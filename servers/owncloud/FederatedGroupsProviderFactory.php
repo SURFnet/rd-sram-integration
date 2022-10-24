@@ -26,6 +26,7 @@ use OCA\FederatedFileSharing\AppInfo\Application;
 use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCP\Share\IProviderFactory;
 use OC\Share20\Exception\ProviderException;
+use OC\Share20\Surf\SurfShareProvider;
 use OCP\IServerContainer;
 
 /**
