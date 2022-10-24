@@ -30,6 +30,7 @@ use OCP\Share\IAttributes;
 use OCP\Share\IShare;
 use OCP\Share\IShareProvider;
 use OC\Share20\Exception\InvalidShare;
+use OC\Share20\Share;
 use OC\Share20\Exception\ProviderException;
 use OCP\Share\Exceptions\ShareNotFound;
 use OC\Share20\Exception\BackendError;
@@ -50,6 +51,10 @@ class SurfShareProvider implements IShareProvider {
 
 	// Special share type for user modified group shares
 	public const SHARE_TYPE_USERGROUP = 2;
+
+	// For representing foreign group members
+	// e.g. 'marie#oc2.docker'
+	public const SEPARATOR = '#';
 
 	/** @var IDBConnection */
 	private $dbConn;
@@ -998,6 +1003,32 @@ class SurfShareProvider implements IShareProvider {
 		return $shares;
 	}
 
+	private function sendOcmInvites($data, $share) {
+		error_log(var_export($data, true));
+		error_log("Sending ocm invites");
+		$group = $this->groupManager->get($share->getSharedWith());
+		// $userIds = [];
+		// foreach ($group->backends as $backend) {
+		// 				$diff = \array_diff(
+		// 								$backend->usersInGroup($this->gid),
+		// 								$userIds
+		// 				);
+		// 				if ($diff) {
+		// 								$userIds = \array_merge($userIds, $diff);
+		// 				}
+		// }
+		$recipients = $group->getUsers();
+		// foreach($userIds as $k) {
+		foreach($recipients as $k => $v) {
+			$parts = explode(self::SEPARATOR, $k);
+			if (count($parts) == 2) {
+				error_log("Sending OCM invite: " . $parts[0] . " at " . $parts[1]);
+			} else {
+				error_log("Local user: $k");
+			}
+		}
+	}
+
 	/**
 	 * Create a share object from an database row
 	 *
@@ -1021,6 +1052,7 @@ class SurfShareProvider implements IShareProvider {
 			$share->setSharedWith($data['share_with']);
 		} elseif ($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP) {
 			$share->setSharedWith($data['share_with']);
+			$this->sendOcmInvites($data, $share);
 		} elseif ($share->getShareType() === \OCP\Share::SHARE_TYPE_LINK) {
 			$share->setPassword($data['share_with']);
 			$share->setToken($data['token']);
