@@ -1003,6 +1003,7 @@ class SurfShareProvider implements IShareProvider {
 		return $shares;
 	}
 
+	// FIXME: https://github.com/SURFnet/rd-sram-integration/issues/12
 	private function sendOcmInvites($data, $share) {
 		error_log(var_export($data, true));
 		error_log("Sending ocm invites");
