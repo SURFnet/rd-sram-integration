@@ -37,7 +37,7 @@ class FederatedGroupsProviderFactory implements IProviderFactory {
 
 	/** @var IServerContainer */
 	private $serverContainer;
-	/** @var DefaultShareProvider */
+	/** @var SurfShareProvider */
 	private $defaultProvider = null;
 	/** @var FederatedShareProvider */
 	private $federatedProvider = null;
@@ -54,14 +54,14 @@ class FederatedGroupsProviderFactory implements IProviderFactory {
 	/**
 	 * Create the default share provider.
 	 *
-	 * @return DefaultShareProvider
+	 * @return SurfShareProvider
 	 */
 	protected function defaultShareProvider() {
 		if ($this->defaultProvider === null) {
 			// serverContainer really has to be more than just an IServerContainer
 			// because getLazyRootFolder() is only in \OC\Server
 			'@phan-var \OC\Server $this->serverContainer';
-			$this->defaultProvider = new DefaultShareProvider(
+			$this->defaultProvider = new SurfShareProvider(
 				$this->serverContainer->getDatabaseConnection(),
 				$this->serverContainer->getUserManager(),
 				$this->serverContainer->getGroupManager(),
