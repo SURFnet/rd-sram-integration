@@ -29,7 +29,7 @@ use OC\Share20\Exception\ProviderException;
 use OCP\IServerContainer;
 
 /**
- * Class ProviderFactory
+ * Class FederatedGroupsProviderFactory
  *
  * @package OC\Share20
  */
