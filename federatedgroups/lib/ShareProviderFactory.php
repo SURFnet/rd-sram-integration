@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  */
-namespace OC\Share20;
+namespace OCA\FederatedGroups;
 
 use OCA\FederatedFileSharing\AppInfo\Application;
 use OCA\FederatedFileSharing\FederatedShareProvider;
@@ -30,11 +30,11 @@ use OC\Share20\FederatedGroups\ShareProvider;
 use OCP\IServerContainer;
 
 /**
- * Class FederatedGroupsProviderFactory
+ * Class ShareProviderFactory
  *
- * @package OC\Share20
+ * @package OCA\FederatedGroups
  */
-class FederatedGroupsProviderFactory implements IProviderFactory {
+class ShareProviderFactory implements IProviderFactory {
 
 	/** @var IServerContainer */
 	private $serverContainer;
