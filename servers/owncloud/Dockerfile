@@ -15,6 +15,10 @@ WORKDIR /var/www/html
 RUN composer install --no-dev
 RUN make install-nodejs-deps
 ENV PHP_MEMORY_LIMIT="512M"
+RUN cd apps && git clone https://github.com/owncloud/customgroups
+RUN cd apps/customgroups && composer install --no-dev
+RUN cd apps/customgroups && yarn install
+RUN cd apps/customgroups && yarn build
 ADD init.sh /init.sh
 ADD FederatedGroupsProviderFactory.php /var/www/html/lib/private/Share20/FederatedGroupsProviderFactory.php
 USER root
