@@ -42,6 +42,13 @@ use OCP\Files\IRootFolder;
 use OCP\IDBConnection;
 use OCP\Files\Node;
 
+use OCA\FederatedFileSharing\AddressHandler;
+use OCA\FederatedFileSharing\DiscoveryManager;
+use OCA\FederatedFileSharing\Ocm\NotificationManager;
+use OCA\FederatedFileSharing\Ocm\Permissions;
+use OCA\FederatedFileSharing\Notifications;
+use OCA\FederatedFileSharing\TokenHandler;
+
 /**
  * Class ShareProvider
  *
@@ -68,6 +75,15 @@ class ShareProvider implements IShareProvider {
 	/** @var IRootFolder */
 	private $rootFolder;
 
+	/** @var AddressHandler */
+	private $addressHandler;
+
+	/** @var Notifications */
+	private $notifications;
+
+	/** @var TokenHandler */
+	private $tokenHandler;
+
 	/**
 	 * DefaultShareProvider constructor.
 	 *
@@ -80,12 +96,18 @@ class ShareProvider implements IShareProvider {
 		IDBConnection $connection,
 		IUserManager $userManager,
 		IGroupManager $groupManager,
+		AddressHandler $addressHandler,
+		Notifications $notifications,
+		TokenHandler $tokenHandler,
 		IRootFolder $rootFolder
 	) {
 		error_log("FederatedGroups ShareProvider!");
 		$this->dbConn = $connection;
 		$this->userManager = $userManager;
 		$this->groupManager = $groupManager;
+		$this->addressHandler = $addressHandler;
+		$this->notifications = $notifications;
+		$this->tokenHandler = $tokenHandler;
 		$this->rootFolder = $rootFolder;
 	}
 
@@ -1003,6 +1025,79 @@ class ShareProvider implements IShareProvider {
 		return $shares;
 	}
 
+	/**
+	 * create federated share and inform the recipient
+	 *
+	 * @param IShare $share
+	 * @return int
+	 * @throws ShareNotFound
+	 * @throws \Exception
+	 */
+	protected function sendOcmInvite($sharedBy, $owner, $sharedWith, $filename) {
+		$token = $this->tokenHandler->generateToken();
+
+  	try {
+			if ($this->userManager->userExists($sharedBy)) {
+					$sharedByAddress = $this->addressHandler->getLocalUserFederatedAddress($sharedBy);
+			} else {
+					$sharedByAddress = new Address($sharedBy);
+			}
+			$ownerAddress = $this->addressHandler->getLocalUserFederatedAddress($owner);
+			$shareWithAddress = new Address($sharedWith);
+			$result = $this->notifications->sendRemoteShare(
+							$shareWithAddress,
+							$ownerAddress,
+							$sharedByAddress,
+							$token,
+							$filename,
+							$shareId
+			);
+
+			/* Check for failure or null return from sending and pick up an error message
+				* if there is one coming from the remote server, otherwise use a generic one.
+				*/
+			if (\is_bool($result)) {
+				$status = $result;
+			} elseif (isset($result['ocs']['meta']['status'])) {
+				$status = $result['ocs']['meta']['status'];
+			} else {
+				$status = false;
+			}
+
+			if ($status === false) {
+				$msg = $result['ocs']['meta']['message'] ?? false;
+				if (!$msg) {
+					$message_t = $this->l->t(
+						'Sharing %s failed, could not find %s, maybe the server is currently unreachable.',
+						[$share->getNode()->getName(), $share->getSharedWith()]
+					);
+				} else {
+					$message_t = $this->l->t("Federated Sharing failed: %s", [$msg]);
+				}
+				throw new \Exception($message_t);
+				}
+			} catch (\Exception $e) {
+				$this->logger->error('Failed to notify remote server of federated share, removing share (' . $e->getMessage() . ')');
+				$this->removeShareFromTableById($shareId);
+				throw $e;
+			}
+
+			return $shareId;
+	}
+
+// 		$shareWithAddress = new Address($shareWith);
+// 		$ownerAddress = new Address($share->getShareOwner());
+// 		$sharedByAddress = new Address($sharedBy);
+		
+// 		 OCA\\FederatedFileSharing\\Address::__set_state(array(\n   'cloudId' => 'marie@oc2.docker',\n   'displayName' => '',\n))
+// [Mon Oct 31 20:15:52.827779 2022] [php7:notice] [pid 10] [client 192.168.176.6:34538] OCA\\FederatedFileSharing\\Address::__set_state(array(\n   'cloudId' => 'einstein@https://oc1.docker/',\n   'displayName' => '',\n))
+// [Mon Oct 31 20:15:52.827788 2022] [php7:notice] [pid 10] [client 192.168.176.6:34538] OCA\\FederatedFileSharing\\Address::__set_state(array(\n   'cloudId' => 'einstein@https://oc1.docker/',\n   'displayName' => '',\n))
+// [Mon Oct 31 20:15:52.827796 2022] [php7:notice] [pid 10] [client 192.168.176.6:34538] '4HEAzJedXPRC52M'
+// [Mon Oct 31 20:15:52.827803 2022] [php7:notice] [pid 10] [client 192.168.176.6:34538] 'welcome.txt'
+// [Mon Oct 31 20:15:52.827810 2022] [php7:notice] [pid 10] [client 192.168.176.6:34538] 3
+// [
+// 	}
+
 	// FIXME: https://github.com/SURFnet/rd-sram-integration/issues/12
 	private function sendOcmInvites($data, $share) {
 		error_log(var_export($data, true));
@@ -1015,6 +1110,7 @@ class ShareProvider implements IShareProvider {
 			$parts = explode(self::SEPARATOR, $v);
 			if (count($parts) == 2) {
 				error_log("Sending OCM invite: " . $parts[0] . " at " . $parts[1]);
+				$this->sendOcmInvite($share->getSharedBy(), $share->getOwner(), $share->getSharedWith(), $share->getNode()->getName());
 			} else {
 				error_log("Local user: $v");
 			}

@@ -29,6 +29,13 @@ use OC\Share20\Exception\ProviderException;
 use OCA\FederatedGroups\ShareProvider;
 use OCP\IServerContainer;
 
+use OCA\FederatedFileSharing\AddressHandler;
+use OCA\FederatedFileSharing\DiscoveryManager;
+use OCA\FederatedFileSharing\Ocm\NotificationManager;
+use OCA\FederatedFileSharing\Ocm\Permissions;
+use OCA\FederatedFileSharing\Notifications;
+use OCA\FederatedFileSharing\TokenHandler;
+
 /**
  * Class ShareProviderFactory
  *
@@ -61,11 +68,45 @@ class ShareProviderFactory implements IProviderFactory {
 		if ($this->defaultProvider === null) {
 			// serverContainer really has to be more than just an IServerContainer
 			// because getLazyRootFolder() is only in \OC\Server
-			'@phan-var \OC\Server $this->serverContainer';
-			$this->defaultProvider = new ShareProvider(
+
+		// IDBConnection $connection,
+		// IUserManager $userManager,
+		// IGroupManager $groupManager,
+		// AddressHandler $addressHandler,
+		// Notifications $notifications,
+		// TokenHandler $tokenHandler,
+		// IRootFolder $rootFolder
+
+		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
+			\OC::$server->getURLGenerator(),
+			\OC::$server->getL10N('federatedfilesharing')
+		);
+		$discoveryManager = new \OCA\FederatedFileSharing\DiscoveryManager(
+			\OC::$server->getMemCacheFactory(),
+			\OC::$server->getHTTPClientService()
+		);
+		$notificationManager = new \OCA\FederatedFileSharing\Ocm\NotificationManager(
+			new \OCA\FederatedFileSharing\Ocm\Permissions()
+		);
+		$notifications = new \OCA\FederatedFileSharing\Notifications(
+			$addressHandler,
+			\OC::$server->getHTTPClientService(),
+			$discoveryManager,
+			$notificationManager,
+			\OC::$server->getJobList(),
+			\OC::$server->getConfig()
+		);
+		$tokenHandler = new \OCA\FederatedFileSharing\TokenHandler(
+			\OC::$server->getSecureRandom()
+		);
+
+		$this->defaultProvider = new ShareProvider(
 				$this->serverContainer->getDatabaseConnection(),
 				$this->serverContainer->getUserManager(),
 				$this->serverContainer->getGroupManager(),
+				$addressHandler,
+				$notifications,
+				$tokenHandler,
 				$this->serverContainer->getLazyRootFolder()
 			);
 		}
