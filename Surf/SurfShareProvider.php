@@ -1008,25 +1008,15 @@ class SurfShareProvider implements IShareProvider {
 		error_log(var_export($data, true));
 		error_log("Sending ocm invites");
 		$group = $this->groupManager->get($share->getSharedWith());
-		// $userIds = [];
-		// foreach ($group->backends as $backend) {
-		// 				$diff = \array_diff(
-		// 								$backend->usersInGroup($this->gid),
-		// 								$userIds
-		// 				);
-		// 				if ($diff) {
-		// 								$userIds = \array_merge($userIds, $diff);
-		// 				}
-		// }
 		$backend = $group->getBackend();
-		$recipients = $backend->usersInGroup($this->gid);
-		// foreach($userIds as $k) {
+		$recipients = $backend->usersInGroup($share->getSharedWith());
+		error_log(var_export($recipients, true));
 		foreach($recipients as $k => $v) {
-			$parts = explode(self::SEPARATOR, $k);
+			$parts = explode(self::SEPARATOR, $v);
 			if (count($parts) == 2) {
 				error_log("Sending OCM invite: " . $parts[0] . " at " . $parts[1]);
 			} else {
-				error_log("Local user: $k");
+				error_log("Local user: $v");
 			}
 		}
 	}
