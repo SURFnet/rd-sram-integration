@@ -1018,7 +1018,8 @@ class SurfShareProvider implements IShareProvider {
 		// 								$userIds = \array_merge($userIds, $diff);
 		// 				}
 		// }
-		$recipients = $group->getUsers();
+		$backend = $group->getBackend();
+		$recipients = $backend->usersInGroup($this->gid);
 		// foreach($userIds as $k) {
 		foreach($recipients as $k => $v) {
 			$parts = explode(self::SEPARATOR, $k);
