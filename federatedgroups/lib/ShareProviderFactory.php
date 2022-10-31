@@ -26,7 +26,7 @@ use OCA\FederatedFileSharing\AppInfo\Application;
 use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCP\Share\IProviderFactory;
 use OC\Share20\Exception\ProviderException;
-use OC\Share20\FederatedGroups\ShareProvider;
+use OCA\FederatedGroups\ShareProvider;
 use OCP\IServerContainer;
 
 /**
@@ -38,7 +38,7 @@ class ShareProviderFactory implements IProviderFactory {
 
 	/** @var IServerContainer */
 	private $serverContainer;
-	/** @var FederatedGroupShareProvider */
+	/** @var ShareProvider */
 	private $defaultProvider = null;
 	/** @var FederatedShareProvider */
 	private $federatedProvider = null;
@@ -55,14 +55,14 @@ class ShareProviderFactory implements IProviderFactory {
 	/**
 	 * Create the default share provider.
 	 *
-	 * @return FederatedGroupShareProvider
+	 * @return ShareProvider
 	 */
 	protected function defaultShareProvider() {
 		if ($this->defaultProvider === null) {
 			// serverContainer really has to be more than just an IServerContainer
 			// because getLazyRootFolder() is only in \OC\Server
 			'@phan-var \OC\Server $this->serverContainer';
-			$this->defaultProvider = new FederatedGroupShareProvider(
+			$this->defaultProvider = new ShareProvider(
 				$this->serverContainer->getDatabaseConnection(),
 				$this->serverContainer->getUserManager(),
 				$this->serverContainer->getGroupManager(),
