@@ -23,7 +23,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  */
-namespace OC\Share20\Surf;
+namespace OCA\FederatedGroups;
 
 use OCP\Files\File;
 use OCP\Share\IAttributes;
@@ -43,11 +43,11 @@ use OCP\IDBConnection;
 use OCP\Files\Node;
 
 /**
- * Class SurfShareProvider
+ * Class ShareProvider
  *
  * @package OC\Share20
  */
-class SurfShareProvider implements IShareProvider {
+class ShareProvider implements IShareProvider {
 
 	// Special share type for user modified group shares
 	public const SHARE_TYPE_USERGROUP = 2;
@@ -82,7 +82,7 @@ class SurfShareProvider implements IShareProvider {
 		IGroupManager $groupManager,
 		IRootFolder $rootFolder
 	) {
-		error_log("SurfShareProvider!");
+		error_log("FederatedGroups ShareProvider!");
 		$this->dbConn = $connection;
 		$this->userManager = $userManager;
 		$this->groupManager = $groupManager;

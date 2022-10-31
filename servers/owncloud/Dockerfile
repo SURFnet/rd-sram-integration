@@ -20,6 +20,6 @@ RUN cd apps/customgroups && composer install --no-dev
 RUN cd apps/customgroups && yarn install
 RUN cd apps/customgroups && yarn build
 RUN cd apps && git clone --branch=as-app https://github.com/SURFnet/rd-sram-integration
-RUN cd apps && ln rd-sram-integration/federatedgroups
+RUN cd apps && ln -s rd-sram-integration/federatedgroups
 ADD init.sh /init.sh
 USER root
