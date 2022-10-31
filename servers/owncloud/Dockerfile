@@ -4,7 +4,7 @@ USER www-data
 RUN git clone --depth=1 https://github.com/owncloud/core.git --recursive --shallow-submodules
 WORKDIR /var/www/core
 USER root
-RUN apt update && apt install -y composer curl dirmngr apt-transport-https lsb-release ca-certificates
+RUN apt update && apt install -y composer curl dirmngr apt-transport-https lsb-release ca-certificates iproute2
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt install nodejs
 RUN npm install -g yarn
