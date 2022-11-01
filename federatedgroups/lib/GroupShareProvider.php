@@ -115,7 +115,7 @@ class GroupShareProvider extends DefaultShareProvider implements IShareProvider 
 			$config,
 			$userManager
 		);
-		error_log("FederatedGroups GroupShareProvider!");
+		// error_log("FederatedGroups GroupShareProvider!");
 	}
 
 	/**
@@ -128,18 +128,18 @@ class GroupShareProvider extends DefaultShareProvider implements IShareProvider 
 	 * @throws \Exception
 	 */
 	public function create(\OCP\Share\IShare $share) {
-		error_log("GroupShareProvider create calling parent");
+		// error_log("GroupShareProvider create calling parent");
 		// Create group share locally
 		$created = parent::create($share);
 		// Send OCM invites to remote group members
-		error_log("Sending ocm invitesz");
+		error_log("Sending OCM invites");
 		error_log($share->getSharedWith());
 		$group = $this->groupManager->get($share->getSharedWith());
-		error_log("Got group");
+		// error_log("Got group");
 		$backend = $group->getBackend();
-		error_log("Got backend");
+		// error_log("Got backend");
 		$recipients = $backend->usersInGroup($share->getSharedWith());
-		error_log("Got recipients");
+		// error_log("Got recipients");
 		error_log(var_export($recipients, true));
 		foreach($recipients as $k => $v) {
 			$parts = explode(self::SEPARATOR, $v);

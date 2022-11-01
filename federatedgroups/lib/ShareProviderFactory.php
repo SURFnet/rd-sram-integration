@@ -33,7 +33,7 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 		$this->serverContainer = $serverContainer;
 	}
 	protected function defaultShareProvider() {
-		error_log("child defaultShareProvider!");
+		// error_log("child defaultShareProvider!");
 		if ($this->defaultProvider === null) {
 			$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
 				\OC::$server->getURLGenerator(),
