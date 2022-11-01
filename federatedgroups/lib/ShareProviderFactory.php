@@ -17,11 +17,20 @@ use OCA\FederatedFileSharing\TokenHandler;
 use OCP\IServerContainer;
 
 class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
-	/** @var IServerContainer */
-	private $serverContainerInChild;
 
-	public function __construct(IServerContainer $serverContainerInChild) {
-		$this->serverContainerInChild = $serverContainerInChild;
+	// These two variables exist in the parent class,
+	// but need to be redeclared here at the child class
+	// level because they're private:
+
+	/** @var IServerContainer */
+	private $serverContainer;
+
+	/** @var DefaultShareProvider */
+	private $defaultProvider = null;
+
+	public function __construct(IServerContainer $serverContainer) {
+		parent::__construct($serverContainer);
+		$this->serverContainer = $serverContainer;
 	}
 	protected function defaultShareProvider() {
 		error_log("child defaultShareProvider!");
@@ -50,13 +59,13 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 			);
 
 			$this->defaultProvider = new ShareProvider(
-				$this->serverContainerInChild->getDatabaseConnection(),
-				$this->serverContainerInChild->getUserManager(),
-				$this->serverContainerInChild->getGroupManager(),
+				$this->serverContainer->getDatabaseConnection(),
+				$this->serverContainer->getUserManager(),
+				$this->serverContainer->getGroupManager(),
 				$addressHandler,
 				$notifications,
 				$tokenHandler,
-				$this->serverContainerInChild->getLazyRootFolder()
+				$this->serverContainer->getLazyRootFolder()
 			);
 		}
 
