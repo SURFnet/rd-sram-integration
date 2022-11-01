@@ -64,34 +64,15 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * @package OC\Share20
  */
 class GroupShareProvider extends DefaultShareProvider implements IShareProvider {
-
-	// Special share type for user modified group shares
-	public const SHARE_TYPE_USERGROUP = 2;
-
 	// For representing foreign group members
 	// e.g. 'marie#oc2.docker'
 	public const SEPARATOR = '#';
 
-	/** @var IDBConnection */
-	private $dbConn;
-
-	/** @var IUserManager */
-	private $userManager;
-
 	/** @var IGroupManager */
 	private $groupManager;
 
-	/** @var IRootFolder */
-	private $rootFolder;
-
-	/** @var AddressHandler */
-	private $addressHandler;
-
-	/** @var Notifications */
-	private $notifications;
-
-	/** @var TokenHandler */
-	private $tokenHandler;
+	/** @var FederatedShareProvider */
+	private $federatedProvider;
 
 	/**
 	 * DefaultShareProvider constructor.
@@ -120,6 +101,8 @@ class GroupShareProvider extends DefaultShareProvider implements IShareProvider 
 			$groupManager,
 		  $rootFolder
 		);
+		// $this->dbConn = $connection;
+		$this->groupManager = $groupManager;
     $this->federatedProvider = new FederatedShareProvider(
 			$connection,
 			$eventDispatcher,
@@ -145,13 +128,18 @@ class GroupShareProvider extends DefaultShareProvider implements IShareProvider 
 	 * @throws \Exception
 	 */
 	public function create(\OCP\Share\IShare $share) {
+		error_log("GroupShareProvider create calling parent");
 		// Create group share locally
 		$created = parent::create($share);
 		// Send OCM invites to remote group members
-		error_log("Sending ocm invites");
+		error_log("Sending ocm invitesz");
+		error_log($share->getSharedWith());
 		$group = $this->groupManager->get($share->getSharedWith());
+		error_log("Got group");
 		$backend = $group->getBackend();
+		error_log("Got backend");
 		$recipients = $backend->usersInGroup($share->getSharedWith());
+		error_log("Got recipients");
 		error_log(var_export($recipients, true));
 		foreach($recipients as $k => $v) {
 			$parts = explode(self::SEPARATOR, $v);
