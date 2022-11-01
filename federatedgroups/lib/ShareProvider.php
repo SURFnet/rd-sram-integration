@@ -1110,7 +1110,7 @@ class ShareProvider implements IShareProvider {
 			$parts = explode(self::SEPARATOR, $v);
 			if (count($parts) == 2) {
 				error_log("Sending OCM invite: " . $parts[0] . " at " . $parts[1]);
-				$this->sendOcmInvite($share->getSharedBy(), $share->getOwner(), $share->getSharedWith(), $share->getNode()->getName());
+				$this->sendOcmInvite($share->getSharedBy(), $share->getShareOwner(), $share->getSharedWith(), $share->getNode()->getName());
 			} else {
 				error_log("Local user: $v");
 			}
