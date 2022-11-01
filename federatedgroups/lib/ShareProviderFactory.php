@@ -58,17 +58,41 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 				\OC::$server->getSecureRandom()
 			);
 
-			$this->defaultProvider = new ShareProvider(
+			$this->defaultProvider = new GroupShareProvider(
 				$this->serverContainer->getDatabaseConnection(),
 				$this->serverContainer->getUserManager(),
 				$this->serverContainer->getGroupManager(),
 				$addressHandler,
 				$notifications,
 				$tokenHandler,
-				$this->serverContainer->getLazyRootFolder()
+				$this->serverContainer->getLazyRootFolder(),
+				$this->serverContainer->getEventDispatcher(),
+				$this->serverContainer->getL10N('federatedgroups'),
+				$this->serverContainer->getLogger(),
+				$this->serverContainer->getConfig()
 			);
 		}
-
 		return $this->defaultProvider;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getProviderForType($shareType) {
+		$provider = null;
+
+		if ($shareType === \OCP\Share::SHARE_TYPE_USER  ||
+						$shareType === \OCP\Share::SHARE_TYPE_GROUP ||
+						$shareType === \OCP\Share::SHARE_TYPE_LINK) {
+						$provider = $this->defaultShareProvider();
+		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
+						$provider = $this->federatedShareProvider();
+		}
+
+		if ($provider === null) {
+						throw new ProviderException('No share provider for share type ' . $shareType);
+		}
+
+		return $provider;
 	}
 }
