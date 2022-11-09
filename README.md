@@ -10,7 +10,7 @@ To see the basic testnet for milestone 1, take a linux machine with Docker insta
 ```
 git clone https://github.com/SURFnet/rd-sram-integration
 cd rd-sram-integration
-git clone --depth=1 http://github.com/owncloud/core
+git clone --branch=accept-ocm-to-groups --depth=1 http://github.com/pondersource/core
 ./scripts/gencerts.sh
 ./scripts/rebuild.sh
 ./scripts/start-testnet.sh
