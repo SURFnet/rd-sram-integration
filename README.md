@@ -13,6 +13,7 @@ cd rd-sram-integration
 git clone --branch=accept-ocm-to-groups --depth=1 http://github.com/pondersource/core
 ./scripts/gencerts.sh
 ./scripts/rebuild.sh
+docker network create testnet
 ./scripts/start-testnet.sh
 ```
 Now point your browser to port 5800 on that server, and in the browser-in-browser view, 
