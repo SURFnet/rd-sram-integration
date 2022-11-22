@@ -22,4 +22,6 @@ RUN cd apps/customgroups && yarn build
 RUN cd apps && git clone https://github.com/SURFnet/rd-sram-integration
 RUN cd apps && ln -s rd-sram-integration/federatedgroups
 ADD init.sh /init.sh
+RUN mkdir -p data ; touch data/owncloud.log
 USER root
+CMD /usr/sbin/apache2ctl -DFOREGROUND & tail -f /var/log/apache2/error.log & tail -f data/owncloud.log
