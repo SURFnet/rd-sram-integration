@@ -60,16 +60,17 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 
 			$this->defaultProvider = new GroupShareProvider(
 				$this->serverContainer->getDatabaseConnection(),
-				$this->serverContainer->getUserManager(),
-				$this->serverContainer->getGroupManager(),
+				
+				$this->serverContainer->getEventDispatcher(),
 				$addressHandler,
 				$notifications,
 				$tokenHandler,
-				$this->serverContainer->getLazyRootFolder(),
-				$this->serverContainer->getEventDispatcher(),
 				$this->serverContainer->getL10N('federatedgroups'),
 				$this->serverContainer->getLogger(),
-				$this->serverContainer->getConfig()
+				$this->serverContainer->getLazyRootFolder(),
+				$this->serverContainer->getConfig(),
+				$this->serverContainer->getUserManager(),
+				$this->serverContainer->getGroupManager()
 			);
 		}
 		return $this->defaultProvider;

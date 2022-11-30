@@ -54,7 +54,7 @@ use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IUserManager;
 use OCP\IDBConnection;
-
+use OCA\FederatedFileSharing;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 
@@ -63,7 +63,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  *
  * @package OC\Share20
  */
-class GroupShareProvider extends DefaultShareProvider implements IShareProvider {
+class GroupShareProvider extends FederatedShareProvider implements IShareProvider {
 	// For representing foreign group members
 	// e.g. 'marie#oc2.docker'
 	public const SEPARATOR = '#';
@@ -84,6 +84,17 @@ class GroupShareProvider extends DefaultShareProvider implements IShareProvider 
 	 */
 	public function __construct(
 		IDBConnection $connection,
+		EventDispatcherInterface $eventDispatcher,
+		AddressHandler $addressHandler,
+		Notifications $notifications,
+		TokenHandler $tokenHandler,
+		IL10N $l10n,
+		ILogger $logger,
+		IRootFolder $rootFolder,
+		IConfig $config,
+		IUserManager $userManager,
+		IGroupManager $groupManager
+		/*IDBConnection $connection,
 		IUserManager $userManager,
 		IGroupManager $groupManager,
 		AddressHandler $addressHandler,
@@ -93,13 +104,19 @@ class GroupShareProvider extends DefaultShareProvider implements IShareProvider 
 		EventDispatcherInterface $eventDispatcher,
 		IL10N $l10n,
 		ILogger $logger,
-		IConfig $config
+		IConfig $config*/
 	) {
 		parent::__construct(
-			$connection,
-			$userManager,
-			$groupManager,
-		  $rootFolder
+			 $connection,
+		 $eventDispatcher,
+		 $addressHandler,
+		 $notifications,
+		 $tokenHandler,
+		 $l10n,
+		 $logger,
+		 $rootFolder,
+		 $config,
+		 $userManager
 		);
 		// $this->dbConn = $connection;
 		$this->groupManager = $groupManager;
@@ -151,4 +168,15 @@ class GroupShareProvider extends DefaultShareProvider implements IShareProvider 
 			}
 		}
 	}
+	public function getAllSharedWith($userId, $node){
+		error_log("you `getAllSharedWith` me on GroupShareProvider...");
+		return parent::getAllSharedWith($userId, $node);
+	}
+
+	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
+		error_log("you `getSharedWith` on GroupShareProvider...");
+		return parent::getSharedWith($userId, $node);
+	}
+
+	
 }
