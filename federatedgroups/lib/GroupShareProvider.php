@@ -175,7 +175,7 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 
 	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
 		error_log("you `getSharedWith` on GroupShareProvider...");
-		return parent::getSharedWith($userId, $node);
+		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
 	}
 
 	
