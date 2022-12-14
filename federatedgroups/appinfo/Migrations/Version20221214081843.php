@@ -10,7 +10,7 @@ class Version20221214081843 implements ISchemaMigration {
     private $prefix;
 
 	/** @var  string */
-	private $tableName = "share_federated_group";
+	private $tableName = "share_external_group";
 
 	public function changeSchema(Schema $schema, array $options) {
 		$this->prefix = $options['tablePrefix'];
