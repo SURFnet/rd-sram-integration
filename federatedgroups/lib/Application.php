@@ -16,4 +16,10 @@ class Application extends App {
 	public function __construct(array $urlParams = []) {
 		parent::__construct('federatedgroups', $urlParams);
 	}
-}
+	public status function createShare() {
+		error_log("Federated Groups app creating share!";
+	}
+	public status function processNotification() {
+		error_log("Federated Groups app processing notification!";
+	}
+} 
