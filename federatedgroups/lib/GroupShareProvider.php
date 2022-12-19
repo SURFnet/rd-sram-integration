@@ -1,28 +1,10 @@
 <?php
-/**
- * @author Björn Schießle <bjoern@schiessle.org>
- * @author Joas Schilling <coding@schilljs.com>
- * @author phisch <git@philippschaffrath.de>
- * @author Roeland Jago Douma <rullzer@owncloud.com>
- * @author Vincent Petry <pvince81@owncloud.com>
- * @author Piotr Mrowczynski <piotr@owncloud.com>
- *
- * @copyright Copyright (c) 2018, ownCloud GmbH
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- */
+
+// Copyright (c) 2018, ownCloud GmbH
+// SPDX-FileCopyrightText: 2022 SURF
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 namespace OCA\FederatedGroups;
 
 use OC\Share20\Exception\BackendError;
