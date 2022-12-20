@@ -22,6 +22,9 @@
 namespace OCA\FederatedGroups;
 
 use OCA\FederatedFileSharing\Ocm\Permissions;
+use OCA\FederatedFileSharing\Notifications;
+use OCA\FederatedFileSharing\AddressHandler;
+use OCA\FederatedFileSharing\Address;
 use OCA\Files_Sharing\Activity;
 use OCP\Activity\IManager as ActivityManager;
 use OCP\Files\NotFoundException;
