@@ -228,13 +228,13 @@ class OcmController extends Controller {
 			$shareWithAddress = new Address($shareWith);
 			$localShareWith = $shareWithAddress->toLocalUid();
 			if ($shareType === 'user') {
-				error_log("checking if user exists");
+				error_log("checking if user $localShareWith exists");
 				if (!$this->userManager->userExists($localShareWith)) {
 					throw new BadRequestException("User $localShareWith does not exist");
 				}
 			} else if ($shareType === 'group') {
-				error_log("checking if group exists");
-				if (!$this->groupManager->groupExists($localShareWith)) {
+				error_log("checking if group $localShareWith exists");
+				if (!\OC::$server->getGroupManager()->groupExists($localShareWith)) {
 					throw new BadRequestException("group $localShareWith does not exist");
 				}
 			}
