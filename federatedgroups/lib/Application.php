@@ -19,7 +19,7 @@ use OCA\FederatedFileSharing\Controller\OcmController;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedGroups\FederatedShareProvider;
 use OCA\FederatedGroups\FedShareManager;
-use OCA\FederatedFileSharing\Middleware\OcmMiddleware;
+use OCA\FederatedGroups\Middleware\OcmMiddleware;
 use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\Controller\RequestHandlerController;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;

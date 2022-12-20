@@ -23,7 +23,7 @@ namespace OCA\FederatedGroups\Middleware;
 
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
-use OCA\FederatedFileSharing\FederatedShareProvider;
+use OCA\FederatedGroups\FederatedShareProvider;
 use OCA\FederatedFileSharing\Ocm\Exception\BadRequestException;
 use OCA\FederatedFileSharing\Ocm\Exception\ForbiddenException;
 use OCA\FederatedFileSharing\Ocm\Exception\NotImplementedException;
