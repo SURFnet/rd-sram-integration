@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedFileSharing\Controller;
+namespace OCA\FederatedGroups\Controller;
 
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
@@ -40,7 +40,7 @@ use OCP\IUserManager;
 /**
  * Class OcmController
  *
- * @package OCA\FederatedFileSharing\Controller
+ * @package OCA\FederatedGroups\Controller
  */
 class OcmController extends Controller {
 	public const API_VERSION = '1.0-proposal1';
