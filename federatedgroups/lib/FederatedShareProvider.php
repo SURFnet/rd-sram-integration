@@ -22,7 +22,7 @@
  *
  */
 
-namespace OCA\FederatedFileSharing;
+namespace OCA\FederatedGroups;
 
 use OC\Share20\Exception\InvalidShare;
 use OC\Share20\Share;
@@ -40,11 +40,14 @@ use OCP\Share\IShare;
 use OCP\Share\IShareProvider;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
+use OCA\FederatedFileSharing\AddressHandler;
+use OCA\FederatedFileSharing\Notifications;
+use OCA\FederatedFileSharing\TokenHandler;
 
 /**
  * Class FederatedShareProvider
  *
- * @package OCA\FederatedFileSharing
+ * @package OCA\FederatedGroups
  */
 class FederatedShareProvider implements IShareProvider {
 	public const SHARE_TYPE_REMOTE = 6;
