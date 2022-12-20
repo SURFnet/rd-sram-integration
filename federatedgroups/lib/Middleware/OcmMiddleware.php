@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedFileSharing\Middleware;
+namespace OCA\FederatedGroups\Middleware;
 
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
@@ -37,7 +37,7 @@ use OCP\Share\IShare;
 /**
  * Class OcmMiddleware
  *
- * @package OCA\FederatedFileSharing\Controller\Middleware
+ * @package OCA\FederatedGroups\Middleware
  */
 class OcmMiddleware {
 	/**
