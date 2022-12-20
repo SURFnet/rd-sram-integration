@@ -105,6 +105,7 @@ class OcmController extends Controller {
 		$this->addressHandler = $addressHandler;
 		$this->fedShareManager = $fedShareManager;
 		$this->logger = $logger;
+		error_log("Federated Groups OcmController constructed");
 	}
 
 	/**
@@ -177,6 +178,7 @@ class OcmController extends Controller {
 		$resourceType,
 		$protocol
 	) {
+		error_log("Federated Groups OcmController creating share");
 		try {
 			$this->ocmMiddleware->assertIncomingSharingEnabled();
 			$this->ocmMiddleware->assertNotNull(
@@ -284,6 +286,7 @@ class OcmController extends Controller {
 		$providerId,
 		$notification
 	) {
+		error_log("Federated Groups OcmController processing notification");
 		try {
 			if (!\is_array($notification)) {
 				throw new BadRequestException(
