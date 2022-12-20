@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedFileSharing;
+namespace OCA\FederatedGroups;
 
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\Files_Sharing\Activity;
