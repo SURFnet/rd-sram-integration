@@ -21,7 +21,7 @@ class Version20221214081843 implements ISchemaMigration {
 		$this->prefix = $options['tablePrefix'];
 
         if (!$schema->hasTable("{$this->prefix}{$this->tableName}")) {
-            $table = $schema->createTable("{$this->prefix}mytable");
+            $table = $schema->createTable("{$this->prefix}{$this->tableName}");
             $table->addColumn('id', 'integer', [
                 'autoincrement' => true,
                 'unsigned' => true,
