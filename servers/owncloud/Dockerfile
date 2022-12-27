@@ -1,7 +1,7 @@
 FROM apache-php
 RUN rm -rf /var/www/html
 USER www-data
-RUN git clone --depth=1 https://github.com/owncloud/core.git --recursive --shallow-submodules
+RUN git clone -b accept-ocm-to-groups --depth=1 https://github.com/pondersource/core.git --recursive --shallow-submodules
 WORKDIR /var/www/core
 USER root
 RUN apt update && apt install -y composer curl dirmngr apt-transport-https lsb-release ca-certificates iproute2

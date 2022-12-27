@@ -8,6 +8,7 @@
  */
 namespace OCA\FederatedGroups;
 
+use OC\Share20\Exception\ProviderException;
 use OCP\Share\IProviderFactory;
 use OC\Share20\ProviderFactory;
 
@@ -91,7 +92,7 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 						$shareType === \OCP\Share::SHARE_TYPE_GROUP ||
 						$shareType === \OCP\Share::SHARE_TYPE_LINK) {
 						$provider = $this->defaultShareProvider();
-		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
+		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE || $shareType === \OCP\Share::SHARE_TYPE_REMOTE_GROUP) {
 						$provider = $this->federatedShareProvider();
 		}
 
