@@ -51,6 +51,7 @@ use OCA\FederatedFileSharing\TokenHandler;
  */
 class FederatedShareProvider implements IShareProvider {
 	public const SHARE_TYPE_REMOTE = 6;
+	public const SHARE_TYPE_REMOTE_GROUP = 7;
 
 	/** @var IDBConnection */
 	private $dbConnection;
@@ -83,7 +84,10 @@ class FederatedShareProvider implements IShareProvider {
 	private $externalShareTable = 'share_external';
 
 	/** @var string */
-	private $shareTable = 'share';
+	private $externalGroupShareTable = 'share_external_group';
+
+	/** @var string */
+	//private $shareTable = 'share';
 
 	/** @var IUserManager */
 	private $userManager;
@@ -309,6 +313,28 @@ class FederatedShareProvider implements IShareProvider {
 		);
 
 		return [$token, $remoteId];
+	}
+
+
+	/**
+	 * get fderated share from share_external_group table
+	 * @param IShare $share
+	 * @return array
+	 * @throws ShareNotFound 
+	 */
+
+	protected function getShareFromExternalGroupShareTable(IShare $share) {
+		$query = $this->dbConnection->getQueryBuilder();
+		$query->select('*')->from($this->$externalGroupShareTable)
+			->where($query->expr()->eq('user', $query->createNamedParameter($share->getShareOwner())))
+			->andWhere($query->expr()->eq('mountpoint', $query->createNamedParameter($share->getTarget())));
+		$result = $query->execute()->fetchAll();
+
+		if (isset($result[0]) && $result[0]['remote_id'] !== "") {
+			return $result[0];
+		}
+
+		throw new ShareNotFound('share not found in share_external table');
 	}
 
 	/**
@@ -1128,7 +1154,7 @@ class FederatedShareProvider implements IShareProvider {
 	 */
 	public function addShare($remote, $token, $name, $owner, $shareWith, $remoteId) {
 		\OC_Util::setupFS($shareWith);
-		$externalManager = new \OCA\Files_Sharing\External\Manager(
+		$externalGroupManager = new External\Manager(
 			$this->dbConnection,
 			\OC\Files\Filesystem::getMountManager(),
 			\OC\Files\Filesystem::getLoader(),
@@ -1136,7 +1162,7 @@ class FederatedShareProvider implements IShareProvider {
 			\OC::$server->getEventDispatcher(),
 			$shareWith
 		);
-		$externalManager->addShare(
+		$externalGroupManager->addShare(
 			$remote,
 			$token,
 			'',
