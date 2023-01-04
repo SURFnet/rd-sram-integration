@@ -75,6 +75,7 @@ class OcmController extends Controller {
 	 */
 	protected $logger;
 
+	private $userId;
 	/**
 	 * OcmController constructor.
 	 *
@@ -95,16 +96,17 @@ class OcmController extends Controller {
 		IUserManager $userManager,
 		AddressHandler $addressHandler,
 		FedShareManager $fedShareManager,
+		$userId,
 		ILogger $logger
 	) {
 		parent::__construct($appName, $request);
-
 		$this->ocmMiddleware = $ocmMiddleware;
 		$this->urlGenerator = $urlGenerator;
 		$this->userManager = $userManager;
 		$this->addressHandler = $addressHandler;
 		$this->fedShareManager = $fedShareManager;
 		$this->logger = $logger;
+		$this->userId = $userId;
 		error_log("Federated Groups OcmController constructed");
 	}
 
@@ -460,4 +462,13 @@ class OcmController extends Controller {
 		$supportedProtocolNames = \array_keys($supportedProtocols);
 		return \in_array($protocolName, $supportedProtocolNames);
 	}
+
+	/**
+	 * @param userId
+	 * @param groupId
+	 */
+	public function getAllSharedFiles(){
+		return $this->fedShareManager->getSharedWithMyGroup($this->userId);
+	}
+
 }

@@ -111,6 +111,8 @@ class Application extends App {
 			$permissions,
 			$eventDispatcher
 		);
+		$user = \OC::$server->getUserSession()->getUser();
+		$uid = $user ? $user->getUID() : null;
 		return new \OCA\FederatedGroups\Controller\OcmController(
 			'federatedgroups',
 			$request,
@@ -119,6 +121,7 @@ class Application extends App {
 			$userManager,
 			$addressHandler,
 			$fedShareManager,
+			$uid,
 			$logger
 		);
 	}

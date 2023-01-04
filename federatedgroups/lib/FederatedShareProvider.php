@@ -87,8 +87,11 @@ class FederatedShareProvider implements IShareProvider {
 	private $externalGroupShareTable = 'share_external_group';
 
 	/** @var string */
-	//private $shareTable = 'share';
+	private $shareTable = 'share';
 
+	/** @var Manager */
+	private $externalGroupManager ;
+	
 	/** @var IUserManager */
 	private $userManager;
 
@@ -1174,6 +1177,23 @@ class FederatedShareProvider implements IShareProvider {
 		);
 		return $this->dbConnection->lastInsertId("*PREFIX*{$this->externalShareTable}");
 	}
+
+	/**
+	 * 
+	 */
+	public function getAllSharedWithMyGroup($userId){
+		error_log("get group external shares");
+		$externalGroupManager = new External\Manager(
+			$this->dbConnection,
+			\OC\Files\Filesystem::getMountManager(),
+			\OC\Files\Filesystem::getLoader(),
+			\OC::$server->getNotificationManager(),
+			\OC::$server->getEventDispatcher(),
+			$userId
+		);
+		return $externalGroupManager->getOpenShares();
+	}
+
 
 	/**
 	 * @param string $remote

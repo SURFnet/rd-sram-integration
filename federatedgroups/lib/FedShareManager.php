@@ -361,6 +361,14 @@ class FedShareManager {
 	}
 
 	/**
+	 * reterive OCM group shared files
+	 * 
+	 */
+	 public function getSharedWithMyGroup($userId){
+		return $this->federatedShareProvider->getAllSharedWithMyGroup($userId);
+	 }
+
+	/**
 	 * @param IShare $share
 	 * @param callable $callback
 	 *

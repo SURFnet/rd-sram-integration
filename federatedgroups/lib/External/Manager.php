@@ -544,8 +544,9 @@ class Manager {
 	 * @return array list of open server-to-server shares
 	 */
 	private function getShares($accepted) {
+		error_log("in external group manager uid is:". $this->uid);
 		$query = 'SELECT `id`, `remote`, `remote_id`, `share_token`, `name`, `owner`, `user`, `mountpoint`, `accepted`
-		          FROM `*PREFIX*share_external` 
+		          FROM `*PREFIX*share_external_group` 
 				  WHERE `user` = ?';
 		$parameters = [$this->uid];
 		if ($accepted !== null) {
