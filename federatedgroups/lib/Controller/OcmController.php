@@ -36,6 +36,7 @@ use OCP\ILogger;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\IUserManager;
+use OCP\Share\IShare;
 
 /**
  * Class OcmController
@@ -464,11 +465,32 @@ class OcmController extends Controller {
 	}
 
 	/**
-	 * @param userId
-	 * @param groupId
+	 * @return array $sharedFiles
 	 */
 	public function getAllSharedFiles(){
-		return $this->fedShareManager->getSharedWithMyGroup($this->userId);
+		$sharedFiles = $this->fedShareManager->getSharedWithMyGroup($this->userId);
+		$sharedFiles = array_map(function ($item) {
+			$item["share_type"] = "group";
+			return $item;
+		}, $sharedFiles);
+		return $sharedFiles;
 	}
+
+	/**
+	 * get shared file accourding to given Id
+	 * @param mixed $id
+	 * @return IShare
+	 */
+	public function getSharedFile($id){
+
+		return $this->fedShareManager->getSharedById($id);
+	}
+
+
+	public function acceptShare($id)
+	{
+		$this->fedShareManager->acceptShare($id);
+	}
+
 
 }

@@ -241,6 +241,7 @@ class FedShareManager {
 		$this->notifyRemote($share, [$this->notifications, 'sendAcceptShare']);
 	}
 
+	
 	/**
 	 * Delete declined share and create a activity
 	 *
@@ -367,6 +368,16 @@ class FedShareManager {
 	 public function getSharedWithMyGroup($userId){
 		return $this->federatedShareProvider->getAllSharedWithMyGroup($userId);
 	 }
+
+	public function getSharedById($id)
+	{
+		return $this->federatedShareProvider->getShareById($id);
+	}
+
+	public function acceptSharedFile(string $shareId) {
+		$this->federatedShareProvider->acceptSharedFile($shareId);
+	}
+
 
 	/**
 	 * @param IShare $share

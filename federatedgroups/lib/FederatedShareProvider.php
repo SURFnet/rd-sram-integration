@@ -767,9 +767,9 @@ class FederatedShareProvider implements IShareProvider {
 		$qb = $this->dbConnection->getQueryBuilder();
 
 		$qb->select('*')
-			->from($this->shareTable)
+			->from($this->externalGroupShareTable)
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
-			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE)));
+			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE_GROUP)));
 
 		$cursor = $qb->execute();
 		$data = $cursor->fetch();
@@ -1194,6 +1194,16 @@ class FederatedShareProvider implements IShareProvider {
 		return $externalGroupManager->getOpenShares();
 	}
 
+	public function acceptSharedFile($shareId){
+		$externalGroupManager = new External\Manager(
+			$this->dbConnection,
+			\OC\Files\Filesystem::getMountManager(),
+			\OC\Files\Filesystem::getLoader(),
+			\OC::$server->getNotificationManager(),
+			\OC::$server->getEventDispatcher()
+		);
+		$externalGroupManager->acceptShare($shareId);
+	}
 
 	/**
 	 * @param string $remote

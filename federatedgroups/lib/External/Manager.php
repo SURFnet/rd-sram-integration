@@ -87,7 +87,7 @@ class Manager {
 		\OCP\Files\Storage\IStorageFactory $storageLoader,
 		IManager $notificationManager,
 		EventDispatcherInterface $eventDispatcher,
-		$uid
+		$uid = null
 	) {
 		$this->connection = $connection;
 		$this->mountManager = $mountManager;
@@ -256,7 +256,7 @@ class Manager {
 	/**
 	 * accept server-to-server share
 	 *
-	 * @param int $id
+	 * @param string $id
 	 * @return bool True if the share could be accepted, false otherwise
 	 */
 	public function acceptShare($id) {
@@ -267,7 +267,7 @@ class Manager {
 			$hash = \md5($mountPoint);
 
 			$acceptShare = $this->connection->prepare('
-				UPDATE `*PREFIX*share_external`
+				UPDATE `*PREFIX*share_external_group`
 				SET `accepted` = ?,
 					`mountpoint` = ?,
 					`mountpoint_hash` = ?
