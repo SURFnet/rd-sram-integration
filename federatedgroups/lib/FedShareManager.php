@@ -378,6 +378,10 @@ class FedShareManager {
 		$this->federatedShareProvider->acceptSharedFile($shareId);
 	}
 
+	public function getExternalManager($userId = null){
+		return $this->federatedShareProvider->getExternalManager($userId); 
+	}
+
 
 	/**
 	 * @param IShare $share

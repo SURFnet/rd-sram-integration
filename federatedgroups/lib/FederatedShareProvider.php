@@ -1205,6 +1205,18 @@ class FederatedShareProvider implements IShareProvider {
 		$externalGroupManager->acceptShare($shareId);
 	}
 
+	public function getExternalManager($userId = null)
+	{
+		return new External\Manager(
+			$this->dbConnection,
+			\OC\Files\Filesystem::getMountManager(),
+			\OC\Files\Filesystem::getLoader(),
+			\OC::$server->getNotificationManager(),
+			\OC::$server->getEventDispatcher(),
+			$userId
+		);
+	}
+
 	/**
 	 * @param string $remote
 	 * @param string $shareWith

@@ -469,10 +469,7 @@ class OcmController extends Controller {
 	 */
 	public function getAllSharedFiles(){
 		$sharedFiles = $this->fedShareManager->getSharedWithMyGroup($this->userId);
-		$sharedFiles = array_map(function ($item) {
-			$item["share_type"] = "group";
-			return $item;
-		}, $sharedFiles);
+		
 		return $sharedFiles;
 	}
 
@@ -490,6 +487,10 @@ class OcmController extends Controller {
 	public function acceptShare($id)
 	{
 		$this->fedShareManager->acceptShare($id);
+	}
+
+	public function getExternalManager(){
+		return $this->fedShareManager->getExternalManager($this->userId); 
 	}
 
 

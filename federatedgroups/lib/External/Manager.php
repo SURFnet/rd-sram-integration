@@ -198,7 +198,7 @@ class Manager {
 	public function getShare($id) {
 		$getShare = $this->connection->prepare('
 			SELECT `id`, `remote`, `remote_id`, `share_token`, `name`, `owner`, `user`, `mountpoint`, `accepted`
-			FROM  `*PREFIX*share_external`
+			FROM  `*PREFIX*share_external_group`
 			WHERE `id` = ? AND `user` = ?');
 		$result = $getShare->execute([$id, $this->uid]);
 
@@ -557,7 +557,11 @@ class Manager {
 
 		$shares = $this->connection->prepare($query);
 		$result = $shares->execute($parameters);
-
-		return $result ? $shares->fetchAll() : [];
+		$groupShared = $shares->fetchAll();
+		$sharedFiles = array_map(function ($item) {
+			$item["share_type"] = "group";
+			return $item;
+		}, $groupShared);
+		return $result ? $sharedFiles : [];
 	}
 }
