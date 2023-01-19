@@ -25,7 +25,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\OCA\Files_SharingExternal;
+namespace OCA\FederatedGroups\External;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
@@ -62,6 +62,7 @@ class Storage extends DAV implements ISharedStorage {
 	private $manager;
 
 	public function __construct($options) {
+		error_log("federated group storage constrctor!!!");
 		$this->memcacheFactory = \OC::$server->getMemCacheFactory();
 		$this->httpClient = \OC::$server->getHTTPClientService();
 		$this->logger = \OC::$server->getLogger();

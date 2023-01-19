@@ -41,7 +41,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
 class Manager {
-	public const STORAGE = '\OCA\Files_Sharing\External\Storage';
+	public const STORAGE = '\OCA\FederatedGroups\External\Storage';
 
 	/**
 	 * @var string

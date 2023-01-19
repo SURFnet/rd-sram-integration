@@ -27,7 +27,7 @@ use OCP\IDBConnection;
 use OCP\IUser;
 
 class MountProvider implements IMountProvider {
-	public const STORAGE = '\OCA\Files_Sharing\External\Storage';
+	public const STORAGE = '\OCA\FederatedGroups\External\Storage';
 
 	/**
 	 * @var \OCP\IDBConnection
