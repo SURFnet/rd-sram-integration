@@ -489,9 +489,4 @@ class OcmController extends Controller {
 		$this->fedShareManager->acceptShare($id);
 	}
 
-	public function getExternalManager(){
-		return $this->fedShareManager->getExternalManager($this->userId); 
-	}
-
-
 }

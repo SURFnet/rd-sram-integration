@@ -125,4 +125,10 @@ class Application extends App {
 			$logger
 		);
 	}
+
+
+	public static function getExternalManager(){
+		$controller = self::getOcmController();
+		return $controller->fedShareManager->getExternalManager($controller->userId); 
+	}
 } 
