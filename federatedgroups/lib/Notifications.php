@@ -26,6 +26,15 @@
 namespace OCA\FederatedGroups;
 
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
+use OCA\FederatedFileSharing\AddressHandler;
+use OCA\FederatedFileSharing\Address;
+use OCA\FederatedFileSharing\Command\PollIncomingShares;
+use OCA\FederatedFileSharing\Controller\OcmController;
+use OCA\FederatedFileSharing\DiscoveryManager;
+use OCA\FederatedFileSharing\Controller\RequestHandlerController;
+use OCA\FederatedFileSharing\Ocm\Permissions;
+use OCA\FederatedFileSharing\TokenHandler;
+
 use OCP\AppFramework\Http;
 use OCP\BackgroundJob\IJobList;
 use OCP\Http\Client\IClientService;

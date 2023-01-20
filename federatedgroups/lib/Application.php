@@ -23,7 +23,7 @@ use OCA\FederatedGroups\Middleware\OcmMiddleware;
 use OCA\FederatedFileSharing\Controller\RequestHandlerController;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
-use OCA\FederatedFileSharing\Notifications;
+use OCA\FederatedGroups\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCP\AppFramework\Http;
 use OCP\Share\Events\AcceptShare;

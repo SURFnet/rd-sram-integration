@@ -34,6 +34,9 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 	/** @var DefaultShareProvider */
 	private $defaultProvider = null;
 
+	/** @var FederatedShareProvider */
+	private $federatedProvider = null;
+
 	public function __construct(IServerContainer $serverContainer) {
 		parent::__construct($serverContainer);
 		error_log("FederatedShareProvider constructor");
