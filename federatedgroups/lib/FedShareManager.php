@@ -22,7 +22,7 @@
 namespace OCA\FederatedGroups;
 
 use OCA\FederatedFileSharing\Ocm\Permissions;
-use OCA\FederatedFileSharing\Notifications;
+use OCA\FederatedGroups\Notifications;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Address;
 use OCA\Files_Sharing\Activity;
