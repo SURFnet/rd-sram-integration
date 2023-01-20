@@ -127,6 +127,62 @@ class Application extends App {
 	}
 
 
+
+    /**
+     * @return ScienceMeshShareProvider
+     */
+    public function getFederatedShareProvider()
+    {
+			$appManager = \OC::$server->getAppManager();
+			$userManager = \OC::$server->getUserManager();
+			$logger = \OC::$server->getLogger();
+			$urlGenerator = \OC::$server->getURLGenerator();
+			$l10n = \OC::$server->getL10N('federatedfilesharing');
+			$addressHandler = new AddressHandler(
+				$urlGenerator,
+				$l10n
+			);
+			$httpClientService = \OC::$server->getHTTPClientService();
+			$memCacheFactory = \OC::$server->getMemCacheFactory();
+			$discoveryManager = new DiscoveryManager(
+				$memCacheFactory,
+				$httpClientService
+			);
+			$permissions = new Permissions();
+			$notificationManagerFFS = new NotificationManager($permissions);
+			$notificationManagerServer = \OC::$server->getNotificationManager();
+			$jobList = \OC::$server->getJobList();
+			$config = \OC::$server->getConfig();
+			$notifications = new Notifications(
+				$addressHandler,
+				$httpClientService,
+				$discoveryManager,
+				$notificationManagerFFS,
+				$jobList,
+				$config
+			);
+			$secureRandom = \OC::$server->getSecureRandom();
+			$tokenHandler = new TokenHandler(
+				$secureRandom
+			);
+			$databaseConnection = \OC::$server->getDatabaseConnection();
+			$eventDispatcher = \OC::$server->getEventDispatcher();
+			$lazyFolderRoot = \OC::$server->getLazyRootFolder();
+			error_log("our application returning our FederatedShareProvider");
+			return new FederatedShareProvider(
+				$databaseConnection,
+				$eventDispatcher,
+				$addressHandler,
+				$notifications,
+				$tokenHandler,
+				$l10n,
+				$logger,
+				$lazyFolderRoot,
+				$config,
+				$userManager
+			);
+	}
+
 	public static function getExternalManager(){
 		$controller = self::getOcmController();
 		return $controller->fedShareManager->getExternalManager($controller->userId); 

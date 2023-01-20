@@ -41,7 +41,7 @@ use OCP\Share\IShareProvider;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use OCA\FederatedFileSharing\AddressHandler;
-use OCA\FederatedFileSharing\Notifications;
+use OCA\FederatedGroups\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
 
 /**
@@ -151,6 +151,7 @@ class FederatedShareProvider implements IShareProvider {
 	 * @throws \Exception
 	 */
 	public function create(IShare $share) {
+		error_log("FederatedGroups FederatedShareProvider create $shareType");
 		$shareWith = $share->getSharedWith();
 		$itemSource = $share->getNodeId();
 		$itemType = $share->getNodeType();
@@ -228,6 +229,7 @@ class FederatedShareProvider implements IShareProvider {
 	 * @throws \Exception
 	 */
 	protected function createFederatedShare(IShare $share) {
+		error_log("createFederatedShare");
 		$token = $this->tokenHandler->generateToken();
 		$shareId = $this->addShareToDB(
 			$share->getNodeId(),
@@ -258,7 +260,8 @@ class FederatedShareProvider implements IShareProvider {
 				$sharedByAddress,
 				$token,
 				$share->getNode()->getName(),
-				$shareId
+				$shareId,
+				$share->getShareType()
 			);
 
 			/* Check for failure or null return from sending and pick up an error message

@@ -36,10 +36,12 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 
 	public function __construct(IServerContainer $serverContainer) {
 		parent::__construct($serverContainer);
+		error_log("FederatedShareProvider constructor");
 		$this->serverContainer = $serverContainer;
 	}
 	protected function defaultShareProvider() {
-		// error_log("child defaultShareProvider!");
+		
+		error_log("our defaultShareProvider!");
 		if ($this->defaultProvider === null) {
 			$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
 				\OC::$server->getURLGenerator(),
@@ -83,9 +85,25 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 	}
 
 	/**
+	 * Create the federated share provider
+	 *
+	 * @return FederatedShareProvider
+	 */
+	protected function federatedShareProvider() {
+		error_log("our factory getting our FederatedShareProvider");
+		if ($this->federatedProvider === null) {
+			$federatedGroupsApp = new Application();
+			$this->federatedProvider = $federatedGroupsApp->getFederatedShareProvider();
+		}
+
+		return $this->federatedProvider;
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public function getProviderForType($shareType) {
+		error_log("getProviderForType $shareType");
 		$provider = null;
 
 		if ($shareType === \OCP\Share::SHARE_TYPE_USER  ||
