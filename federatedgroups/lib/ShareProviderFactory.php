@@ -35,11 +35,14 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 	private $defaultProvider = null;
 
 	/** @var FederatedShareProvider */
-	private $federatedProvider = null;
+	private $federatedUserProvider = null;
+
+	/** @var FederatedShareProvider */
+	private $federatedGroupProvider = null;
 
 	public function __construct(IServerContainer $serverContainer) {
 		parent::__construct($serverContainer);
-		error_log("FederatedShareProvider constructor");
+		error_log("FederatedShareProviderFactory constructor");
 		$this->serverContainer = $serverContainer;
 	}
 	protected function defaultShareProvider() {
@@ -88,18 +91,33 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 	}
 
 	/**
-	 * Create the federated share provider
+	 * Create the federated share provider for OCM to groups
 	 *
 	 * @return FederatedShareProvider
 	 */
-	protected function federatedShareProvider() {
-		error_log("our factory getting our FederatedShareProvider");
-		if ($this->federatedProvider === null) {
+	protected function federatedGroupShareProvider() {
+		error_log("our factory getting our FederatedShareProvider for OCM to group");
+		if ($this->federatedGroupProvider === null) {
 			$federatedGroupsApp = new Application();
-			$this->federatedProvider = $federatedGroupsApp->getFederatedShareProvider();
+			$this->federatedGroupProvider = $federatedGroupsApp->getFederatedShareProvider();
 		}
 
-		return $this->federatedProvider;
+		return $this->federatedGroupProvider;
+	}
+
+	/**
+	 * Create the federated share provider for OCM to users
+	 *
+	 * @return FederatedShareProvider
+	 */
+	protected function federatedUserShareProvider() {
+		error_log("our factory getting our FederatedShareProvider for OCM to user");
+		if ($this->federatedUserProvider === null) {
+			$federatedFileSharingApp = new \OCA\FederatedFileSharing\AppInfo\Application();
+			$this->federatedUserProvider = $federatedFileSharingApp->getFederatedShareProvider();
+		}
+
+		return $this->federatedUserProvider;
 	}
 
 	/**
@@ -113,8 +131,10 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 						$shareType === \OCP\Share::SHARE_TYPE_GROUP ||
 						$shareType === \OCP\Share::SHARE_TYPE_LINK) {
 						$provider = $this->defaultShareProvider();
-		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE || $shareType === \OCP\Share::SHARE_TYPE_REMOTE_GROUP) {
-						$provider = $this->federatedShareProvider();
+		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
+						$provider = $this->federatedUserShareProvider();
+		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE_GROUP) {
+						$provider = $this->federateGroupShareProvider();
 		}
 
 		if ($provider === null) {
