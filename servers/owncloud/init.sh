@@ -9,3 +9,4 @@ echo Editing Config
 sed -i "8 i\      1 => 'oc1.docker'," /var/www/html/config/config.php
 sed -i "9 i\      2 => 'oc2.docker'," /var/www/html/config/config.php
 sed -i "3 i\  'sharing.managerFactory' => 'OCA\\\\FederatedGroups\\\\ShareProviderFactory'," /var/www/html/config/config.php
+sed -i "4 i\  'sharing.remoteShareesSearch' => 'OCA\\\\FederatedGroups\\\\ShareeSearchPlugin'," /var/www/html/config/config.php
