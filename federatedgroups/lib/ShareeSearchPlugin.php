@@ -5,8 +5,10 @@ namespace OCA\FederatedGroups;
 use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\IUserSession;
+use OCP\Share\IRemoteShareesSearch;
+use OCP\Contacts\IManager;
 
-class ShareeSearchPlugin implements ISearchPlugin {
+class ShareeSearchPlugin implements IRemoteShareesSearch {
 	protected $shareeEnumeration;
 	/** @var IConfig */
 	private $config;
@@ -15,7 +17,14 @@ class ShareeSearchPlugin implements ISearchPlugin {
 	/** @var string */
 	private $userId = '';
 
-	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession) {
+	/** @var IManager */
+	protected $contactsManager;
+
+	private $limit;
+	private $offset;
+
+	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, IManager $contactsManager) {
+		error_log("constructing ShareeSearchPlugin");
 		$this->config = $config;
 		$this->userManager = $userManager;
 		$user = $userSession->getUser();
@@ -23,9 +32,13 @@ class ShareeSearchPlugin implements ISearchPlugin {
 			$this->userId = $user->getUID();
 		}
 		$this->shareeEnumeration = $this->config->getAppValue('core', 'shareapi_allow_share_dialog_user_enumeration', 'yes') === 'yes';
+		$this->contactsManager = $contactsManager;
+		$this->limit = 1000000;
+		$this->offset = 0;
 	}
 
 	public function search($search) {
+		error_log("searching $search");
 		// copied from https://github.com/owncloud/core/blob/v10.11.0/apps/files_sharing/lib/Controller/ShareesController.php#L385-L503
     // just doubling up every result so it appears once with share type Share::SHARE_TYPE_REMOTE
 		// and once with share type Share::SHARE_TYPE_REMOTE_GROUP
@@ -171,5 +184,6 @@ class ShareeSearchPlugin implements ISearchPlugin {
 				],
 			];
 		}
+		return $this->result['exact']['remotes'];
 	}
 }
