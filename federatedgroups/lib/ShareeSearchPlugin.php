@@ -6,12 +6,16 @@ use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\Share\IRemoteShareesSearch;
+use OCP\Share;
 use OCP\Contacts\IManager;
+use OCP\Util\UserSearch;
 
 class ShareeSearchPlugin implements IRemoteShareesSearch {
 	protected $shareeEnumeration;
+
 	/** @var IConfig */
 	private $config;
+
 	/** @var IUserManager */
 	private $userManager;
 	/** @var string */
@@ -182,6 +186,8 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 					'shareType' => Share::SHARE_TYPE_REMOTE,
 					'shareWith' => $search,
 				],
+			];
+			$this->result['exact']['remotes'][] = [
 				'label' => 'G_' . $search,
 				'value' => [
 					'shareType' => Share::SHARE_TYPE_REMOTE_GROUP,
@@ -190,5 +196,28 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 			];
 		}
 		return $this->result['exact']['remotes'];
+	}
+
+	/**
+	 * Checks whether the given target's domain part matches one of the server's
+	 * trusted domain entries
+	 *
+	 * @param string $target target
+	 * @return true if one match was found, false otherwise
+	 */
+	protected function isInstanceDomain($target) {
+		if (\strpos($target, '/') !== false) {
+			// not a proper email-like format with domain name
+			return false;
+		}
+		$parts = \explode('@', $target);
+		if (\count($parts) === 1) {
+			// no "@" sign
+			return false;
+		}
+		$domainName = $parts[\count($parts) - 1];
+		$trustedDomains = $this->config->getSystemValue('trusted_domains', []);
+
+		return \in_array($domainName, $trustedDomains, true);
 	}
 }
