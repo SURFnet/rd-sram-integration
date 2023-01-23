@@ -20,10 +20,16 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 	/** @var IManager */
 	protected $contactsManager;
 
-	private $limit;
-	private $offset;
+	/** @var UserSearch*/
+	protected $userSearch;
 
-	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, IManager $contactsManager) {
+	/** @var int */
+	private $limit = 10;
+
+	/** @var int */
+	private $offset = 0;
+
+	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, IManager $contactsManager, UserSearch $userSearch) {
 		error_log("constructing ShareeSearchPlugin");
 		$this->config = $config;
 		$this->userManager = $userManager;
@@ -33,8 +39,7 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 		}
 		$this->shareeEnumeration = $this->config->getAppValue('core', 'shareapi_allow_share_dialog_user_enumeration', 'yes') === 'yes';
 		$this->contactsManager = $contactsManager;
-		$this->limit = 1000000;
-		$this->offset = 0;
+		$this->userSearch = $userSearch;
 	}
 
 	public function search($search) {
