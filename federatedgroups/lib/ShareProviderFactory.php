@@ -134,7 +134,7 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
 						$provider = $this->federatedUserShareProvider();
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE_GROUP) {
-						$provider = $this->federateGroupShareProvider();
+						$provider = $this->federatedGroupShareProvider();
 		}
 
 		if ($provider === null) {
