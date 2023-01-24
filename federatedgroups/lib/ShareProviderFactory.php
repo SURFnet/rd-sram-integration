@@ -22,7 +22,7 @@ use OCA\FederatedFileSharing\TokenHandler;
 
 use OCP\IServerContainer;
 
-class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
+class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProviderFactory {
 
 	// These two variables exist in the parent class,
 	// but need to be redeclared here at the child class
@@ -42,7 +42,7 @@ class ShareProviderFactory extends ProviderFactory implements IProviderFactory {
 
 	public function __construct(IServerContainer $serverContainer) {
 		parent::__construct($serverContainer);
-		error_log("FederatedShareProviderFactory constructor");
+		error_log("FederatedGroups ProviderFactory constructor");
 		$this->serverContainer = $serverContainer;
 	}
 	protected function defaultShareProvider() {
