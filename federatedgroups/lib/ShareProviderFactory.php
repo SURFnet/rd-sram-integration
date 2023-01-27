@@ -11,13 +11,13 @@ namespace OCA\FederatedGroups;
 use OC\Share20\Exception\ProviderException;
 use OCP\Share\IProviderFactory;
 use OC\Share20\ProviderFactory;
-
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
+use OCA\FederatedGroups\AppInfo\Application;
 
 
 use OCP\IServerContainer;
