@@ -8,4 +8,4 @@
  *
  */
 
-$app = new \OCA\FederatedGroups\Application();
+$app = new \OCA\FederatedGroups\AppInfo\Application();
