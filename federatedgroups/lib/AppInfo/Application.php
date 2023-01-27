@@ -8,7 +8,7 @@
  *
  */
 
-namespace OCA\FederatedGroups;
+namespace OCA\FederatedGroups\AppInfo;
 
 use OCP\AppFramework\App;
 use OCP\IRequest;
