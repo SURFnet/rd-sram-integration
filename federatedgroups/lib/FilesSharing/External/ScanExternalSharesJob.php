@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\FileSharing\External;
+namespace OCA\FederatedGroups\FilesSharing\External;
 
 use OC\User\NoUserException;
 use OC\BackgroundJob\TimedJob;

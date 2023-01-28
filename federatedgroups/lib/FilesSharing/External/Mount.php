@@ -22,7 +22,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\FileSharing\External;
+namespace OCA\FederatedGroups\FilesSharing\External;
 
 use OC\Files\Mount\MountPoint;
 use OC\Files\Mount\MoveableMount;

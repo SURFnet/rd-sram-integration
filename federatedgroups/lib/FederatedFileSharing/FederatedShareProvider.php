@@ -44,6 +44,7 @@ use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
+use OCA\FederatedGroups\FilesSharing\External\Manager;
 
 /**
  * Class FederatedShareProvider
@@ -1161,7 +1162,7 @@ class FederatedShareProvider implements IShareProvider {
 	 */
 	public function addShare($remote, $token, $name, $owner, $shareWith, $remoteId) {
 		\OC_Util::setupFS($shareWith);
-		$externalGroupManager = new External\Manager(
+		$externalGroupManager = new Manager(
 			$this->dbConnection,
 			\OC\Files\Filesystem::getMountManager(),
 			\OC\Files\Filesystem::getLoader(),
