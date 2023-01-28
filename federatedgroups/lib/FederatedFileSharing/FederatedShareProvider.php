@@ -1212,7 +1212,7 @@ class FederatedShareProvider implements IShareProvider {
 
 	public function getExternalManager($userId = null)
 	{
-		return new \OCA\FederatedGroups\FileSharing\Manager(
+		return new Manager(
 			$this->dbConnection,
 			\OC\Files\Filesystem::getMountManager(),
 			\OC\Files\Filesystem::getLoader(),
