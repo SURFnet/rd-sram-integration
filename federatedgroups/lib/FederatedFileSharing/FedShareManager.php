@@ -19,10 +19,10 @@
  *
  */
 
-namespace OCA\FederatedGroups\FederatedFilesSharing;
+namespace OCA\FederatedGroups\FederatedFileSharing;
 
 use OCA\FederatedFileSharing\Ocm\Permissions;
-use OCA\FederatedGroups\Notifications;
+use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Address;
 use OCA\Files_Sharing\Activity;

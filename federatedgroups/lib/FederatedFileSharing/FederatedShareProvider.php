@@ -22,7 +22,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\FederatedFilesSharing;
+namespace OCA\FederatedGroups\FederatedFileSharing;
 
 use OC\Share20\Exception\InvalidShare;
 use OC\Share20\Share;
@@ -42,7 +42,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Address;
-use OCA\FederatedGroups\Notifications;
+use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
 
 /**

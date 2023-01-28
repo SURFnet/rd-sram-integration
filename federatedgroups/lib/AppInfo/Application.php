@@ -17,13 +17,13 @@ use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Command\PollIncomingShares;
 use OCA\FederatedFileSharing\Controller\OcmController;
 use OCA\FederatedFileSharing\DiscoveryManager;
-use OCA\FederatedGroups\FederatedShareProvider;
-use OCA\FederatedGroups\FedShareManager;
-use OCA\FederatedGroups\Middleware\OcmMiddleware;
+use OCA\FederatedGroups\FederatedFileSharing\FederatedShareProvider;
+use OCA\FederatedGroups\FederatedFileSharing\FedShareManager;
+use OCA\FederatedGroups\FederatedFileSharing\Middleware\OcmMiddleware;
 use OCA\FederatedFileSharing\Controller\RequestHandlerController;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
-use OCA\FederatedGroups\Notifications;
+use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCP\AppFramework\Http;
 use OCP\Share\Events\AcceptShare;
@@ -128,9 +128,7 @@ class Application extends App {
 
 
 
-    /**
-     * @return ScienceMeshShareProvider
-     */
+    
     public function getFederatedShareProvider()
     {
 			$appManager = \OC::$server->getAppManager();

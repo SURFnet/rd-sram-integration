@@ -23,7 +23,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\FederatedFilesSharing;
+namespace OCA\FederatedGroups\FederatedFileSharing;
 
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\AddressHandler;
