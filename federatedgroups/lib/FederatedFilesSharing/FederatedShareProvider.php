@@ -22,7 +22,7 @@
  *
  */
 
-namespace OCA\FederatedGroups;
+namespace OCA\FederatedGroups\FederatedFilesSharing;
 
 use OC\Share20\Exception\InvalidShare;
 use OC\Share20\Share;

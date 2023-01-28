@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\Middleware;
+namespace OCA\FederatedGroups\FederatedFilesSharing\Middleware;
 
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;

@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\External;
+namespace OCA\FederatedGroups\FileSharing\External;
 
 use OCP\Files\Config\IMountProvider;
 use OCP\Files\Storage\IStorageFactory;

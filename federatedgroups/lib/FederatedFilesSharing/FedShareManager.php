@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedGroups;
+namespace OCA\FederatedGroups\FederatedFilesSharing;
 
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedGroups\Notifications;
