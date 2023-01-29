@@ -29,12 +29,44 @@ use OCP\AppFramework\Http;
 use OCP\Share\Events\AcceptShare;
 use OCP\Share\Events\DeclineShare;
 use OCP\Util;
+use OCP\IContainer;
+use OCA\FederatedGroups\FilesSharing\External\MountProvider;
 
 
 class Application extends App {
+	private $isProviderRegistered = false;
+
 	public function __construct(array $urlParams = []) {
+		error_log("fg: ". get_parent_class($this));
 		parent::__construct('federatedgroups', $urlParams);
+		$container = $this->getContainer();
+		$server = $container->getServer();
+
+
+		$container->registerService('ExternalGroupMountProvider', function (IContainer $c) {
+			/** @var \OCP\IServerContainer $server */
+			$server = $c->query('ServerContainer');
+			return new \OCA\FederatedGroups\FilesSharing\External\MountProvider(
+				$server->getDatabaseConnection(),
+				function () use ($c) {
+					return $c->query('ExternalManager');
+				}
+			);
+		});
 	}
+
+	public function registerMountProviders() {
+		// We need to prevent adding providers more than once
+		// Doing this on MountProviderCollection level makes a lot tests to fail
+		if ($this->isProviderRegistered === false) {
+			/** @var \OCP\IServerContainer $server */
+			$server = $this->getContainer()->query('ServerContainer');
+			$mountProviderCollection = $server->getMountProviderCollection();
+			$mountProviderCollection->registerProvider($this->getContainer()->query('ExternalGroupMountProvider'));
+			$this->isProviderRegistered = true;
+		}
+	}
+
 	public static function getOcmController(
 		IRequest $request
 	) {
