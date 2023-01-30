@@ -10,6 +10,7 @@
 
 namespace OCA\FederatedGroups\AppInfo;
 
+use OC\AppFramework\Utility\SimpleContainer;
 use OCP\AppFramework\App;
 use OCP\IRequest;
 use GuzzleHttp\Exception\ServerException;
@@ -43,23 +44,32 @@ class Application extends App {
 		$server = $container->getServer();
 
 
+		$container->registerService('ExternalGroupManager', function (SimpleContainer $c) use ($server) {
+			$user = $server->getUserSession()->getUser();
+			$uid = $user ? $user->getUID() : null;
+			return new \OCA\FederatedGroups\FilesSharing\External\Manager(
+				$server->getDatabaseConnection(),
+				\OC\Files\Filesystem::getMountManager(),
+				\OC\Files\Filesystem::getLoader(),
+				$server->getNotificationManager(),
+				$server->getEventDispatcher(),
+				$uid
+			);
+		});
 		// FIXME: https://github.com/SURFnet/rd-sram-integration/issues/71
-		// $container->registerService('ExternalGroupMountProvider', function (IContainer $c) {
-		// 	/** @var \OCP\IServerContainer $server */
-		// 	$server = $c->query('ServerContainer');
-		// 	return new \OCA\FederatedGroups\FilesSharing\External\MountProvider(
-		// 		$server->getDatabaseConnection(),
-		// 		function () use ($c) {
-		// 			return $c->query('ExternalManager');
-		// 		}
-		// 	);
-		// });
+		$container->registerService('ExternalGroupMountProvider', function (IContainer $c) {
+		/** @var \OCP\IServerContainer $server */
+		 	$server = $c->query('ServerContainer');
+		 	return new \OCA\FederatedGroups\FilesSharing\External\MountProvider(
+		 		$server->getDatabaseConnection(),
+		 		function () use ($c) {
+		 			return $c->query('ExternalGroupManager');
+		 		}
+		 	);
+		});
 	}
 
 	public function registerMountProviders() {
-		// FIXME: https://github.com/SURFnet/rd-sram-integration/issues/71
-		return;
-
 		// We need to prevent adding providers more than once
 		// Doing this on MountProviderCollection level makes a lot tests to fail
 		if ($this->isProviderRegistered === false) {
