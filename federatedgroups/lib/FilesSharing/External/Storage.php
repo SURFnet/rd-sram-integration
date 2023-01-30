@@ -93,7 +93,7 @@ class Storage extends DAV implements ISharedStorage {
 	}
 
 	/**
-	 * @return booleano
+	 * @return boolean
 	 */
 	public function usePartFile() {
 		return false;
