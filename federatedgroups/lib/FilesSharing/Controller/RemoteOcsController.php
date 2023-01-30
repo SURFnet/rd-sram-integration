@@ -37,6 +37,9 @@ class RemoteOcsController extends OCSController {
 	/** @var Manager */
 	protected $externalManager;
 
+	/** @var \OCA\FederatedGroups\FilesSharing\External\Manager */
+	protected $externalGroupManager;
+
 	/** @var string */
 	protected $uid;
 
@@ -52,11 +55,13 @@ class RemoteOcsController extends OCSController {
 		$appName,
 		IRequest $request,
 		Manager $externalManager,
+		\OCA\FederatedGroups\FilesSharing\External\Manager $externalGroupManager,
 		$uid
 	) {
 		parent::__construct($appName, $request);
 		$this->request = $request;
 		$this->externalManager = $externalManager;
+		$this->externalGroupManager = $externalGroupManager;
 		$this->uid = $uid;
 	}
 
@@ -125,11 +130,23 @@ class RemoteOcsController extends OCSController {
 	 * @return Result
 	 */
 	public function getShares($includingPending = false) {
-		error_log("HELLO in FederatedGRoups RemoteOcsController ");
+		error_log("HELLO in FederatedGroups RemoteOcsController ");
 
 		$shares = [];
 		foreach ($this->externalManager->getAcceptedShares() as $shareInfo) {
 			try {
+				error_log("Found accepted share to user");
+				$shares[] = $this->extendShareInfo($shareInfo);
+			} catch (StorageNotAvailableException $e) {
+				//TODO: Log the exception here? There are several logs already below the stack
+			} catch (StorageInvalidException $e) {
+				//TODO: Log the exception here? There are several logs already below the stack
+			}
+		}
+
+		foreach ($this->externalGroupManager->getAcceptedShares() as $shareInfo) {
+			try {
+				error_log("Found accepted share to group");
 				$shares[] = $this->extendShareInfo($shareInfo);
 			} catch (StorageNotAvailableException $e) {
 				//TODO: Log the exception here? There are several logs already below the stack
@@ -144,7 +161,7 @@ class RemoteOcsController extends OCSController {
 			 * {{TemporaryMountPointName#/filename.ext}}
 			 * so we need to cut it off
 			 */
-			$openShares = \array_map(
+			$openSharesToUser = \array_map(
 				function ($share) {
 					$share['mountpoint'] = \substr(
 						$share['mountpoint'],
@@ -156,7 +173,19 @@ class RemoteOcsController extends OCSController {
 				},
 				$this->externalManager->getOpenShares()
 			);
-			$shares = \array_merge($shares, $openShares);
+			$openSharesToGroup = \array_map(
+				function ($share) {
+					$share['mountpoint'] = \substr(
+						$share['mountpoint'],
+						\strlen('{{TemporaryMountPointName#')
+					);
+
+					$share['mountpoint'] = \rtrim($share['mountpoint'], '}');
+					return $share;
+				},
+				$this->externalGroupManager->getOpenShares()
+			);
+			$shares = \array_merge($shares, $openSharesToUser, $openSharesToGroup);
 		}
 
 		return new Result($shares);

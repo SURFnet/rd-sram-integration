@@ -86,13 +86,24 @@ class Application extends App {
 		\OCA\Files_Sharing\External\Manager $externalManager,
 		$uid
 	) {
-		return new \OCA\FederatedGroups\FilesSharing\Controller\RemoteOcsController(
+		$a = \OC::$server->getDatabaseConnection();
+		$b = \OC\Files\Filesystem::getMountManager();
+		$c = \OC\Files\Filesystem::getLoader();
+		$d = \OC::$server->getNotificationManager();
+		$e = \OC::$server->getEventDispatcher();
+		$f = $uid;
+		$externalGroupManager = new \OCA\FederatedGroups\FilesSharing\External\Manager($a, $b, $c, $d, $e, $f);
+		$controller = new \OCA\FederatedGroups\FilesSharing\Controller\RemoteOcsController(
 			'files_sharing',
 			$request,
 			$externalManager,
+			$externalGroupManager,
 			$uid
 		);
+		return $controller;
 	}
+
+	
 
 	public static function getOcmController(
 		IRequest $request
