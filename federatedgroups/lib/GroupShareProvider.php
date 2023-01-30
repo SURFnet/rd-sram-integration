@@ -117,6 +117,10 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		// error_log("FederatedGroups GroupShareProvider!");
 	}
 
+	private function sendOcmInvite($getSharedBy, $shareOwner, $sharedWith, $name) {
+		error_log("Send OCM invite ($getSharedBy, $shareOwner, $sharedWith, $name)");
+	}
+
 	/**
 	 * Share a path
 	 *
@@ -144,7 +148,7 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 			$parts = explode(self::SEPARATOR, $v);
 			if (count($parts) == 2) {
 				error_log("Sending OCM invite: " . $parts[0] . " at " . $parts[1]);
-				// $this->sendOcmInvite($share->getSharedBy(), $share->getShareOwner(), $share->getSharedWith(), $share->getNode()->getName());
+				$this->sendOcmInvite($share->getSharedBy(), $share->getShareOwner(), $share->getSharedWith(), $share->getNode()->getName());
 			} else {
 				error_log("Local user: $v");
 			}
