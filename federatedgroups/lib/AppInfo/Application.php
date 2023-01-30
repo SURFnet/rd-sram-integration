@@ -81,6 +81,19 @@ class Application extends App {
 		}
 	}
 
+	public static function getRemoteOcsController(
+		IRequest $request,
+		\OCA\Files_Sharing\External\Manager $externalManager,
+		$uid
+	) {
+		return new \OCA\FederatedGroups\FilesSharing\Controller\RemoteOcsController(
+			'files_sharing',
+			$request,
+			$externalManager,
+			$uid
+		);
+	}
+
 	public static function getOcmController(
 		IRequest $request
 	) {
