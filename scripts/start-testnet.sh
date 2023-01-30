@@ -56,6 +56,12 @@ docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi
 echo Adding local user to regular group on oc2
 docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_group_user (gid, uid) values ('federalists', 'marie');"
 
+echo Creating regular group 'helpdesk' on oc2
+docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_groups (gid) values ('helpdesk');"
+echo Adding foreign user to regular group on oc2
+docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_group_user (gid, uid) values ('helpdesk', 'marie');"
+
+
 echo Creating custom group 'custard with mustard' on oc1
 docker exec maria1.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group (group_id, uri, display_name) values (1, 'Custard with Mustard', 'Custard with Mustard');"
 echo Adding local user to custom group on oc1
