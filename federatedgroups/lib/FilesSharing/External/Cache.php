@@ -21,7 +21,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\External;
+namespace OCA\FederatedGroups\FilesSharing\External;
 
 class Cache extends \OC\Files\Cache\Cache {
 	private $remote;

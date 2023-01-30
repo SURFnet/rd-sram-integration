@@ -23,12 +23,12 @@ namespace OCA\FederatedGroups\Controller;
 
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
-use OCA\FederatedGroups\Middleware\OcmMiddleware;
+use OCA\FederatedGroups\FederatedFileSharing\Middleware\OcmMiddleware;
 use OCA\FederatedFileSharing\Ocm\Exception\BadRequestException;
 use OCA\FederatedFileSharing\Ocm\Exception\NotImplementedException;
 use OCA\FederatedFileSharing\Ocm\Notification\FileNotification;
 use OCP\AppFramework\Http\JSONResponse;
-use OCA\FederatedGroups\FedShareManager;
+use OCA\FederatedGroups\FederatedFileSharing\FedShareManager;
 use OCA\FederatedFileSharing\Ocm\Exception\OcmException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;

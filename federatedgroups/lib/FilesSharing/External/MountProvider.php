@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\External;
+namespace OCA\FederatedGroups\FilesSharing\External;
 
 use OCP\Files\Config\IMountProvider;
 use OCP\Files\Storage\IStorageFactory;
@@ -27,7 +27,7 @@ use OCP\IDBConnection;
 use OCP\IUser;
 
 class MountProvider implements IMountProvider {
-	public const STORAGE = '\OCA\FederatedGroups\External\Storage';
+	public const STORAGE = '\OCA\FederatedGroups\FilesSharing\External\Storage';
 
 	/**
 	 * @var \OCP\IDBConnection
@@ -61,7 +61,7 @@ class MountProvider implements IMountProvider {
 	public function getMountsForUser(IUser $user, IStorageFactory $loader) {
 		$query = $this->connection->prepare('
 				SELECT `remote`, `share_token`, `password`, `mountpoint`, `owner`
-				FROM `*PREFIX*share_external`
+				FROM `*PREFIX*share_external_group`
 				WHERE `user` = ? AND `accepted` = ?
 			');
 		$query->execute([$user->getUID(), 1]);

@@ -170,7 +170,7 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 		if (!$this->shareeEnumeration) {
 			$this->result['remotes'] = [];
 		}
-
+		$this->result['exact']['remotes'] = [];
 		if (!$foundRemoteById && \substr_count($search, '@') >= 1
 			&& $this->offset === 0 && $this->userSearch->isSearchable($search)
 			// if an exact local user is found, only keep the remote entry if
