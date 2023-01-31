@@ -31,6 +31,15 @@ docker run -d --network=testnet --name=oc2.docker \
   -v $REPO_DIR/core/apps/files_sharing:/var/www/html/apps/files_sharing \
   oc2
 
+echo Starting SCIM server
+docker run -d --network=testnet --name=scim1.docker \
+    -e SERVER_URL="http://scim1.docker" \
+    -e BASE_PATH=/api/v2 \
+    -e API_TOKEN=123456789 \
+    -e DATABASE_URL="mysql://root:@eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek@maria1.docker/owncloud "\
+    -p 80:80 \
+    harrykodden/scim-server
+
 echo "starting firefox tester"
 docker run -d --name=firefox -p 5800:5800 -v /tmp/shm:/config:rw --network=testnet --shm-size 2g jlesage/firefox:v1.17.1
 
@@ -79,6 +88,5 @@ echo Adding foreign user to custom group on oc2
 docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group_member (group_id, user_id, role) values (1, 'einstein#oc1.docker', 1);"
 echo Adding local user to custom group on oc2
 docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group_member (group_id, user_id, role) values (1, 'marie', 1);"
-
 
 echo Now browse to http://\<host\>:5800 to see a Firefox instance that sits inside the Docker testnet.

@@ -6,4 +6,5 @@ git clone --branch=accept-ocm-to-groups --depth=1 https://github.com/pondersourc
 ./scripts/rebuild.sh
 docker pull mariadb
 docker pull jlesage/firefox:v1.17.1
+docker pull harrykodden/scim-server
 docker network create testnet
