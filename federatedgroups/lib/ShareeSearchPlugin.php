@@ -132,6 +132,8 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 									'shareWith' => $cloudId,
 									'server' => $serverUrl,
 								],
+							];
+							$this->result['exact']['remotes'][] = [
 								'label' =>  $contact['FN'],
 								'value' => [
 									'shareType' => Share::SHARE_TYPE_REMOTE_GROUP,
@@ -155,6 +157,8 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 							'shareWith' => $cloudId,
 							'server' => $serverUrl,
 						],
+					];
+					$this->result['exact']['remotes'][] = [
 						'label' =>  $contact['FN'],
 						'value' => [
 							'shareType' => Share::SHARE_TYPE_REMOTE_GROUP,
