@@ -316,11 +316,12 @@ class Manager {
 	 * @return bool True if the share could be declined, false otherwise
 	 */
 	public function declineShare($id) {
+		error_log("gf declineShare is called !!!");
 		$share = $this->getShare($id);
 
 		if ($share) {
 			$removeShare = $this->connection->prepare('
-				DELETE FROM `*PREFIX*share_external` WHERE `id` = ? AND `user` = ?');
+				Update `*PREFIX*share_external_group` set `accepted` = 2 WHERE `id` = ? AND `user` = ?');
 			$removeShare->execute([$id, $this->uid]);
 
 			$this->eventDispatcher->dispatch(
