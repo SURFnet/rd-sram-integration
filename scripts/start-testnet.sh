@@ -71,7 +71,10 @@ docker exec maria1.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi
 echo Adding local user to custom group on oc1
 docker exec maria1.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group_member (group_id, user_id, role) values (1, 'einstein', 1);"
 echo Adding foreign user to custom group on oc1
-docker exec maria1.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group_member (group_id, user_id, role) values (1, 'marie#oc2.docker', 1);"
+
+# docker exec maria1.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group_member (group_id, user_id, role) values (1, 'marie#oc2.docker', 1);"
+docker exec nc1.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "marie#oc2.docker"}]}}]}' https://oc1.docker/index.php/apps/federatedgroups/scim/Groups
+
 
 echo Creating custom group 'custard with mustard' on oc2
 docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group (group_id, uri, display_name) values (1, 'Custard with Mustard', 'Custard with Mustard');"
@@ -79,6 +82,7 @@ echo Adding foreign user to custom group on oc2
 docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group_member (group_id, user_id, role) values (1, 'einstein#oc1.docker', 1);"
 echo Adding local user to custom group on oc2
 docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group_member (group_id, user_id, role) values (1, 'marie', 1);"
+
 
 
 echo Now browse to http://\<host\>:5800 to see a Firefox instance that sits inside the Docker testnet.
