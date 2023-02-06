@@ -109,7 +109,7 @@ class ScimController extends Controller {
 			return $this->addToCustomGroup($userId, $customGroupId);
 		} else {
 			error_log("Adding $userId to regular group $regularGroupId ('$groupId')");
-			return $this->addToCustomGroup($userId, $regularGroupId);
+			return $this->addToRegularGroup($userId, $regularGroupId);
 		}
 	}
 

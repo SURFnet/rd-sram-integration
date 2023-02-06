@@ -49,7 +49,6 @@ docker exec -e DBHOST=maria2.docker -e USER=marie -e PASS=radioactivity -u www-d
 echo Creating regular group 'federalists' on oc1
 docker exec maria1.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_groups (gid) values ('federalists');"
 echo Adding local user to regular group on oc1
-docker exec maria1.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_group_user (gid, uid) values ('federalists', 'einstein');"
 docker exec oc1.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "einstein"}]}}]}' -H 'Content-Type: application/json' https://oc1.docker/index.php/apps/federatedgroups/scim/Groups/federalists
 echo Adding foreign user to regular group on oc1
 docker exec oc1.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "marie#oc2.docker"}]}}]}' -H 'Content-Type: application/json' https://oc1.docker/index.php/apps/federatedgroups/scim/Groups/federalists
@@ -57,15 +56,15 @@ docker exec oc1.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "mem
 echo Creating regular group 'federalists' on oc2
 docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_groups (gid) values ('federalists');"
 echo Adding foreign user to regular group on oc2
-docker exec oc2.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "einstein#oc1.docker"}]}}]}' -H 'Content-Type: application/json' https://oc1.docker/index.php/apps/federatedgroups/scim/Groups/federalists
+docker exec oc2.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "einstein#oc1.docker"}]}}]}' -H 'Content-Type: application/json' https://oc2.docker/index.php/apps/federatedgroups/scim/Groups/federalists
 echo Adding local user to regular group on oc2
-docker exec oc2.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "marie"}]}}]}' -H 'Content-Type: application/json' https://oc1.docker/index.php/apps/federatedgroups/scim/Groups/federalists
+docker exec oc2.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "marie"}]}}]}' -H 'Content-Type: application/json' https://oc2.docker/index.php/apps/federatedgroups/scim/Groups/federalists
 
 
 echo Creating regular group 'helpdesk' on oc2
 docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_groups (gid) values ('helpdesk');"
 echo Adding local user to regular group on oc2
-docker exec oc1.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "marie"}]}}]}' -H 'Content-Type: application/json' https://oc1.docker/index.php/apps/federatedgroups/scim/Groups/federalists
+docker exec oc1.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "marie"}]}}]}' -H 'Content-Type: application/json' https://oc2.docker/index.php/apps/federatedgroups/scim/Groups/helpdesk
 
 
 echo Creating custom group 'custard with mustard' on oc1
@@ -79,9 +78,9 @@ docker exec oc1.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "mem
 echo Creating custom group 'custard with mustard' on oc2
 docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group (group_id, uri, display_name) values (1, 'Custard with Mustard', 'Custard with Mustard');"
 echo Adding foreign user to custom group on oc2
-docker exec oc2.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "einstein#oc1.docker"}]}}]}' -H 'Content-Type: application/json' https://oc1.docker/index.php/apps/federatedgroups/scim/Groups/Custard%20with%20Mustard
+docker exec oc2.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "einstein#oc1.docker"}]}}]}' -H 'Content-Type: application/json' https://oc2.docker/index.php/apps/federatedgroups/scim/Groups/Custard%20with%20Mustard
 echo Adding local user to custom group on oc2
-docker exec oc2.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "marie"}]}}]}' -H 'Content-Type: application/json' https://oc1.docker/index.php/apps/federatedgroups/scim/Groups/Custard%20with%20Mustard
+docker exec oc2.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "marie"}]}}]}' -H 'Content-Type: application/json' https://oc2.docker/index.php/apps/federatedgroups/scim/Groups/Custard%20with%20Mustard
 
 
 
