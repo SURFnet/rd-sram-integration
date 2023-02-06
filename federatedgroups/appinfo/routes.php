@@ -10,8 +10,7 @@
 
 return [
 	'routes' => [
-		['name' => 'scim#addUserToGroup', 'url' => '/scim/Groups', 'verb' => 'PATCH'],
-		['name' => 'scim#addUserToGroup', 'url' => '/scim/Groups', 'verb' => 'POST'],
+		['name' => 'scim#addUserToGroup', 'url' => '/scim/Groups/{groupId}', 'verb' => 'PATCH'],
 	],
 	'resources' => []
 ];
