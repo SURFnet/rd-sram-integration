@@ -117,8 +117,71 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		// error_log("FederatedGroups GroupShareProvider!");
 	}
 
-	private function sendOcmInvite($getSharedBy, $shareOwner, $sharedWith, $name) {
-		error_log("Send OCM invite ($getSharedBy, $shareOwner, $sharedWith, $name)");
+	private function sendOcmInvite($getSharedBy, $shareOwner, $fedGroupId, $remote, $name) {
+		error_log("Send OCM invite ($getSharedBy, $shareOwner, $fedGroupId, $remote, $name)");
+	}
+
+	private function customGroupHasForeignersFrom($remote, $customGroupId) {
+		$queryBuilder = $this->dbConn->getQueryBuilder();
+		$cursor = $queryBuilder->select('user_id')->from('custom_group_member')
+			->where($queryBuilder->expr()->eq('group_id', $queryBuilder->createNamedParameter($customGroupId, IQueryBuilder::PARAM_INT)))
+			->where($queryBuilder->expr()->like('user_id', $queryBuilder->createNamedParameter("%#$remote", IQueryBuilder::PARAM_STR)))
+			->execute();
+		$row = $cursor->fetch();
+		$cursor->closeCursor();
+		error_log("Got row:");
+		error_log(var_export($row, true));
+		return ($row !== false);
+	}
+
+	private function regularGroupHasForeignersFrom($remote, $regularGroupId) {
+		$queryBuilder = $this->dbConn->getQueryBuilder();
+		$cursor = $queryBuilder->select('uid')->from('group_user')
+			->where($queryBuilder->expr()->eq('gid', $queryBuilder->createNamedParameter($regularGroupId, IQueryBuilder::PARAM_STR)))
+			->where($queryBuilder->expr()->like('uid', $queryBuilder->createNamedParameter("%#$remote", IQueryBuilder::PARAM_STR)))
+			->execute();
+		$row = $cursor->fetch();
+		$cursor->closeCursor();
+		error_log("Got row:");
+		error_log(var_export($row, true));
+		return ($row !== false);
+	}
+
+	public function notifyNewForeignRegularGroupMember($userId, $regularGroupId) {
+		if (str_contains($userId, '#')) {
+			$parts = explode('#', $userId);
+			$remote = $parts[1];
+			error_log("Checking if we need to send any OCM invites to $remote");
+			if (!$this->regularGroupHasForeignersFrom($remote, $regularGroupId)) {
+				$sharesToThisGroup = $this->groupShareProvider->getSharesToRegularGroup($regularGroupId);
+				for ($i = 0; $i < count($sharesToThisGroup); $i++) {
+					$this->groupShareProvider->sendOcmInvitesFor(
+						$sharesToThisGroup[$i]->getSharedBy(),
+						$sharesToThisGroup[$i]->getShareOwner(),
+						$regularGroupId,
+						$remote,
+						$$sharesToThisGroup[$i]->getName()
+					);
+				}
+			}
+		} else {
+			error_log("Local user, no need to check for OCM invites to send");
+		}
+	}
+	public function notifyNewForeignCustomGroupMember($userId, $customGroupId) {
+		if (str_contains($userId, '#')) {
+			$parts = explode('#', $userId);
+			$remote = $parts[1];
+			error_log("Checking if we need to send any OCM invites to $remote");
+			if (!$this->customGroupHasForeignersFrom($remote, $customGroupId)) {
+				$sharesToThisGroup = $this->groupShareProvider->getSharesToCustomGroup($customGroupId);
+				for ($i = 0; $i < count($sharesToThisGroup); $i++) {
+					$this->groupShareProvider->sendOcmInvitesFor($remote, $sharesToThisGroup[$i]);
+				}
+			}
+		} else {
+			error_log("Local user, no need to check for OCM invites to send");
+		}
 	}
 
 	/**
@@ -134,6 +197,7 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		// error_log("GroupShareProvider create calling parent");
 		// Create group share locally
 		$created = parent::create($share);
+		$remotes = [];
 		// Send OCM invites to remote group members
 		error_log("Sending OCM invites");
 		error_log($share->getSharedWith());
@@ -147,11 +211,14 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		foreach($recipients as $k => $v) {
 			$parts = explode(self::SEPARATOR, $v);
 			if (count($parts) == 2) {
-				error_log("Sending OCM invite: " . $parts[0] . " at " . $parts[1]);
-				$this->sendOcmInvite($share->getSharedBy(), $share->getShareOwner(), $share->getSharedWith(), $share->getNode()->getName());
+				error_log("Considering remote " . $parts[1] . " because of " . $parts[0] . " there");
+				$remotes[$parts[1]] = true;
 			} else {
 				error_log("Local user: $v");
 			}
+		}
+		foreach($remotes as $remote => $_dummy) {
+			$this->sendOcmInvite($share->getSharedBy(), $share->getShareOwner(), $share->getSharedWith(), $remote, $share->getNode()->getName());
 		}
 	}
 	public function getAllSharedWith($userId, $node){
