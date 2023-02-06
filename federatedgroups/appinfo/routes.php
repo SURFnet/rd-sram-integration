@@ -11,6 +11,7 @@
 return [
 	'routes' => [
 		['name' => 'scim#addUserToGroup', 'url' => '/scim/Groups', 'verb' => 'PATCH'],
+		['name' => 'scim#addUserToGroup', 'url' => '/scim/Groups', 'verb' => 'POST'],
 	],
 	'resources' => []
 ];
