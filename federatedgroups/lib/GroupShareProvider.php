@@ -149,6 +149,7 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 	}
 
 	public function notifyNewRegularGroupMember($userId, $regularGroupId) {
+		return; // FIXME
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
@@ -170,6 +171,7 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		}
 	}
 	public function notifyNewCustomGroupMember($userId, $customGroupId) {
+		return; // FIXME
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
