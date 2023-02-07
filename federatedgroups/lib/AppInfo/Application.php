@@ -43,7 +43,6 @@ class Application extends App {
 		$container = $this->getContainer();
 		$server = $container->getServer();
 
-
 		$container->registerService('ExternalGroupManager', function (SimpleContainer $c) use ($server) {
 			$user = $server->getUserSession()->getUser();
 			$uid = $user ? $user->getUID() : null;
@@ -56,6 +55,7 @@ class Application extends App {
 				$uid
 			);
 		});
+
 		// FIXME: https://github.com/SURFnet/rd-sram-integration/issues/71
 		$container->registerService('ExternalGroupMountProvider', function (IContainer $c) {
 		/** @var \OCP\IServerContainer $server */

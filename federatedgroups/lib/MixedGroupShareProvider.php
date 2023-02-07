@@ -7,37 +7,13 @@
 
 namespace OCA\FederatedGroups;
 
-use OC\Share20\Exception\BackendError;
-use OC\Share20\Exception\InvalidShare;
-use OC\Share20\Exception\ProviderException;
-use OC\Share20\Share;
-use OC\Share20\DefaultShareProvider;
-
-use OCA\FederatedFileSharing\AddressHandler;
-use OCA\FederatedFileSharing\FederatedShareProvider;
-use OCA\FederatedFileSharing\DiscoveryManager;
-use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Notifications;
-use OCA\FederatedFileSharing\Ocm\Permissions;
-use OCA\FederatedFileSharing\TokenHandler;
-
-use OCP\Files\File;
-use OCP\Share\IAttributes;
-use OCP\Share\IShare;
+use OC\Share20\DefaultShareProvider;
 use OCP\Share\IShareProvider;
-use OCP\Share\Exceptions\ShareNotFound;
-use OCP\DB\QueryBuilder\IQueryBuilder;
-use OCP\Files\IRootFolder;
-use OCP\Files\Node;
-use OCP\IConfig;
-use OCP\IGroup;
-use OCP\IGroupManager;
-use OCP\IL10N;
-use OCP\ILogger;
-use OCP\IUserManager;
 use OCP\IDBConnection;
-use OCA\FederatedFileSharing;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use OCP\IUserManager;
+use OCP\IGroupManager;
+use OCP\Files\IRootFolder;
 
 
 /**
@@ -50,73 +26,41 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	// e.g. 'marie#oc2.docker'
 	public const SEPARATOR = '#';
 
-	/** @var IGroupManager */
-	private $groupManager;
+	/** @var Notifications */
+	private $notifications;
 
-	/** @var FederatedShareProvider */
-	private $federatedProvider;
+	/**
+	 * Note $dbConn is private in the parent class
+	 * so we need to keep a copy of it here
+	 * @var IDBConnection
+	 */
+	private $dbConn;
 
 	/**
 	 * DefaultShareProvider constructor.
 	 *
-	 * @param IDBConnection $connection
+	 * @param IDBConnection $dbConn
 	 * @param IUserManager $userManager
 	 * @param IGroupManager $groupManager
 	 * @param IRootFolder $rootFolder
+	 * @param Notifications $notifications
 	 */
 	public function __construct(
-		IDBConnection $connection,
-		EventDispatcherInterface $eventDispatcher,
-		AddressHandler $addressHandler,
-		Notifications $notifications,
-		TokenHandler $tokenHandler,
-		IL10N $l10n,
-		ILogger $logger,
-		IRootFolder $rootFolder,
-		IConfig $config,
-		IUserManager $userManager,
-		IGroupManager $groupManager
-		/*IDBConnection $connection,
+		IDBConnection $dbConn,
 		IUserManager $userManager,
 		IGroupManager $groupManager,
-		AddressHandler $addressHandler,
-		Notifications $notifications,
-		TokenHandler $tokenHandler,
 		IRootFolder $rootFolder,
-		EventDispatcherInterface $eventDispatcher,
-		IL10N $l10n,
-		ILogger $logger,
-		IConfig $config*/
+		Notifications $notifications
 	) {
 		parent::__construct(
-			 $connection,
-		 $eventDispatcher,
-		 $addressHandler,
-		 $notifications,
-		 $tokenHandler,
-		 $l10n,
-		 $logger,
-		 $rootFolder,
-		 $config,
-		 $userManager
+			 $dbConn,
+			 $userManager,
+			 $groupManager,
+			 $rootFolder
 		);
 		error_log("Constructing the MixedGroupShareProvider");
-		// $this->dbConn = $connection;
-		$this->groupManager = $groupManager;
-    $this->federatedProvider = new FederatedShareProvider(
-			$connection,
-			$eventDispatcher,
-			$addressHandler,
-			$notifications,
-			$tokenHandler,
-			$l10n,
-			$logger,
-			$rootFolder,
-			$config,
-			$userManager
-		);
-		$this->notifications = $notifications;
-		// error_log("FederatedGroups MixedGroupShareProvider!");
+		// $this->notifications = $notifications;
+		$this->dbConn = $dbConn;
 	}
 
 	private function sendOcmInvite($getSharedBy, $shareOwner, $fedGroupId, $remote, $name) {

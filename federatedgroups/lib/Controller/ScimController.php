@@ -26,8 +26,16 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IDBConnection;
+use OCP\IUserManager;
+use OCP\IGroupManager;
+use OCP\Files\IRootFolder;
 use OCP\DB\QueryBuilder\IQueryBuilder;
-use OCA\FederatedGroups\GroupShareProvider;
+
+
+// use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCA\FederatedGroups\MixedGroupShareProvider;
+use OCA\FederatedFileSharing\Notifications;
+
 /**
  * Class ScimController
  *
@@ -40,28 +48,37 @@ class ScimController extends Controller {
 	private $dbConn;
 
 	/**
-	 * @var GroupShareProvider
+	 * @var MixedGroupShareProvider
 	 */
-	protected $groupShareProvider;
+	protected $mixedGroupShareProvider;
 
 	/**
 	 * OcmController constructor.
 	 *
 	 * @param string $appName
 	 * @param IRequest $request
-	 * @param GroupShareProvider $groupShareProvider
+	 * @param MixedGroupShareProvider $mixedGroupShareProvider
 	 * @param IDBConnection $dbConn
 	 */
   public function __construct(
 		$appName,
 		IRequest $request,
-		GroupShareProvider $groupShareProvider,
-		IDBConnection $dbConn
+		Notifications $notifications,
+		IDBConnection $dbConn,
+		IUserManager $userManager,
+		IGroupManager $groupManager,
+		IRootFolder $rootFolder
 	) {
 		parent::__construct($appName, $request);
 		error_log("Federated Groups ScimController constructed");
+		$this->mixedGroupShareProvider = new MixedGroupShareProvider(
+			$dbConn,
+			$userManager,
+			$groupManager,
+			$rootFolder,
+			$notifications
+		);
 		$this->dbConn = $dbConn;
-		$this->groupShareProvider = $groupShareProvider;
 	}
 	private function getRegularGroupId($groupId) {
 		$queryBuilder = $this->dbConn->getQueryBuilder();
@@ -79,7 +96,7 @@ class ScimController extends Controller {
 	}
 
 	private function addToRegularGroup($userId, $regularGroupId) {
-		$this->groupShareProvider->notifyNewRegularGroupMember($userId, $regularGroupId);
+		$this->mixedGroupShareProvider->notifyNewRegularGroupMember($userId, $regularGroupId);
 		$queryBuilder = $this->dbConn->getQueryBuilder();
 		$result = $queryBuilder->insert('group_user')
 			->values([
@@ -104,7 +121,7 @@ class ScimController extends Controller {
 	}
 
 	private function addToCustomGroup($userId, $customGroupId) {
-		$this->groupShareProvider->notifyNewRegularGroupMember($userId, $customGroupId);
+		$this->mixedGroupShareProvider->notifyNewRegularGroupMember($userId, $customGroupId);
 		$queryBuilder = $this->dbConn->getQueryBuilder();
 		$result = $queryBuilder->insert('custom_group_member')
 			->values([
