@@ -18,7 +18,7 @@ use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Command\PollIncomingShares;
 use OCA\FederatedFileSharing\Controller\OcmController;
 use OCA\FederatedFileSharing\DiscoveryManager;
-use OCA\FederatedGroups\FederatedFileSharing\FederatedShareProvider;
+use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCA\FederatedGroups\FederatedFileSharing\FedShareManager;
 use OCA\FederatedGroups\FederatedFileSharing\Middleware\OcmMiddleware;
 use OCA\FederatedFileSharing\Controller\RequestHandlerController;
@@ -144,7 +144,13 @@ class Application extends App {
 		$databaseConnection = \OC::$server->getDatabaseConnection();
 		$eventDispatcher = \OC::$server->getEventDispatcher();
 		$lazyFolderRoot = \OC::$server->getLazyRootFolder();
-		$federatedShareProvider = new FederatedShareProvider(
+		$urlGenerator = \OC::$server->getURLGenerator();
+		$l10n = \OC::$server->getL10N('federatedfilesharing');
+		$addressHandler = new AddressHandler(
+			$urlGenerator,
+			$l10n
+		);	
+	  $federatedUserShareProvider = new FederatedShareProvider(
 			$databaseConnection,
 			$eventDispatcher,
 			$addressHandler,
@@ -155,7 +161,19 @@ class Application extends App {
 			$lazyFolderRoot,
 			$config,
 			$userManager
-		);
+    );
+	  $federatedGroupShareProvider = new FederatedGroupShareProvider(
+			$databaseConnection,
+			$eventDispatcher,
+			$addressHandler,
+			$notifications,
+			$tokenHandler,
+			$l10n,
+			$logger,
+			$lazyFolderRoot,
+			$config,
+			$userManager
+    );
 		$ocmMiddleware = new OcmMiddleware(
 			$federatedShareProvider,
 			$appManager,
@@ -166,6 +184,7 @@ class Application extends App {
 		$activityManager = \OC::$server->getActivityManager();
 		$fedShareManager = new FedShareManager(
 			$federatedShareProvider,
+			$federatedGroupShareProvider,
 			$notifications,
 			$userManager,
 			$activityManager,
@@ -188,6 +207,7 @@ class Application extends App {
 			$logger
 		);
 	}
+
   public function getMixedGroupShareProvider() {
 		error_log("returning the MixedGroupShareProvider from the Application getMixedGroupShareProvider method");
 		$urlGenerator = \OC::$server->getURLGenerator();
@@ -207,6 +227,7 @@ class Application extends App {
 			\OC::$server->getLogger()
 		);
 	}
+
   public function getFederatedUserShareProvider()
     {
 			$appManager = \OC::$server->getAppManager();

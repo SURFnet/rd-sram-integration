@@ -22,7 +22,7 @@
 namespace OCA\FederatedGroups\FederatedFileSharing;
 
 use OCA\FederatedFileSharing\Ocm\Permissions;
-use OCA\FederatedGroups\FederatedFileSharing\Notifications;
+use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Address;
 use OCA\Files_Sharing\Activity;
@@ -45,7 +45,12 @@ class FedShareManager {
 	/**
 	 * @var FederatedShareProvider
 	 */
-	private $federatedShareProvider;
+	private $federatedUserShareProvider;
+
+	/**
+	 * @var FederatedGroupShareProvider
+	 */
+	private $federatedGroupShareProvider;
 
 	/**
 	 * @var Notifications
@@ -85,7 +90,8 @@ class FedShareManager {
 	/**
 	 * FedShareManager constructor.
 	 *
-	 * @param FederatedShareProvider $federatedShareProvider
+	 * @param FederatedShareProvider $federatedUserShareProvider
+	 * @param FederatedGroupShareProvider $federatedGroupShareProvider
 	 * @param Notifications $notifications
 	 * @param IUserManager $userManager
 	 * @param ActivityManager $activityManager
@@ -95,7 +101,8 @@ class FedShareManager {
 	 * @param EventDispatcherInterface $eventDispatcher
 	 */
 	public function __construct(
-		FederatedShareProvider $federatedShareProvider,
+		FederatedShareProvider $federatedUserShareProvider,
+		FederatedGroupShareProvider $federatedGroupShareProvider,
 		Notifications $notifications,
 		IUserManager $userManager,
 		ActivityManager $activityManager,
@@ -104,7 +111,8 @@ class FedShareManager {
 		Permissions $permissions,
 		EventDispatcherInterface $eventDispatcher
 	) {
-		$this->federatedShareProvider = $federatedShareProvider;
+		$this->federatedUserShareProvider = $federatedUserShareProvider;
+		$this->federatedGroupShareProvider = $federatedGroupShareProvider;
 		$this->notifications = $notifications;
 		$this->userManager = $userManager;
 		$this->activityManager = $activityManager;
@@ -112,6 +120,13 @@ class FedShareManager {
 		$this->addressHandler = $addressHandler;
 		$this->permissions = $permissions;
 		$this->eventDispatcher = $eventDispatcher;
+	}
+
+	private function getProviderForType($shareType) {
+		if ($shareType == Share::SHARE_TYPE_REMOTE) {
+			return $this->federatedUserShareProvider;
+		}
+		return $this->federatedGroupShareProvider;
 	}
 
 	/**
@@ -132,11 +147,12 @@ class FedShareManager {
 		$shareWith,
 		$remoteId,
 		$name,
-		$token
+		$token,
+		$shareType = SHARE_TYPE_REMOTE
 	) {
 		$owner = $ownerAddress->getUserId();
 		$remote = $ownerAddress->getOrigin();
-		$shareId = $this->federatedShareProvider->addShare(
+		$shareId = $this->getProviderForShareType($shareType)->addShare(
 			$remote,
 			$token,
 			$name,
@@ -174,7 +190,7 @@ class FedShareManager {
 			$sharedByAddress->getCloudId(),
 			\trim($name, '/')
 		];
-		if (!$this->federatedShareProvider->getAccepted($remote, $shareWith)) {
+		if (!$this->getProviderForShareType($shareType)->getAccepted($remote, $shareWith)) {
 			$notification = $this->createNotification($shareWith);
 			$notification->setDateTime(new \DateTime())
 				->setObject('remote_share', $shareId)
@@ -209,8 +225,8 @@ class FedShareManager {
 		// the recipient of the initial share is now the initiator for the re-share
 		$share->setSharedBy($share->getSharedWith());
 		$share->setSharedWith($shareWith);
-		$result = $this->federatedShareProvider->create($share);
-		$this->federatedShareProvider->storeRemoteId(
+		$result = $this->getProviderForShareType($share->getType())->create($share);
+		$this->getProviderForShareType($share->getType())->storeRemoteId(
 			(int)$result->getId(),
 			$remoteId
 		);
@@ -254,7 +270,7 @@ class FedShareManager {
 		$this->notifyRemote($share, [$this->notifications, 'sendDeclineShare']);
 		$uid = $this->getCorrectUid($share);
 		$fileId = $share->getNode()->getId();
-		$this->federatedShareProvider->removeShareFromTable($share);
+		$this->getProviderForShareType($share->getType())->removeShareFromTable($share);
 		list($file, $link) = $this->getFile($uid, $fileId);
 		$this->publishActivity(
 			$uid,
@@ -272,11 +288,12 @@ class FedShareManager {
 	 *
 	 * @param int $id
 	 * @param string $token
+	 * @param int $shareType
 	 *
 	 * @return void
 	 */
-	public function unshare($id, $token) {
-		$shareRow = $this->federatedShareProvider->unshare($id, $token);
+	public function unshare($id, $token, $shareType) {
+		$shareRow = $this->getProviderForShareType($shareType)->unshare($id, $token);
 		if ($shareRow === false) {
 			return;
 		}
@@ -308,7 +325,7 @@ class FedShareManager {
 	 * @return void
 	 */
 	public function undoReshare(IShare $share) {
-		$this->federatedShareProvider->removeShareFromTable($share);
+		$this->getProviderForShareType($share->getType())->removeShareFromTable($share);
 	}
 
 	/**
@@ -335,7 +352,7 @@ class FedShareManager {
 	public function updatePermissions(IShare $share, $permissions) {
 		if ($share->getPermissions() !== $permissions) {
 			$share->setPermissions($permissions);
-			$this->federatedShareProvider->update($share);
+			$this->getProviderForShareType($share->getType())->update($share);
 		}
 	}
 
@@ -348,7 +365,7 @@ class FedShareManager {
 	 */
 	public function isFederatedReShare(IShare $share) {
 		// get all federated shares on this file
-		$shares = $this->federatedShareProvider->getSharesByPath($share->getNode());
+		$shares = $this->getProviderForShareType($share->getType())->getSharesByPath($share->getNode());
 
 		foreach ($shares as $matchingShare) {
 			// if the share initiator (sharedBy) received a share for this file
@@ -362,24 +379,24 @@ class FedShareManager {
 	}
 
 	/**
-	 * reterive OCM group shared files
+	 * retrieve OCM group shared files
 	 * 
 	 */
-	 public function getSharedWithMyGroup($userId){
-		return $this->federatedShareProvider->getAllSharedWithMyGroup($userId);
+	 public function getSharedWithMyGroup($userId, $shareType){
+		return $this->getProviderForShareType($shareType)->getAllSharedWithMyGroup($userId);
 	 }
 
-	public function getSharedById($id)
+	public function getSharedById($id, $shareType)
 	{
-		return $this->federatedShareProvider->getShareById($id);
+		return $this->getProviderForShareType($shareType)->getShareById($id);
 	}
 
-	public function acceptSharedFile(string $shareId) {
-		$this->federatedShareProvider->acceptSharedFile($shareId);
+	public function acceptSharedFile(string $shareId, $shareType) {
+		$this->getProviderForShareType($shareType)->acceptSharedFile($shareId);
 	}
 
-	public function getExternalManager($userId = null){
-		return $this->federatedShareProvider->getExternalManager($userId); 
+	public function getExternalManager($userId = null, $shareType){
+		return $this->getProviderForShareType($shareType)->getExternalManager($userId); 
 	}
 
 
@@ -396,7 +413,7 @@ class FedShareManager {
 				list(, $remote) = $this->addressHandler->splitUserRemote(
 					$share->getSharedBy()
 				);
-				$remoteId = $this->federatedShareProvider->getRemoteId($share);
+				$remoteId = $this->getProviderForShare($share)->getRemoteId($share);
 				$callback($remote, $remoteId, $share->getToken());
 			} catch (\Exception $e) {
 				// expected fail if sender is a local user
