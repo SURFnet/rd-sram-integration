@@ -114,6 +114,7 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 			$config,
 			$userManager
 		);
+		$this->notifications = $notifications;
 		// error_log("FederatedGroups GroupShareProvider!");
 	}
 
@@ -147,7 +148,7 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		return ($row !== false);
 	}
 
-	public function notifyNewForeignRegularGroupMember($userId, $regularGroupId) {
+	public function notifyNewRegularGroupMember($userId, $regularGroupId) {
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
@@ -168,7 +169,7 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 			error_log("Local user, no need to check for OCM invites to send");
 		}
 	}
-	public function notifyNewForeignCustomGroupMember($userId, $customGroupId) {
+	public function notifyNewCustomGroupMember($userId, $customGroupId) {
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
