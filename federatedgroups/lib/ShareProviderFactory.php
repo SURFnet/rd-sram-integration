@@ -37,8 +37,11 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	/** @var FederatedShareProvider */
 	private $federatedUserProvider = null;
 
-	/** @var FederatedShareProvider */
+	/** @var FederatedGroupShareProvider */
 	private $federatedGroupProvider = null;
+
+	/** @var MixedGroupShareProvider */
+	private $mixedGroupProvider = null;
 
 	public function __construct(IServerContainer $serverContainer) {
 		parent::__construct($serverContainer);
@@ -46,7 +49,6 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 		$this->serverContainer = $serverContainer;
 	}
 	protected function defaultShareProvider() {
-		
 		error_log("our defaultShareProvider!");
 		if ($this->defaultProvider === null) {
 			$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
@@ -72,7 +74,7 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 				\OC::$server->getSecureRandom()
 			);
 
-			$this->defaultProvider = new GroupShareProvider(
+			$this->defaultProvider = new MixedGroupShareProvider(
 				$this->serverContainer->getDatabaseConnection(),
 				
 				$this->serverContainer->getEventDispatcher(),
@@ -93,16 +95,30 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	/**
 	 * Create the federated share provider for OCM to groups
 	 *
-	 * @return FederatedShareProvider
+	 * @return FederatedGroupShareProvider
 	 */
 	protected function federatedGroupShareProvider() {
 		error_log("our factory getting our FederatedShareProvider for OCM to group");
 		if ($this->federatedGroupProvider === null) {
 			$federatedGroupsApp = new Application();
-			$this->federatedGroupProvider = $federatedGroupsApp->getFederatedShareProvider();
+			$this->federatedGroupProvider = $federatedGroupsApp->getFederatedGroupShareProvider();
 		}
 
 		return $this->federatedGroupProvider;
+	}
+	/**
+	 * Create the mixed group share provider for OCM to groups
+	 *
+	 * @return MixedGroupShareProvider
+	 */
+	protected function mixedGroupShareProvider() {
+		error_log("our factory getting our FederatedShareProvider for OCM to group");
+		if ($this->federatedGroupProvider === null) {
+			$federatedGroupsApp = new Application();
+			$this->federatedGroupProvider = $federatedGroupsApp->getMixedGroupShareProvider();
+		}
+
+		return $this->mixedGroupProvider;
 	}
 
 	/**

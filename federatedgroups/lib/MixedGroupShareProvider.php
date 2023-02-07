@@ -156,9 +156,9 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$remote = $parts[1];
 			error_log("Checking if we need to send any OCM invites to $remote");
 			if (!$this->regularGroupHasForeignersFrom($remote, $regularGroupId)) {
-				$sharesToThisGroup = $this->groupShareProvider->getSharesToRegularGroup($regularGroupId);
+				$sharesToThisGroup = $this->getSharesToRegularGroup($regularGroupId);
 				for ($i = 0; $i < count($sharesToThisGroup); $i++) {
-					$this->groupShareProvider->sendOcmInvitesFor(
+					$this->sendOcmInvitesFor(
 						$sharesToThisGroup[$i]->getSharedBy(),
 						$sharesToThisGroup[$i]->getShareOwner(),
 						$regularGroupId,
@@ -178,9 +178,9 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$remote = $parts[1];
 			error_log("Checking if we need to send any OCM invites to $remote");
 			if (!$this->customGroupHasForeignersFrom($remote, $customGroupId)) {
-				$sharesToThisGroup = $this->groupShareProvider->getSharesToCustomGroup($customGroupId);
+				$sharesToThisGroup = $this->getSharesToCustomGroup($customGroupId);
 				for ($i = 0; $i < count($sharesToThisGroup); $i++) {
-					$this->groupShareProvider->sendOcmInvitesFor($remote, $sharesToThisGroup[$i]);
+					$this->sendOcmInvitesFor($remote, $sharesToThisGroup[$i]);
 				}
 			}
 		} else {

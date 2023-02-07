@@ -45,7 +45,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  *
  * @package OC\Share20
  */
-class FederatedGroupShareProvider extends DefaultShareProvider implements IShareProvider {
+class FederatedGroupShareProvider extends FederatedShareProvider implements IShareProvider {
 	// For representing foreign group members
 	// e.g. 'marie#oc2.docker'
 	public const SEPARATOR = '#';
@@ -117,75 +117,6 @@ class FederatedGroupShareProvider extends DefaultShareProvider implements IShare
 		);
 		$this->notifications = $notifications;
 		// error_log("FederatedGroups FederatedGroupShareProvider!");
-	}
-
-	private function sendOcmInvite($getSharedBy, $shareOwner, $fedGroupId, $remote, $name) {
-		error_log("Send OCM invite ($getSharedBy, $shareOwner, $fedGroupId, $remote, $name)");
-	}
-
-	private function customGroupHasForeignersFrom($remote, $customGroupId) {
-		$queryBuilder = $this->dbConn->getQueryBuilder();
-		$cursor = $queryBuilder->select('user_id')->from('custom_group_member')
-			->where($queryBuilder->expr()->eq('group_id', $queryBuilder->createNamedParameter($customGroupId, IQueryBuilder::PARAM_INT)))
-			->where($queryBuilder->expr()->like('user_id', $queryBuilder->createNamedParameter("%#$remote", IQueryBuilder::PARAM_STR)))
-			->execute();
-		$row = $cursor->fetch();
-		$cursor->closeCursor();
-		error_log("Got row:");
-		error_log(var_export($row, true));
-		return ($row !== false);
-	}
-
-	private function regularGroupHasForeignersFrom($remote, $regularGroupId) {
-		$queryBuilder = $this->dbConn->getQueryBuilder();
-		$cursor = $queryBuilder->select('uid')->from('group_user')
-			->where($queryBuilder->expr()->eq('gid', $queryBuilder->createNamedParameter($regularGroupId, IQueryBuilder::PARAM_STR)))
-			->where($queryBuilder->expr()->like('uid', $queryBuilder->createNamedParameter("%#$remote", IQueryBuilder::PARAM_STR)))
-			->execute();
-		$row = $cursor->fetch();
-		$cursor->closeCursor();
-		error_log("Got row:");
-		error_log(var_export($row, true));
-		return ($row !== false);
-	}
-
-	public function notifyNewRegularGroupMember($userId, $regularGroupId) {
-		return; // FIXME
-		if (str_contains($userId, '#')) {
-			$parts = explode('#', $userId);
-			$remote = $parts[1];
-			error_log("Checking if we need to send any OCM invites to $remote");
-			if (!$this->regularGroupHasForeignersFrom($remote, $regularGroupId)) {
-				$sharesToThisGroup = $this->groupShareProvider->getSharesToRegularGroup($regularGroupId);
-				for ($i = 0; $i < count($sharesToThisGroup); $i++) {
-					$this->groupShareProvider->sendOcmInvitesFor(
-						$sharesToThisGroup[$i]->getSharedBy(),
-						$sharesToThisGroup[$i]->getShareOwner(),
-						$regularGroupId,
-						$remote,
-						$$sharesToThisGroup[$i]->getName()
-					);
-				}
-			}
-		} else {
-			error_log("Local user, no need to check for OCM invites to send");
-		}
-	}
-	public function notifyNewCustomGroupMember($userId, $customGroupId) {
-		return; // FIXME
-		if (str_contains($userId, '#')) {
-			$parts = explode('#', $userId);
-			$remote = $parts[1];
-			error_log("Checking if we need to send any OCM invites to $remote");
-			if (!$this->customGroupHasForeignersFrom($remote, $customGroupId)) {
-				$sharesToThisGroup = $this->groupShareProvider->getSharesToCustomGroup($customGroupId);
-				for ($i = 0; $i < count($sharesToThisGroup); $i++) {
-					$this->groupShareProvider->sendOcmInvitesFor($remote, $sharesToThisGroup[$i]);
-				}
-			}
-		} else {
-			error_log("Local user, no need to check for OCM invites to send");
-		}
 	}
 
 	/**
