@@ -189,6 +189,7 @@ class Application extends App {
 		);
 	}
   public function getMixedGroupShareProvider() {
+		error_log("returning the MixedGroupShareProvider from the Application getMixedGroupShareProvider method");
 	  return new MixedGroupShareProvider(
 			\OC::$server->getDatabaseConnection(),
 			\OC::$server->getUserManager(),

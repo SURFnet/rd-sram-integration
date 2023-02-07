@@ -11,6 +11,7 @@ namespace OCA\FederatedGroups;
 use OC\Share20\Exception\ProviderException;
 use OCP\Share\IProviderFactory;
 use OC\Share20\ProviderFactory;
+use OC\Share20\DefaultShareProvider;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
@@ -81,12 +82,12 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	 */
 	protected function mixedGroupShareProvider() {
 		error_log("our factory getting our FederatedShareProvider for OCM to group");
-		if ($this->federatedGroupShareProvider === null) {
+		if ($this->mixedGroupShareProvider === null) {
 			$federatedGroupsApp = new Application();
-			$this->federatedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
+			$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		}
-
-		return $this->mixedGroupProvider;
+    error_log("returning the MixedGroupShareProvider from the ShareProviderFactory");
+		return $this->mixedGroupShareProvider;
 	}
 
 	/**
