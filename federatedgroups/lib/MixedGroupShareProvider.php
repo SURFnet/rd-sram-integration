@@ -8,13 +8,16 @@
 namespace OCA\FederatedGroups;
 
 use OCA\FederatedGroups\FederatedFileSharing\Notifications;
+use OCA\FederatedFileSharing\AddressHandler;
+use OCA\FederatedFileSharing\Address;
 use OC\Share20\DefaultShareProvider;
 use OCP\Share\IShareProvider;
 use OCP\IDBConnection;
 use OCP\IUserManager;
 use OCP\IGroupManager;
 use OCP\Files\IRootFolder;
-
+use OCP\IL10N;
+use OCP\ILogger;
 
 /**
  * Class MixedGroupShareProvider
@@ -29,12 +32,35 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	/** @var Notifications */
 	private $notifications;
 
+	/** @var AddressHandler */
+	private $addressHandler;
+
+	/** @var IL10N */
+	private $l;
+
+	/** @var ILogger */
+	private $logger;
+
 	/**
 	 * Note $dbConn is private in the parent class
 	 * so we need to keep a copy of it here
 	 * @var IDBConnection
 	 */
 	private $dbConn;
+
+	/**
+	 * Note this is private in the parent class
+	 * so we need to keep a copy of it here
+	 * @var IGroupManager $groupManager
+	 */
+	private $groupManager;
+
+	/**
+	 * Note this is private in the parent class
+	 * so we need to keep a copy of it here
+	 * @var IUserManager $userManager
+	 */
+	private $userManager;
 
 	/**
 	 * DefaultShareProvider constructor.
@@ -44,13 +70,19 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 * @param IGroupManager $groupManager
 	 * @param IRootFolder $rootFolder
 	 * @param Notifications $notifications
+	 * @param AddressHandler $addressHandler
+	 * @param IL10N $l
+	 * @param ILogger $logger
 	 */
 	public function __construct(
 		IDBConnection $dbConn,
 		IUserManager $userManager,
 		IGroupManager $groupManager,
 		IRootFolder $rootFolder,
-		Notifications $notifications
+		Notifications $notifications,
+		AddressHandler $addressHandler,
+		IL10N $l,
+		ILogger $logger
 	) {
 		parent::__construct(
 			 $dbConn,
@@ -59,13 +91,94 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			 $rootFolder
 		);
 		error_log("Constructing the MixedGroupShareProvider");
-		// $this->notifications = $notifications;
+		$this->notifications = $notifications;
+		$this->addressHandler = $addressHandler;
+		$this->l = $l;
+		$this->logger = $logger;
 		$this->dbConn = $dbConn;
+		$this->userManager = $userManager;
+		$this->groupManager = $groupManager;
 	}
 
-	private function sendOcmInvite($getSharedBy, $shareOwner, $fedGroupId, $remote, $name) {
-		error_log("Send OCM invite ($getSharedBy, $shareOwner, $fedGroupId, $remote, $name)");
-	}
+	/**
+	 * Adapted from FederatedShareProvider::createFederatedShare
+	 * See https://github.com/owncloud/core/blob/v10.11.0/apps/federatedfilesharing/lib/FederatedShareProvider.php#L220
+	 *
+	 * @param IShare $share
+	 * @param string $fedGroupId
+	 * @param string $remote
+	 * @return void
+	 */
+	private function sendOcmInvite($share, $fedGroupId, $remote) {
+		error_log("Send OCM invite (share, $fedGroupId, $remote)");
+		try {
+			$sharedBy = $share->getSharedBy();
+			if ($this->userManager->userExists($sharedBy)) {
+				$sharedByAddress = $this->addressHandler->getLocalUserFederatedAddress($sharedBy);
+			} else {
+				$sharedByAddress = new Address($sharedBy);
+			}
+
+			$owner = $share->getShareOwner();
+			$ownerAddress = $this->addressHandler->getLocalUserFederatedAddress($owner);
+			$sharedWith = $share->getSharedWith() . "@" . $remote;
+			$shareWithAddress = new Address($sharedWith);
+			$token = "a good question"; // FIXME this will be null because the DefaultShareProvider doesn't set this?
+			error_log("Calling sendRemoteShare!");
+			error_log(var_export([				$shareWithAddress,
+			$ownerAddress,
+			$sharedByAddress,
+			$token,
+			$share->getNode()->getName(),
+			$share->getId(),
+			\OCP\Share::SHARE_TYPE_REMOTE_GROUP], true));
+			// protected function sendOcmRemoteShare(
+			// 	Address $shareWithAddress,
+			// 	Address $ownerAddress,
+			// 	Address $sharedByAddress,
+			// 	$token,
+			// 	$name,
+			// 	$remote_id,
+			// 	$remoteShareType = 6) {
+
+			$result = $this->notifications->sendRemoteShare(
+				$shareWithAddress,
+				$ownerAddress,
+				$sharedByAddress,
+				$token,
+				$share->getNode()->getName(),
+				$share->getId(),
+				\OCP\Share::SHARE_TYPE_REMOTE_GROUP
+			);
+
+			/* Check for failure or null return from sending and pick up an error message
+			 * if there is one coming from the remote server, otherwise use a generic one.
+			 */
+			if (\is_bool($result)) {
+				$status = $result;
+			} elseif (isset($result['ocs']['meta']['status'])) {
+				$status = $result['ocs']['meta']['status'];
+			} else {
+				$status = false;
+			}
+
+			if ($status === false) {
+				$msg = $result['ocs']['meta']['message'] ?? false;
+				if (!$msg) {
+					$message_t = $this->l->t(
+						'Sharing %s failed, could not find %s, maybe the server is currently unreachable.',
+						[$share->getNode()->getName(), $share->getSharedWith()]
+					);
+				} else {
+					$message_t = $this->l->t("Federated Sharing failed: %s", [$msg]);
+				}
+				throw new \Exception($message_t);
+			}
+		} catch (\Exception $e) {
+			$this->logger->error('Failed to notify remote server of mixed group share, panic (' . $e->getMessage() . ')');
+			// $this->removeShareFromTableById($shareId);
+			throw $e;
+		}	}
 
 	private function customGroupHasForeignersFrom($remote, $customGroupId) {
 		$queryBuilder = $this->dbConn->getQueryBuilder();
@@ -151,11 +264,11 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		error_log("Sending OCM invites");
 		error_log($share->getSharedWith());
 		$group = $this->groupManager->get($share->getSharedWith());
-		// error_log("Got group");
+		error_log("Got group");
 		$backend = $group->getBackend();
-		// error_log("Got backend");
+		error_log("Got backend");
 		$recipients = $backend->usersInGroup($share->getSharedWith());
-		// error_log("Got recipients");
+		error_log("Got recipients");
 		error_log(var_export($recipients, true));
 		foreach($recipients as $k => $v) {
 			$parts = explode(self::SEPARATOR, $v);
@@ -167,7 +280,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			}
 		}
 		foreach($remotes as $remote => $_dummy) {
-			$this->sendOcmInvite($share->getSharedBy(), $share->getShareOwner(), $share->getSharedWith(), $remote, $share->getNode()->getName());
+			$this->sendOcmInvite($share, $share->getSharedWith(), $remote);
 		}
 	}
 	public function getAllSharedWith($userId, $node){

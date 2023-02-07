@@ -97,12 +97,12 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	 */
 	protected function federatedUserShareProvider() {
 		error_log("our factory getting our FederatedShareProvider for OCM to user");
-		if ($this->federatedUserProvider === null) {
+		if ($this->federatedUserShareProvider === null) {
 			$federatedFileSharingApp = new \OCA\FederatedFileSharing\AppInfo\Application();
-			$this->federatedUserProvider = $federatedFileSharingApp->getFederatedShareProvider();
+			$this->federatedUserShareProvider = $federatedFileSharingApp->getFederatedShareProvider();
 		}
 
-		return $this->federatedUserProvider;
+		return $this->federatedUserShareProvider;
 	}
 
 	/**
@@ -112,14 +112,29 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 		error_log("getProviderForType $shareType");
 		$provider = null;
 
+		// SHARE_TYPE_USER = 0;
+		// SHARE_TYPE_GROUP = 1;
+		// SHARE_TYPE_LINK = 3;
+		// SHARE_TYPE_GUEST = 4;
+		// SHARE_TYPE_CONTACT = 5; // ToDo Check if it is still in use otherwise remove it
+		// SHARE_TYPE_REMOTE = 6;
+		// SHARE_TYPE_REMOTE_GROUP = 7;
+	
+	
 		if ($shareType === \OCP\Share::SHARE_TYPE_USER  ||
-				$shareType === \OCP\Share::SHARE_TYPE_LINK) {
+				$shareType === \OCP\Share::SHARE_TYPE_LINK  ||
+				$shareType === \OCP\Share::SHARE_TYPE_GUEST  ||
+				$shareType === \OCP\Share::SHARE_TYPE_CONTACT) {
+			error_log("First case - $shareType");
 			$provider = $this->defaultShareProvider();
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_GROUP) {
+			error_log("Second case - $shareType");
 			$provider = $this->mixedGroupShareProvider();
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
+			error_log("Third case - $shareType");
 			$provider = $this->federatedUserShareProvider();
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE_GROUP) {
+			error_log("Fourth case - $shareType");
 			$provider = $this->federatedGroupShareProvider();
 		}
 

@@ -190,12 +190,21 @@ class Application extends App {
 	}
   public function getMixedGroupShareProvider() {
 		error_log("returning the MixedGroupShareProvider from the Application getMixedGroupShareProvider method");
+		$urlGenerator = \OC::$server->getURLGenerator();
+		$l10n = \OC::$server->getL10N('federatedfilesharing');
+		$addressHandler = new AddressHandler(
+			$urlGenerator,
+			$l10n
+		);
 	  return new MixedGroupShareProvider(
 			\OC::$server->getDatabaseConnection(),
 			\OC::$server->getUserManager(),
 			\OC::$server->getGroupManager(),
 			\OC::$server->getLazyRootFolder(),
-			getNotifications()
+			getNotifications(),
+			$addressHandler,
+			$l10n,
+			\OC::$server->getLogger()
 		);
 	}
   public function getFederatedUserShareProvider()
