@@ -128,13 +128,14 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 		$provider = null;
 
 		if ($shareType === \OCP\Share::SHARE_TYPE_USER  ||
-						$shareType === \OCP\Share::SHARE_TYPE_GROUP ||
-						$shareType === \OCP\Share::SHARE_TYPE_LINK) {
-						$provider = $this->defaultShareProvider();
+				$shareType === \OCP\Share::SHARE_TYPE_LINK) {
+			$provider = $this->defaultShareProvider();
+		} elseif ($shareType === \OCP\Share::SHARE_TYPE_GROUP) {
+			$provider = $this->mixedGroupShareProvider();
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
-						$provider = $this->federatedUserShareProvider();
+			$provider = $this->federatedUserShareProvider();
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE_GROUP) {
-						$provider = $this->federatedGroupShareProvider();
+			$provider = $this->federatedGroupShareProvider();
 		}
 
 		if ($provider === null) {

@@ -41,11 +41,11 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 
 /**
- * Class GroupShareProvider
+ * Class MixedGroupShareProvider
  *
  * @package OC\Share20
  */
-class GroupShareProvider extends FederatedShareProvider implements IShareProvider {
+class MixedGroupShareProvider extends DefaultShareProvider implements IShareProvider {
 	// For representing foreign group members
 	// e.g. 'marie#oc2.docker'
 	public const SEPARATOR = '#';
@@ -100,6 +100,7 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		 $config,
 		 $userManager
 		);
+		error_log("Constructing the MixedGroupShareProvider");
 		// $this->dbConn = $connection;
 		$this->groupManager = $groupManager;
     $this->federatedProvider = new FederatedShareProvider(
@@ -115,7 +116,7 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 			$userManager
 		);
 		$this->notifications = $notifications;
-		// error_log("FederatedGroups GroupShareProvider!");
+		// error_log("FederatedGroups MixedGroupShareProvider!");
 	}
 
 	private function sendOcmInvite($getSharedBy, $shareOwner, $fedGroupId, $remote, $name) {
@@ -197,9 +198,10 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 	 * @throws \Exception
 	 */
 	public function create(\OCP\Share\IShare $share) {
-		// error_log("GroupShareProvider create calling parent");
+		error_log("MixedGroupShareProvider create calling parent");
 		// Create group share locally
 		$created = parent::create($share);
+		error_log("MixedGroupShareProvider create called parent");
 		$remotes = [];
 		// Send OCM invites to remote group members
 		error_log("Sending OCM invites");
@@ -225,12 +227,12 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		}
 	}
 	public function getAllSharedWith($userId, $node){
-		error_log("you `getAllSharedWith` me on GroupShareProvider...");
+		error_log("you `getAllSharedWith` me on MixedGroupShareProvider...");
 		return parent::getAllSharedWith($userId, $node);
 	}
 
 	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
-		error_log("you `getSharedWith` on GroupShareProvider...");
+		error_log("you `getSharedWith` on MixedGroupShareProvider...");
 		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
 	}
 
