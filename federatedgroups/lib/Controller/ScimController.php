@@ -71,13 +71,8 @@ class ScimController extends Controller {
 	) {
 		parent::__construct($appName, $request);
 		error_log("Federated Groups ScimController constructed");
-		$this->mixedGroupShareProvider = new MixedGroupShareProvider(
-			$dbConn,
-			$userManager,
-			$groupManager,
-			$rootFolder,
-			$notifications
-		);
+		$federatedGroupsApp = new \OCA\FederatedGroups\AppInfo\Application();
+		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		$this->dbConn = $dbConn;
 	}
 	private function getRegularGroupId($groupId) {

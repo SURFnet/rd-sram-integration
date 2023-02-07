@@ -7,7 +7,7 @@
 
 namespace OCA\FederatedGroups;
 
-use OCA\FederatedFileSharing\Notifications;
+use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 use OC\Share20\DefaultShareProvider;
 use OCP\Share\IShareProvider;
 use OCP\IDBConnection;

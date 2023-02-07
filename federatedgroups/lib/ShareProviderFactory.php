@@ -32,16 +32,16 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	private $serverContainer;
 
 	/** @var DefaultShareProvider */
-	private $defaultProvider = null;
+	private $defaultShareProvider = null;
 
-	/** @var FederatedShareProvider */
-	private $federatedUserProvider = null;
+	/** @var FederatedUserShareProvider */
+	private $federatedUserShareProvider = null;
 
 	/** @var FederatedGroupShareProvider */
-	private $federatedGroupProvider = null;
+	private $federatedGroupShareProvider = null;
 
 	/** @var MixedGroupShareProvider */
-	private $mixedGroupProvider = null;
+	private $mixedGroupShareProvider = null;
 
 	public function __construct(IServerContainer $serverContainer) {
 		parent::__construct($serverContainer);
@@ -50,46 +50,15 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	}
 	protected function defaultShareProvider() {
 		error_log("our defaultShareProvider!");
-		if ($this->defaultProvider === null) {
-			$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
-				\OC::$server->getURLGenerator(),
-				\OC::$server->getL10N('federatedfilesharing')
-			);
-			$discoveryManager = new \OCA\FederatedFileSharing\DiscoveryManager(
-				\OC::$server->getMemCacheFactory(),
-				\OC::$server->getHTTPClientService()
-			);
-			$notificationManager = new \OCA\FederatedFileSharing\Ocm\NotificationManager(
-				new \OCA\FederatedFileSharing\Ocm\Permissions()
-			);
-			$notifications = new \OCA\FederatedFileSharing\Notifications(
-				$addressHandler,
-				\OC::$server->getHTTPClientService(),
-				$discoveryManager,
-				$notificationManager,
-				\OC::$server->getJobList(),
-				\OC::$server->getConfig()
-			);
-			$tokenHandler = new \OCA\FederatedFileSharing\TokenHandler(
-				\OC::$server->getSecureRandom()
-			);
-
-			$this->defaultProvider = new MixedGroupShareProvider(
+		if ($this->defaultShareProvider === null) {
+			$this->defaultShareProvider = new DefaultShareProvider(
 				$this->serverContainer->getDatabaseConnection(),
-				
-				$this->serverContainer->getEventDispatcher(),
-				$addressHandler,
-				$notifications,
-				$tokenHandler,
-				$this->serverContainer->getL10N('federatedgroups'),
-				$this->serverContainer->getLogger(),
-				$this->serverContainer->getLazyRootFolder(),
-				$this->serverContainer->getConfig(),
 				$this->serverContainer->getUserManager(),
-				$this->serverContainer->getGroupManager()
+				$this->serverContainer->getGroupManager(),
+				$this->serverContainer->getLazyRootFolder()
 			);
 		}
-		return $this->defaultProvider;
+		return $this->defaultShareProvider;
 	}
 
 	/**
@@ -99,12 +68,11 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	 */
 	protected function federatedGroupShareProvider() {
 		error_log("our factory getting our FederatedShareProvider for OCM to group");
-		if ($this->federatedGroupProvider === null) {
+		if ($this->federatedGroupShareProvider === null) {
 			$federatedGroupsApp = new Application();
-			$this->federatedGroupProvider = $federatedGroupsApp->getFederatedGroupShareProvider();
+			$this->federatedGroupShareProvider = $federatedGroupsApp->getFederatedGroupShareProvider();
 		}
-
-		return $this->federatedGroupProvider;
+		return $this->federatedGroupShareProvider;
 	}
 	/**
 	 * Create the mixed group share provider for OCM to groups
@@ -113,9 +81,9 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	 */
 	protected function mixedGroupShareProvider() {
 		error_log("our factory getting our FederatedShareProvider for OCM to group");
-		if ($this->federatedGroupProvider === null) {
+		if ($this->federatedGroupShareProvider === null) {
 			$federatedGroupsApp = new Application();
-			$this->federatedGroupProvider = $federatedGroupsApp->getMixedGroupShareProvider();
+			$this->federatedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		}
 
 		return $this->mixedGroupProvider;
