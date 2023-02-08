@@ -91,6 +91,7 @@ class ScimController extends Controller {
 	}
 
 	private function addToRegularGroup($userId, $regularGroupId) {
+		error_log("addToRegularGroup $userId $regularGroupId calling notifyNewRegularGroupMember");
 		$this->mixedGroupShareProvider->notifyNewRegularGroupMember($userId, $regularGroupId);
 		$queryBuilder = $this->dbConn->getQueryBuilder();
 		$result = $queryBuilder->insert('group_user')
@@ -116,7 +117,8 @@ class ScimController extends Controller {
 	}
 
 	private function addToCustomGroup($userId, $customGroupId) {
-		$this->mixedGroupShareProvider->notifyNewRegularGroupMember($userId, $customGroupId);
+		error_log("addToCustomGroup $userId $customGroupId calling notifyNewCustomGroupMember");
+		$this->mixedGroupShareProvider->notifyNewCustomGroupMember($userId, $customGroupId);
 		$queryBuilder = $this->dbConn->getQueryBuilder();
 		$result = $queryBuilder->insert('custom_group_member')
 			->values([
