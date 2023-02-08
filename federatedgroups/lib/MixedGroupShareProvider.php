@@ -176,6 +176,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			}
 		} catch (\Exception $e) {
 			$this->logger->error('Failed to notify remote server of mixed group share, panic (' . $e->getMessage() . ')');
+			// FIXME: https://github.com/SURFnet/rd-sram-integration/issues/92
 			// $this->removeShareFromTableById($shareId);
 			throw $e;
 		}	}

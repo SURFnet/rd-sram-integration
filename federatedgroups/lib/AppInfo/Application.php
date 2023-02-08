@@ -41,6 +41,38 @@ function getFederatedUserNotifications() {
 	$notificationManagerServer = \OC::$server->getNotificationManager();
 	$jobList = \OC::$server->getJobList();
 	$config = \OC::$server->getConfig();
+	return new \OCA\FederatedFileSharing\Notifications(
+		$addressHandler,
+		$httpClientService,
+		$discoveryManager,
+		$notificationManagerFFS,
+		$jobList,
+		$config
+	);
+}
+
+
+function getFederatedGroupNotifications() {
+	$appManager = \OC::$server->getAppManager();
+	$userManager = \OC::$server->getUserManager();
+	$logger = \OC::$server->getLogger();
+	$urlGenerator = \OC::$server->getURLGenerator();
+	$l10n = \OC::$server->getL10N('federatedgroups');
+	$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
+		$urlGenerator,
+		$l10n
+	);
+	$httpClientService = \OC::$server->getHTTPClientService();
+	$memCacheFactory = \OC::$server->getMemCacheFactory();
+	$discoveryManager = new \OCA\FederatedFileSharing\DiscoveryManager(
+		$memCacheFactory,
+		$httpClientService
+	);
+	$permissions = new \OCA\FederatedFileSharing\Ocm\Permissions();
+	$notificationManagerFFS = new \OCA\FederatedFileSharing\Ocm\NotificationManager($permissions);
+	$notificationManagerServer = \OC::$server->getNotificationManager();
+	$jobList = \OC::$server->getJobList();
+	$config = \OC::$server->getConfig();
 	return new \OCA\FederatedGroups\FederatedFileSharing\Notifications(
 		$addressHandler,
 		$httpClientService,
@@ -50,6 +82,7 @@ function getFederatedUserNotifications() {
 		$config
 	);
 }
+
 class Application extends App {
 	private $isProviderRegistered = false;
 
@@ -119,10 +152,13 @@ class Application extends App {
 		return $controller;
 	}
 
-	public static function getOcmController(
-		IRequest $request
-	) {
-		$notifications = get\OCA\FederatedGroups\FederatedFileSharing\Notifications();
+	public static function getOcmController(IRequest $request) {
+		return self::getFederatedGroupOcmController($request);
+	}
+
+	public static function getFederatedGroupOcmController(IRequest $request) {
+		$federatedUserNotifications = getFederatedUserNotifications();
+		$federatedGroupNotifications = getFederatedGroupNotifications();
 		$secureRandom = \OC::$server->getSecureRandom();
 		$tokenHandler = new \OCA\FederatedFileSharing\TokenHandler(
 			$secureRandom
@@ -135,12 +171,20 @@ class Application extends App {
 		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
 			$urlGenerator,
 			$l10n
-		);	
+		);
+		$logger = \OC::$server->getLogger();
+		$config = \OC::$server->getConfig();
+		$userManager = \OC::$server->getUserManager();
+		$groupManager = \OC::$server->getGroupManager();
+		$appManager = \OC::$server->getAppManager();
+		$notificationManagerServer = \OC::$server->getNotificationManager();
+		$permissions = new \OCA\FederatedFileSharing\Ocm\Permissions();
+
 	  $federatedUserShareProvider = new \OCA\FederatedFileSharing\FederatedShareProvider(
 			$databaseConnection,
 			$eventDispatcher,
 			$addressHandler,
-			$notifications,
+			$federatedUserNotifications,
 			$tokenHandler,
 			$l10n,
 			$logger,
@@ -148,20 +192,22 @@ class Application extends App {
 			$config,
 			$userManager
     );
-	  $federatedGroupShareProvider = new FederatedGroupShareProvider(
+
+	  $federatedGroupShareProvider = new \OCA\FederatedGroups\FederatedGroupShareProvider(
 			$databaseConnection,
 			$eventDispatcher,
 			$addressHandler,
-			$notifications,
+			$federatedGroupNotifications,
 			$tokenHandler,
 			$l10n,
 			$logger,
 			$lazyFolderRoot,
 			$config,
-			$userManager
+			$userManager,
+			$groupManager
     );
-		$ocmMiddleware = new \OCA\FederatedGroups\FederatedFileSharing\Middleware\OcmMiddleware(
-			$federatedShareProvider,
+		$federeatedGroupOcmMiddleware = new \OCA\FederatedGroups\FederatedFileSharing\Middleware\OcmMiddleware(
+			$federatedGroupShareProvider,
 			$appManager,
 			$userManager,
 			$addressHandler,
@@ -169,9 +215,10 @@ class Application extends App {
 		);
 		$activityManager = \OC::$server->getActivityManager();
 		$fedShareManager = new \OCA\FederatedGroups\FederatedFileSharing\FedShareManager(
-			$federatedShareProvider,
+			$federatedUserShareProvider,
 			$federatedGroupShareProvider,
-			$notifications,
+			$federatedUserNotifications,
+			$federatedGroupNotifications,
 			$userManager,
 			$activityManager,
 			$notificationManagerServer,
@@ -184,7 +231,7 @@ class Application extends App {
 		return new \OCA\FederatedGroups\Controller\OcmController(
 			'federatedgroups',
 			$request,
-			$ocmMiddleware,
+			$federeatedGroupOcmMiddleware,
 			$urlGenerator,
 			$userManager,
 			$addressHandler,
@@ -195,7 +242,7 @@ class Application extends App {
 	}
 
   public function getMixedGroupShareProvider() {
-		error_log("returning the \OCA\FederatedGroups\MixedGroupShareProvider from the Application get\OCA\FederatedGroups\MixedGroupShareProvider method");
+		error_log("returning the \OCA\FederatedGroups\MixedGroupShareProvider from the Application getMixedGroupShareProvider method");
 		$urlGenerator = \OC::$server->getURLGenerator();
 		$l10n = \OC::$server->getL10N('federatedfilesharing');
 		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
@@ -207,7 +254,7 @@ class Application extends App {
 			\OC::$server->getUserManager(),
 			\OC::$server->getGroupManager(),
 			\OC::$server->getLazyRootFolder(),
-			get\OCA\FederatedGroups\FederatedFileSharing\Notifications(),
+			getFederatedGroupNotifications(),
 			$addressHandler,
 			$l10n,
 			\OC::$server->getLogger()
@@ -236,7 +283,7 @@ class Application extends App {
 			$notificationManagerServer = \OC::$server->getNotificationManager();
 			$jobList = \OC::$server->getJobList();
 			$config = \OC::$server->getConfig();
-			$notifications = new \OCA\FederatedGroups\FederatedFileSharing\Notifications(
+			$federatedUserNotifications = new \OCA\FederatedFileSharing\Notifications(
 				$addressHandler,
 				$httpClientService,
 				$discoveryManager,
@@ -256,7 +303,7 @@ class Application extends App {
 				$databaseConnection,
 				$eventDispatcher,
 				$addressHandler,
-				$notifications,
+				$federatedUserNotifications,
 				$tokenHandler,
 				$l10n,
 				$logger,
@@ -287,7 +334,15 @@ class Application extends App {
 		$notificationManagerServer = \OC::$server->getNotificationManager();
 		$jobList = \OC::$server->getJobList();
 		$config = \OC::$server->getConfig();
-		$notifications = new \OCA\FederatedGroups\FederatedFileSharing\Notifications(
+		$federatedUserNotifications = new \OCA\FederatedFileSharing\Notifications(
+			$addressHandler,
+			$httpClientService,
+			$discoveryManager,
+			$notificationManagerFFS,
+			$jobList,
+			$config
+		);
+		$federatedGroupNotifications = new \OCA\FederatedGroups\FederatedFileSharing\Notifications(
 			$addressHandler,
 			$httpClientService,
 			$discoveryManager,
@@ -302,11 +357,11 @@ class Application extends App {
 		$databaseConnection = \OC::$server->getDatabaseConnection();
 		$eventDispatcher = \OC::$server->getEventDispatcher();
 		$lazyFolderRoot = \OC::$server->getLazyRootFolder();
-		$federatedShareProvider = new \OCA\FederatedFileSharing\FederatedShareProvider(
+		$federatedUserShareProvider = new \OCA\FederatedFileSharing\FederatedShareProvider(
 			$databaseConnection,
 			$eventDispatcher,
 			$addressHandler,
-			$notifications,
+			$federatedUserNotifications,
 			$tokenHandler,
 			$l10n,
 			$logger,
@@ -315,13 +370,13 @@ class Application extends App {
 			$userManager
 		);
 		$ocmMiddleware = new \OCA\FederatedGroups\FederatedFileSharing\Middleware\OcmMiddleware(
-			$federatedShareProvider,
+			$federatedGroupShareProvider,
 			$appManager,
 			$userManager,
 			$addressHandler,
 			$logger
 		);
-		$notifications = new \OCA\FederatedGroups\FederatedFileSharing\Notifications(
+		$federatedGroupNotifications = new \OCA\FederatedGroups\FederatedFileSharing\Notifications(
 			$addressHandler,
 			\OC::$server->getHTTPClientService(),
 			$discoveryManager,
@@ -331,8 +386,10 @@ class Application extends App {
 		);
 		$activityManager = \OC::$server->getActivityManager();
 		$fedShareManager = new \OCA\FederatedGroups\FederatedFileSharing\FedShareManager(
-			$federatedShareProvider,
-			$notifications,
+			$federatedUserShareProvider,
+			$federatedGroupShareProvider,
+			$federatedUserNotifications,
+			$federatedGroupNotifications,
 			$userManager,
 			$activityManager,
 			$notificationManagerServer,

@@ -17,9 +17,10 @@ use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
-use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
+
+use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 
 use OCP\Files\File;
 use OCP\Share\IAttributes;
@@ -57,12 +58,19 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	private $federatedProvider;
 
 	/**
-	 * DefaultShareProvider constructor.
+	 * FederatedGroupShareProvider constructor.
 	 *
 	 * @param IDBConnection $connection
+	 * @param EventDispatcherInterface $eventDispatcher
+	 * @param AddressHandler $addressHandler
+	 * @param Notifications $notifications
+	 * @param TokenHandler $tokenHandler
+	 * @param IL10N $l10n
+	 * @param ILogger $logger
+	 * @param IRootFolder $rootFolder
+	 * @param IConfig $config
 	 * @param IUserManager $userManager
 	 * @param IGroupManager $groupManager
-	 * @param IRootFolder $rootFolder
 	 */
 	public function __construct(
 		IDBConnection $connection,
@@ -76,17 +84,6 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		IConfig $config,
 		IUserManager $userManager,
 		IGroupManager $groupManager
-		/*IDBConnection $connection,
-		IUserManager $userManager,
-		IGroupManager $groupManager,
-		AddressHandler $addressHandler,
-		Notifications $notifications,
-		TokenHandler $tokenHandler,
-		IRootFolder $rootFolder,
-		EventDispatcherInterface $eventDispatcher,
-		IL10N $l10n,
-		ILogger $logger,
-		IConfig $config*/
 	) {
 		parent::__construct(
 			 $connection,

@@ -31,8 +31,14 @@ use OCP\Files\NotFoundException;
 use OCP\IUserManager;
 use OCP\Notification\IManager as NotificationManager;
 use OCP\Share\IShare;
+use OCP\Share;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
+
+// For user-to-user OCM:
+use OCA\FederatedFileSharing\FederatedShareProvider;
+// For user-to-group OCM:
+use OCA\FederatedGroups\FederatedGroupShareProvider;
 
 /**
  * Class FedShareManager holds the share logic
@@ -53,9 +59,14 @@ class FedShareManager {
 	private $federatedGroupShareProvider;
 
 	/**
-	 * @var Notifications
+	 * @var \OCA\FederatedFileSharing\Notifications
 	 */
-	private $notifications;
+	private $federatedUserNotifications;
+
+	/**
+	 * @var \OCA\FederatedGroups\FederatedFileSharing\Notifications
+	 */
+	private $federatedGroupNotifications;
 
 	/**
 	 * @var IUserManager
@@ -92,7 +103,8 @@ class FedShareManager {
 	 *
 	 * @param FederatedShareProvider $federatedUserShareProvider
 	 * @param FederatedGroupShareProvider $federatedGroupShareProvider
-	 * @param Notifications $notifications
+	 * @param \OCA\FederatedFileSharing\Notifications $federatedUserNotifications
+	 * @param \OCA\FederatedGroups\FederatedFileSharing\Notifications $federatedGroupNotifications
 	 * @param IUserManager $userManager
 	 * @param ActivityManager $activityManager
 	 * @param NotificationManager $notificationManager
@@ -103,7 +115,8 @@ class FedShareManager {
 	public function __construct(
 		FederatedShareProvider $federatedUserShareProvider,
 		FederatedGroupShareProvider $federatedGroupShareProvider,
-		Notifications $notifications,
+		\OCA\FederatedFileSharing\Notifications $federatedUserNotifications,
+		\OCA\FederatedGroups\FederatedFileSharing\Notifications $federatedGroupNotifications,
 		IUserManager $userManager,
 		ActivityManager $activityManager,
 		NotificationManager $notificationManager,
@@ -113,7 +126,8 @@ class FedShareManager {
 	) {
 		$this->federatedUserShareProvider = $federatedUserShareProvider;
 		$this->federatedGroupShareProvider = $federatedGroupShareProvider;
-		$this->notifications = $notifications;
+		$this->federatedUserNotifications = $federatedUserNotifications;
+		$this->federatedGroupNotifications = $federatedGroupNotifications;
 		$this->userManager = $userManager;
 		$this->activityManager = $activityManager;
 		$this->notificationManager = $notificationManager;
@@ -122,7 +136,7 @@ class FedShareManager {
 		$this->eventDispatcher = $eventDispatcher;
 	}
 
-	private function getProviderForType($shareType) {
+	private function getProviderForShareType($shareType) {
 		if ($shareType == Share::SHARE_TYPE_REMOTE) {
 			return $this->federatedUserShareProvider;
 		}
@@ -148,7 +162,7 @@ class FedShareManager {
 		$remoteId,
 		$name,
 		$token,
-		$shareType = SHARE_TYPE_REMOTE
+		$shareType = Share::SHARE_TYPE_REMOTE
 	) {
 		$owner = $ownerAddress->getUserId();
 		$remote = $ownerAddress->getOrigin();
