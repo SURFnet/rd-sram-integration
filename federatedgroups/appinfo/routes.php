@@ -9,6 +9,8 @@
  */
 
 return [
-	'routes' => [],
+	'routes' => [
+		['name' => 'scim#addUserToGroup', 'url' => '/scim/Groups/{groupId}', 'verb' => 'PATCH'],
+	],
 	'resources' => []
 ];
