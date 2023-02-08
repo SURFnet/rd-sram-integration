@@ -238,6 +238,7 @@ class OcmController extends Controller {
 
 			$ownerAddress = new Address($owner, $ownerDisplayName);
 			$sharedByAddress = new Address($sender, $senderDisplayName);
+			error_log("Calling our FedShareManager for type $shareType");
 
 			$this->fedShareManager->createShare(
 				$ownerAddress,
@@ -245,7 +246,8 @@ class OcmController extends Controller {
 				$localShareWith,
 				$providerId,
 				$name,
-				$protocol['options']['sharedSecret']
+				$protocol['options']['sharedSecret'],
+				$shareType // this is not a Share::SHARE_TYPE_.. constant, but the OCM POST param of the same name, so 'user' or 'group'
 			);
 		} catch (OcmException $e) {
 			return new JSONResponse(

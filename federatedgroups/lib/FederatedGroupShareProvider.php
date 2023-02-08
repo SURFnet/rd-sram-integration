@@ -117,6 +117,40 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	}
 
 	/**
+	 * @param $remote
+	 * @param $token
+	 * @param $name
+	 * @param $owner
+	 * @param $shareWith
+	 * @param $remoteId
+	 *
+	 * @return int
+	 */
+	public function addShare($remote, $token, $name, $owner, $shareWith, $remoteId) {
+		error_log("FederatedGroupShareProvider addShare calling our External Manager");
+		\OC_Util::setupFS($shareWith);
+		$externalManager = new \OCA\FederatedGroups\Files_Sharing\External\Manager(
+			$this->dbConnection,
+			\OC\Files\Filesystem::getMountManager(),
+			\OC\Files\Filesystem::getLoader(),
+			\OC::$server->getNotificationManager(),
+			\OC::$server->getEventDispatcher(),
+			$shareWith
+		);
+		$externalManager->addShare(
+			$remote,
+			$token,
+			'',
+			$name,
+			$owner,
+			$this->getAccepted($remote, $shareWith),
+			$shareWith,
+			$remoteId
+		);
+		return $this->dbConnection->lastInsertId("*PREFIX*{$this->externalShareTable}");
+	}
+
+	/**
 	 * Share a path
 	 *
 	 * @param \OCP\Share\IShare $share

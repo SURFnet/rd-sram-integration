@@ -136,11 +136,15 @@ class FedShareManager {
 		$this->eventDispatcher = $eventDispatcher;
 	}
 
-	private function getProviderForShareType($shareType) {
-		if ($shareType == Share::SHARE_TYPE_REMOTE) {
+	private function getProviderForOcmShareType($ocmShareType) {
+		if ($ocmShareType == 'user') {
 			return $this->federatedUserShareProvider;
+		} else if ($ocmShareType == 'group') {
+			return $this->federatedGroupShareProvider;
+		} else {
+			error_log("Unsupported share type $ocmShareType");
+			throw new Exception("Unsupported share type");
 		}
-		return $this->federatedGroupShareProvider;
 	}
 
 	/**
@@ -162,11 +166,12 @@ class FedShareManager {
 		$remoteId,
 		$name,
 		$token,
-		$shareType = Share::SHARE_TYPE_REMOTE
+		$ocmShareType
 	) {
+		error_log("Our FedShareManager creating share of type $ocmShareType");
 		$owner = $ownerAddress->getUserId();
 		$remote = $ownerAddress->getOrigin();
-		$shareId = $this->getProviderForShareType($shareType)->addShare(
+		$shareId = $this->getProviderForOcmShareType($ocmShareType)->addShare(
 			$remote,
 			$token,
 			$name,
@@ -204,7 +209,7 @@ class FedShareManager {
 			$sharedByAddress->getCloudId(),
 			\trim($name, '/')
 		];
-		if (!$this->getProviderForShareType($shareType)->getAccepted($remote, $shareWith)) {
+		if (!$this->getProviderForOcmShareType($ocmShareType)->getAccepted($remote, $shareWith)) {
 			$notification = $this->createNotification($shareWith);
 			$notification->setDateTime(new \DateTime())
 				->setObject('remote_share', $shareId)
@@ -239,8 +244,8 @@ class FedShareManager {
 		// the recipient of the initial share is now the initiator for the re-share
 		$share->setSharedBy($share->getSharedWith());
 		$share->setSharedWith($shareWith);
-		$result = $this->getProviderForShareType($share->getType())->create($share);
-		$this->getProviderForShareType($share->getType())->storeRemoteId(
+		$result = $this->getProviderForOcmShareType($share->getType())->create($share);
+		$this->getProviderForOcmShareType($share->getType())->storeRemoteId(
 			(int)$result->getId(),
 			$remoteId
 		);
@@ -284,7 +289,7 @@ class FedShareManager {
 		$this->notifyRemote($share, [$this->notifications, 'sendDeclineShare']);
 		$uid = $this->getCorrectUid($share);
 		$fileId = $share->getNode()->getId();
-		$this->getProviderForShareType($share->getType())->removeShareFromTable($share);
+		$this->getProviderForOcmShareType($share->getType())->removeShareFromTable($share);
 		list($file, $link) = $this->getFile($uid, $fileId);
 		$this->publishActivity(
 			$uid,
@@ -302,12 +307,12 @@ class FedShareManager {
 	 *
 	 * @param int $id
 	 * @param string $token
-	 * @param int $shareType
+	 * @param int $ocmShareType
 	 *
 	 * @return void
 	 */
-	public function unshare($id, $token, $shareType) {
-		$shareRow = $this->getProviderForShareType($shareType)->unshare($id, $token);
+	public function unshare($id, $token, $ocmShareType) {
+		$shareRow = $this->getProviderForOcmShareType($ocmShareType)->unshare($id, $token);
 		if ($shareRow === false) {
 			return;
 		}
@@ -339,7 +344,7 @@ class FedShareManager {
 	 * @return void
 	 */
 	public function undoReshare(IShare $share) {
-		$this->getProviderForShareType($share->getType())->removeShareFromTable($share);
+		$this->getProviderForOcmShareType($share->getType())->removeShareFromTable($share);
 	}
 
 	/**
@@ -366,7 +371,7 @@ class FedShareManager {
 	public function updatePermissions(IShare $share, $permissions) {
 		if ($share->getPermissions() !== $permissions) {
 			$share->setPermissions($permissions);
-			$this->getProviderForShareType($share->getType())->update($share);
+			$this->getProviderForOcmShareType($share->getType())->update($share);
 		}
 	}
 
@@ -379,7 +384,7 @@ class FedShareManager {
 	 */
 	public function isFederatedReShare(IShare $share) {
 		// get all federated shares on this file
-		$shares = $this->getProviderForShareType($share->getType())->getSharesByPath($share->getNode());
+		$shares = $this->getProviderForOcmShareType($share->getType())->getSharesByPath($share->getNode());
 
 		foreach ($shares as $matchingShare) {
 			// if the share initiator (sharedBy) received a share for this file
@@ -396,21 +401,21 @@ class FedShareManager {
 	 * retrieve OCM group shared files
 	 * 
 	 */
-	 public function getSharedWithMyGroup($userId, $shareType){
-		return $this->getProviderForShareType($shareType)->getAllSharedWithMyGroup($userId);
+	 public function getSharedWithMyGroup($userId, $ocmShareType){
+		return $this->getProviderForOcmShareType($ocmShareType)->getAllSharedWithMyGroup($userId);
 	 }
 
-	public function getSharedById($id, $shareType)
+	public function getSharedById($id, $ocmShareType)
 	{
-		return $this->getProviderForShareType($shareType)->getShareById($id);
+		return $this->getProviderForOcmShareType($ocmShareType)->getShareById($id);
 	}
 
-	public function acceptSharedFile(string $shareId, $shareType) {
-		$this->getProviderForShareType($shareType)->acceptSharedFile($shareId);
+	public function acceptSharedFile(string $shareId, $ocmShareType) {
+		$this->getProviderForOcmShareType($ocmShareType)->acceptSharedFile($shareId);
 	}
 
-	public function getExternalManager($userId = null, $shareType){
-		return $this->getProviderForShareType($shareType)->getExternalManager($userId); 
+	public function getExternalManager($userId = null, $ocmShareType){
+		return $this->getProviderForOcmShareType($ocmShareType)->getExternalManager($userId); 
 	}
 
 
