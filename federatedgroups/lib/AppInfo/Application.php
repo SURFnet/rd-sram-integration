@@ -95,7 +95,7 @@ class Application extends App {
 		$container->registerService('ExternalGroupManager', function (SimpleContainer $c) use ($server) {
 			$user = $server->getUserSession()->getUser();
 			$uid = $user ? $user->getUID() : null;
-			return new \OCA\FederatedGroups\FilesSharing\External\Manager(
+			return new \OCA\FederatedGroups\Files_Sharing\External\Manager(
 				$server->getDatabaseConnection(),
 				\OC\Files\Filesystem::getMountManager(),
 				\OC\Files\Filesystem::getLoader(),
@@ -109,7 +109,7 @@ class Application extends App {
 		$container->registerService('ExternalGroupMountProvider', function (IContainer $c) {
 		/** @var \OCP\IServerContainer $server */
 		 	$server = $c->query('ServerContainer');
-		 	return new \OCA\FederatedGroups\FilesSharing\External\MountProvider(
+		 	return new \OCA\FederatedGroups\Files_Sharing\External\MountProvider(
 		 		$server->getDatabaseConnection(),
 		 		function () use ($c) {
 		 			return $c->query('ExternalGroupManager');
@@ -141,8 +141,8 @@ class Application extends App {
 		$d = \OC::$server->getNotificationManager();
 		$e = \OC::$server->getEventDispatcher();
 		$f = $uid;
-		$externalGroupManager = new \OCA\FederatedGroups\FilesSharing\External\Manager($a, $b, $c, $d, $e, $f);
-		$controller = new \OCA\FederatedGroups\FilesSharing\Controller\RemoteOcsController(
+		$externalGroupManager = new \OCA\FederatedGroups\Files_Sharing\External\Manager($a, $b, $c, $d, $e, $f);
+		$controller = new \OCA\FederatedGroups\Files_Sharing\Controller\RemoteOcsController(
 			'files_sharing',
 			$request,
 			$externalManager,

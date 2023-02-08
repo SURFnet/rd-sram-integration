@@ -44,7 +44,7 @@ use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
-use OCA\FederatedGroups\FilesSharing\External\Manager;
+use OCA\FederatedGroups\Files_Sharing\External\Manager;
 
 /**
  * Class FederatedShareProvider

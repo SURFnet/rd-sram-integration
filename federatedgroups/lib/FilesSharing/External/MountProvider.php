@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\FilesSharing\External;
+namespace OCA\FederatedGroups\Files_Sharing\External;
 
 use OCP\Files\Config\IMountProvider;
 use OCP\Files\Storage\IStorageFactory;
@@ -27,7 +27,7 @@ use OCP\IDBConnection;
 use OCP\IUser;
 
 class MountProvider implements IMountProvider {
-	public const STORAGE = '\OCA\FederatedGroups\FilesSharing\External\Storage';
+	public const STORAGE = '\OCA\FederatedGroups\Files_Sharing\External\Storage';
 
 	/**
 	 * @var \OCP\IDBConnection

@@ -25,7 +25,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\FilesSharing\External;
+namespace OCA\FederatedGroups\Files_Sharing\External;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
