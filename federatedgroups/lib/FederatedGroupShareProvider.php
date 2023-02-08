@@ -57,10 +57,12 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	/** @var FederatedShareProvider */
 	private $federatedProvider;
 
+	private $dbConnection;
+
 	/**
 	 * FederatedGroupShareProvider constructor.
 	 *
-	 * @param IDBConnection $connection
+	 * @param IDBConnection $dbConnection
 	 * @param EventDispatcherInterface $eventDispatcher
 	 * @param AddressHandler $addressHandler
 	 * @param Notifications $notifications
@@ -73,7 +75,7 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	 * @param IGroupManager $groupManager
 	 */
 	public function __construct(
-		IDBConnection $connection,
+		IDBConnection $dbConnection,
 		EventDispatcherInterface $eventDispatcher,
 		AddressHandler $addressHandler,
 		Notifications $notifications,
@@ -86,7 +88,7 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		IGroupManager $groupManager
 	) {
 		parent::__construct(
-			 $connection,
+			 $dbConnection,
 		 $eventDispatcher,
 		 $addressHandler,
 		 $notifications,
@@ -98,10 +100,9 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		 $userManager
 		);
 		error_log("Constructing the FederatedGroupShareProvider");
-		// $this->dbConn = $connection;
 		$this->groupManager = $groupManager;
     $this->federatedProvider = new FederatedShareProvider(
-			$connection,
+			$dbConnection,
 			$eventDispatcher,
 			$addressHandler,
 			$notifications,
@@ -113,6 +114,7 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 			$userManager
 		);
 		$this->notifications = $notifications;
+		$this->dbConnection = $dbConnection;
 		// error_log("FederatedGroups FederatedGroupShareProvider!");
 	}
 
