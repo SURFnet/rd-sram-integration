@@ -27,7 +27,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\FilesSharing\External;
+namespace OCA\FederatedGroups\Files_Sharing\External;
 
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use OC\Files\Filesystem;

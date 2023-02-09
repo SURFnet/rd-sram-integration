@@ -41,7 +41,7 @@ use OCP\Http\Client\IClientService;
 use OCP\IConfig;
 use GuzzleHttp\Exception\ClientException;
 
-class Notifications {
+class Notifications extends \OCA\FederatedFileSharing\Notifications {
 	public const RESPONSE_FORMAT = 'json'; // default response format for ocs calls
 
 	/** @var AddressHandler */

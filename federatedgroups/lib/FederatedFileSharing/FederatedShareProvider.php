@@ -44,14 +44,14 @@ use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
-use OCA\FederatedGroups\FilesSharing\External\Manager;
+use OCA\FederatedGroups\Files_Sharing\External\Manager;
 
 /**
  * Class FederatedShareProvider
  *
  * @package OCA\FederatedGroups
  */
-class FederatedShareProvider implements IShareProvider {
+class FederatedGroupShareProvider extends FederatedShareProvider {
 	public const SHARE_TYPE_REMOTE = 6;
 	public const SHARE_TYPE_REMOTE_GROUP = 7;
 
@@ -164,7 +164,7 @@ class FederatedShareProvider implements IShareProvider {
 		/*
 		 * Check if file is not already shared with the remote user
 		 */
-		$alreadyShared = $this->getSharedWith($shareWith, self::SHARE_TYPE_REMOTE, $share->getNode(), 1, 0);
+		$alreadyShared = $this->getSharedWith($shareWith, self::SHARE_TYPE_REMOTE_GROUP, $share->getNode(), 1, 0);
 		if (!empty($alreadyShared)) {
 			$message = 'Sharing %s failed, because this item is already shared with %s';
 			$message_t = $this->l->t('Sharing %s failed, because this item is already shared with %s', [$share->getNode()->getName(), $shareWith]);

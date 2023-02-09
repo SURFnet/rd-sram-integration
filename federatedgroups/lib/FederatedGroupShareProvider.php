@@ -17,9 +17,10 @@ use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
-use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
+
+use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 
 use OCP\Files\File;
 use OCP\Share\IAttributes;
@@ -41,11 +42,11 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 
 /**
- * Class GroupShareProvider
+ * Class FederatedGroupShareProvider
  *
  * @package OC\Share20
  */
-class GroupShareProvider extends FederatedShareProvider implements IShareProvider {
+class FederatedGroupShareProvider extends FederatedShareProvider implements IShareProvider {
 	// For representing foreign group members
 	// e.g. 'marie#oc2.docker'
 	public const SEPARATOR = '#';
@@ -56,16 +57,25 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 	/** @var FederatedShareProvider */
 	private $federatedProvider;
 
+	private $dbConnection;
+
 	/**
-	 * DefaultShareProvider constructor.
+	 * FederatedGroupShareProvider constructor.
 	 *
-	 * @param IDBConnection $connection
+	 * @param IDBConnection $dbConnection
+	 * @param EventDispatcherInterface $eventDispatcher
+	 * @param AddressHandler $addressHandler
+	 * @param Notifications $notifications
+	 * @param TokenHandler $tokenHandler
+	 * @param IL10N $l10n
+	 * @param ILogger $logger
+	 * @param IRootFolder $rootFolder
+	 * @param IConfig $config
 	 * @param IUserManager $userManager
 	 * @param IGroupManager $groupManager
-	 * @param IRootFolder $rootFolder
 	 */
 	public function __construct(
-		IDBConnection $connection,
+		IDBConnection $dbConnection,
 		EventDispatcherInterface $eventDispatcher,
 		AddressHandler $addressHandler,
 		Notifications $notifications,
@@ -76,20 +86,9 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		IConfig $config,
 		IUserManager $userManager,
 		IGroupManager $groupManager
-		/*IDBConnection $connection,
-		IUserManager $userManager,
-		IGroupManager $groupManager,
-		AddressHandler $addressHandler,
-		Notifications $notifications,
-		TokenHandler $tokenHandler,
-		IRootFolder $rootFolder,
-		EventDispatcherInterface $eventDispatcher,
-		IL10N $l10n,
-		ILogger $logger,
-		IConfig $config*/
 	) {
 		parent::__construct(
-			 $connection,
+			 $dbConnection,
 		 $eventDispatcher,
 		 $addressHandler,
 		 $notifications,
@@ -100,10 +99,10 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		 $config,
 		 $userManager
 		);
-		// $this->dbConn = $connection;
+		error_log("Constructing the FederatedGroupShareProvider");
 		$this->groupManager = $groupManager;
     $this->federatedProvider = new FederatedShareProvider(
-			$connection,
+			$dbConnection,
 			$eventDispatcher,
 			$addressHandler,
 			$notifications,
@@ -114,11 +113,43 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 			$config,
 			$userManager
 		);
-		// error_log("FederatedGroups GroupShareProvider!");
+		$this->notifications = $notifications;
+		$this->dbConnection = $dbConnection;
+		// error_log("FederatedGroups FederatedGroupShareProvider!");
 	}
 
-	private function sendOcmInvite($getSharedBy, $shareOwner, $sharedWith, $name) {
-		error_log("Send OCM invite ($getSharedBy, $shareOwner, $sharedWith, $name)");
+	/**
+	 * @param $remote
+	 * @param $token
+	 * @param $name
+	 * @param $owner
+	 * @param $shareWith
+	 * @param $remoteId
+	 *
+	 * @return int
+	 */
+	public function addShare($remote, $token, $name, $owner, $shareWith, $remoteId) {
+		error_log("FederatedGroupShareProvider addShare calling our External Manager");
+		\OC_Util::setupFS($shareWith);
+		$externalManager = new \OCA\FederatedGroups\Files_Sharing\External\Manager(
+			$this->dbConnection,
+			\OC\Files\Filesystem::getMountManager(),
+			\OC\Files\Filesystem::getLoader(),
+			\OC::$server->getNotificationManager(),
+			\OC::$server->getEventDispatcher(),
+			$shareWith
+		);
+		$externalManager->addShare(
+			$remote,
+			$token,
+			'',
+			$name,
+			$owner,
+			$this->getAccepted($remote, $shareWith),
+			$shareWith,
+			$remoteId
+		);
+		return $this->dbConnection->lastInsertId("*PREFIX*{$this->externalShareTable}");
 	}
 
 	/**
@@ -131,9 +162,11 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 	 * @throws \Exception
 	 */
 	public function create(\OCP\Share\IShare $share) {
-		// error_log("GroupShareProvider create calling parent");
+		error_log("FederatedGroupShareProvider create calling parent");
 		// Create group share locally
 		$created = parent::create($share);
+		error_log("FederatedGroupShareProvider create called parent");
+		$remotes = [];
 		// Send OCM invites to remote group members
 		error_log("Sending OCM invites");
 		error_log($share->getSharedWith());
@@ -147,20 +180,23 @@ class GroupShareProvider extends FederatedShareProvider implements IShareProvide
 		foreach($recipients as $k => $v) {
 			$parts = explode(self::SEPARATOR, $v);
 			if (count($parts) == 2) {
-				error_log("Sending OCM invite: " . $parts[0] . " at " . $parts[1]);
-				$this->sendOcmInvite($share->getSharedBy(), $share->getShareOwner(), $share->getSharedWith(), $share->getNode()->getName());
+				error_log("Considering remote " . $parts[1] . " because of " . $parts[0] . " there");
+				$remotes[$parts[1]] = true;
 			} else {
 				error_log("Local user: $v");
 			}
 		}
+		foreach($remotes as $remote => $_dummy) {
+			$this->sendOcmInvite($share->getSharedBy(), $share->getShareOwner(), $share->getSharedWith(), $remote, $share->getNode()->getName());
+		}
 	}
 	public function getAllSharedWith($userId, $node){
-		error_log("you `getAllSharedWith` me on GroupShareProvider...");
+		error_log("you `getAllSharedWith` me on FederatedGroupShareProvider...");
 		return parent::getAllSharedWith($userId, $node);
 	}
 
 	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
-		error_log("you `getSharedWith` on GroupShareProvider...");
+		error_log("you `getSharedWith` on FederatedGroupShareProvider...");
 		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
 	}
 

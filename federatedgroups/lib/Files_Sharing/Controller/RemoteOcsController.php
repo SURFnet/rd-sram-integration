@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\FilesSharing\Controller;
+namespace OCA\FederatedGroups\Files_Sharing\Controller;
 
 use OC\Files\View;
 use OC\OCS\Result;
@@ -37,7 +37,7 @@ class RemoteOcsController extends OCSController {
 	/** @var Manager */
 	protected $externalManager;
 
-	/** @var \OCA\FederatedGroups\FilesSharing\External\Manager */
+	/** @var \OCA\FederatedGroups\Files_Sharing\External\Manager */
 	protected $externalGroupManager;
 
 	/** @var string */
@@ -55,7 +55,7 @@ class RemoteOcsController extends OCSController {
 		$appName,
 		IRequest $request,
 		Manager $externalManager,
-		\OCA\FederatedGroups\FilesSharing\External\Manager $externalGroupManager,
+		\OCA\FederatedGroups\Files_Sharing\External\Manager $externalGroupManager,
 		$uid
 	) {
 		parent::__construct($appName, $request);

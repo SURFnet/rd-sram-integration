@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\FilesSharing\External;
+namespace OCA\FederatedGroups\Files_Sharing\External;
 
 use OCP\Files\StorageNotAvailableException;
 

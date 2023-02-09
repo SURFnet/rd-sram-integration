@@ -11,6 +11,7 @@ namespace OCA\FederatedGroups;
 use OC\Share20\Exception\ProviderException;
 use OCP\Share\IProviderFactory;
 use OC\Share20\ProviderFactory;
+use OC\Share20\DefaultShareProvider;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
@@ -32,13 +33,16 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	private $serverContainer;
 
 	/** @var DefaultShareProvider */
-	private $defaultProvider = null;
+	private $defaultShareProvider = null;
 
-	/** @var FederatedShareProvider */
-	private $federatedUserProvider = null;
+	/** @var FederatedUserShareProvider */
+	private $federatedUserShareProvider = null;
 
-	/** @var FederatedShareProvider */
-	private $federatedGroupProvider = null;
+	/** @var FederatedGroupShareProvider */
+	private $federatedGroupShareProvider = null;
+
+	/** @var MixedGroupShareProvider */
+	private $mixedGroupShareProvider = null;
 
 	public function __construct(IServerContainer $serverContainer) {
 		parent::__construct($serverContainer);
@@ -46,63 +50,44 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 		$this->serverContainer = $serverContainer;
 	}
 	protected function defaultShareProvider() {
-		
 		error_log("our defaultShareProvider!");
-		if ($this->defaultProvider === null) {
-			$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
-				\OC::$server->getURLGenerator(),
-				\OC::$server->getL10N('federatedfilesharing')
-			);
-			$discoveryManager = new \OCA\FederatedFileSharing\DiscoveryManager(
-				\OC::$server->getMemCacheFactory(),
-				\OC::$server->getHTTPClientService()
-			);
-			$notificationManager = new \OCA\FederatedFileSharing\Ocm\NotificationManager(
-				new \OCA\FederatedFileSharing\Ocm\Permissions()
-			);
-			$notifications = new \OCA\FederatedFileSharing\Notifications(
-				$addressHandler,
-				\OC::$server->getHTTPClientService(),
-				$discoveryManager,
-				$notificationManager,
-				\OC::$server->getJobList(),
-				\OC::$server->getConfig()
-			);
-			$tokenHandler = new \OCA\FederatedFileSharing\TokenHandler(
-				\OC::$server->getSecureRandom()
-			);
-
-			$this->defaultProvider = new GroupShareProvider(
+		if ($this->defaultShareProvider === null) {
+			$this->defaultShareProvider = new DefaultShareProvider(
 				$this->serverContainer->getDatabaseConnection(),
-				
-				$this->serverContainer->getEventDispatcher(),
-				$addressHandler,
-				$notifications,
-				$tokenHandler,
-				$this->serverContainer->getL10N('federatedgroups'),
-				$this->serverContainer->getLogger(),
-				$this->serverContainer->getLazyRootFolder(),
-				$this->serverContainer->getConfig(),
 				$this->serverContainer->getUserManager(),
-				$this->serverContainer->getGroupManager()
+				$this->serverContainer->getGroupManager(),
+				$this->serverContainer->getLazyRootFolder()
 			);
 		}
-		return $this->defaultProvider;
+		return $this->defaultShareProvider;
 	}
 
 	/**
 	 * Create the federated share provider for OCM to groups
 	 *
-	 * @return FederatedShareProvider
+	 * @return FederatedGroupShareProvider
 	 */
 	protected function federatedGroupShareProvider() {
 		error_log("our factory getting our FederatedShareProvider for OCM to group");
-		if ($this->federatedGroupProvider === null) {
+		if ($this->federatedGroupShareProvider === null) {
 			$federatedGroupsApp = new Application();
-			$this->federatedGroupProvider = $federatedGroupsApp->getFederatedShareProvider();
+			$this->federatedGroupShareProvider = $federatedGroupsApp->getFederatedGroupShareProvider();
 		}
-
-		return $this->federatedGroupProvider;
+		return $this->federatedGroupShareProvider;
+	}
+	/**
+	 * Create the mixed group share provider for OCM to groups
+	 *
+	 * @return MixedGroupShareProvider
+	 */
+	protected function mixedGroupShareProvider() {
+		error_log("our factory getting our FederatedShareProvider for OCM to group");
+		if ($this->mixedGroupShareProvider === null) {
+			$federatedGroupsApp = new Application();
+			$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
+		}
+    error_log("returning the MixedGroupShareProvider from the ShareProviderFactory");
+		return $this->mixedGroupShareProvider;
 	}
 
 	/**
@@ -112,12 +97,12 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	 */
 	protected function federatedUserShareProvider() {
 		error_log("our factory getting our FederatedShareProvider for OCM to user");
-		if ($this->federatedUserProvider === null) {
+		if ($this->federatedUserShareProvider === null) {
 			$federatedFileSharingApp = new \OCA\FederatedFileSharing\AppInfo\Application();
-			$this->federatedUserProvider = $federatedFileSharingApp->getFederatedShareProvider();
+			$this->federatedUserShareProvider = $federatedFileSharingApp->getFederatedShareProvider();
 		}
 
-		return $this->federatedUserProvider;
+		return $this->federatedUserShareProvider;
 	}
 
 	/**
@@ -127,14 +112,30 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 		error_log("getProviderForType $shareType");
 		$provider = null;
 
+		// SHARE_TYPE_USER = 0;
+		// SHARE_TYPE_GROUP = 1;
+		// SHARE_TYPE_LINK = 3;
+		// SHARE_TYPE_GUEST = 4;
+		// SHARE_TYPE_CONTACT = 5; // ToDo Check if it is still in use otherwise remove it
+		// SHARE_TYPE_REMOTE = 6;
+		// SHARE_TYPE_REMOTE_GROUP = 7;
+	
+	
 		if ($shareType === \OCP\Share::SHARE_TYPE_USER  ||
-						$shareType === \OCP\Share::SHARE_TYPE_GROUP ||
-						$shareType === \OCP\Share::SHARE_TYPE_LINK) {
-						$provider = $this->defaultShareProvider();
+				$shareType === \OCP\Share::SHARE_TYPE_LINK  ||
+				$shareType === \OCP\Share::SHARE_TYPE_GUEST  ||
+				$shareType === \OCP\Share::SHARE_TYPE_CONTACT) {
+			error_log("First case - $shareType");
+			$provider = $this->defaultShareProvider();
+		} elseif ($shareType === \OCP\Share::SHARE_TYPE_GROUP) {
+			error_log("Second case - $shareType");
+			$provider = $this->mixedGroupShareProvider();
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
-						$provider = $this->federatedUserShareProvider();
+			error_log("Third case - $shareType");
+			$provider = $this->federatedUserShareProvider();
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE_GROUP) {
-						$provider = $this->federatedGroupShareProvider();
+			error_log("Fourth case - $shareType");
+			$provider = $this->federatedGroupShareProvider();
 		}
 
 		if ($provider === null) {
