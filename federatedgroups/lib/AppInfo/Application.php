@@ -191,7 +191,7 @@ class Application extends App {
 			$lazyFolderRoot,
 			$config,
 			$userManager
-    );
+    	);
 
 	  $federatedGroupShareProvider = new \OCA\FederatedGroups\FederatedGroupShareProvider(
 			$databaseConnection,
@@ -205,7 +205,7 @@ class Application extends App {
 			$config,
 			$userManager,
 			$groupManager
-    );
+    	);
 		$federeatedGroupOcmMiddleware = new \OCA\FederatedGroups\FederatedFileSharing\Middleware\OcmMiddleware(
 			$federatedGroupShareProvider,
 			$appManager,

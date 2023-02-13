@@ -118,6 +118,15 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		// error_log("FederatedGroups FederatedGroupShareProvider!");
 	}
 
+/**
+	 * Return the identifier of this provider.
+	 *
+	 * @return string Containing only [a-zA-Z0-9]
+	 */
+	public function identifier() {
+		return 'ocGroupFederatedSharing';
+	}
+
 	/**
 	 * @param $remote
 	 * @param $token
