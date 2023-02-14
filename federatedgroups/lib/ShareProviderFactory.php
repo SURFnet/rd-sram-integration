@@ -144,4 +144,28 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 
 		return $provider;
 	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getProvider($id) {
+		$provider = null;
+		if ($id === 'ocinternal') {
+			$provider = $this->defaultShareProvider();
+		} elseif ($id === 'ocFederatedSharing') {
+			$provider = $this->federatedShareProvider();
+		}
+		elseif($id === 'ocMixFederatedSharing'){
+			$provider = $this->mixedGroupShareProvider();
+		}
+		elseif($id === 'ocGroupFederatedSharing'){
+			$provider = $this->federatedGroupShareProvider();
+		}
+
+		if ($provider === null) {
+			throw new ProviderException('No provider with id .' . $id . ' found.');
+		}
+
+		return $provider;
+	}
 }
