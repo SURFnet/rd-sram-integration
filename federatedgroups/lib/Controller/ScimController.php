@@ -176,7 +176,6 @@ class ScimController extends Controller {
     error_log("scimming $groupId!");
 		try {
 			$body = json_decode(file_get_contents('php://input'), true);
-			$ops = $body['Operations'];
 		} catch (Exception $e) {
 			return new JSONResponse(
 				[ "Could not parse operations array"],
@@ -184,12 +183,8 @@ class ScimController extends Controller {
 			);
 		}
 		
-		error_log(var_export($body, true));
-		$success = 0;
-		for ($i = 0; $i < count($ops); $i++) {
-			$success += $this->executeOperation($body['Operations'][$i], $groupId);
-		}
-		if ($success == count($body['Operations'])) {
+    error_log(var_export($body, true));
+    if (true) {
 			return new JSONResponse(
 				[],
 				Http::STATUS_OK
