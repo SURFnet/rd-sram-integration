@@ -349,7 +349,7 @@ class Application extends App {
 			);
 	}
 
-	public static function getExternalManager(){
+	public static function getExternalManager($ocmShareType){
 		$appManager = \OC::$server->getAppManager();
 		$userManager = \OC::$server->getUserManager();
 		$logger = \OC::$server->getLogger();
@@ -435,6 +435,6 @@ class Application extends App {
 			$eventDispatcher
 		);
 		$user = \OC::$server->getUserSession()->getUser();
-		return $fedShareManager->getExternalManager($user->getUID());
+		return $fedShareManager->getExternalManager($user->getUID(), $ocmShareType);
 	}
 } 
