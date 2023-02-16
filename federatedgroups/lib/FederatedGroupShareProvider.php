@@ -201,4 +201,84 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	}
 
 	
+	/**
+	 * create federated share and inform the recipient
+	 *
+	 * @param IShare $share
+	 * @return int
+	 * @throws ShareNotFound
+	 * @throws \Exception
+	 */
+	protected function createFederatedShare(IShare $share) {
+		error_log("createFederatedShare");
+		$token = $this->tokenHandler->generateToken();
+		$shareId = $this->addShareToDB(
+			$share->getNodeId(),
+			$share->getNodeType(),
+			$share->getSharedWith(),
+			$share->getSharedBy(),
+			$share->getShareOwner(),
+			$share->getPermissions(),
+			$share->getExpirationDate(),
+			$token,
+			$share->getShareType()
+		);
+
+		try {
+			$sharedBy = $share->getSharedBy();
+			if ($this->userManager->userExists($sharedBy)) {
+				$sharedByAddress = $this->addressHandler->getLocalUserFederatedAddress($sharedBy);
+			} else {
+				$sharedByAddress = new Address($sharedBy);
+			}
+
+			$owner = $share->getShareOwner();
+			$ownerAddress = $this->addressHandler->getLocalUserFederatedAddress($owner);
+			$sharedWith = $share->getSharedWith();
+			$shareWithAddress = new Address($sharedWith);
+			$result = $this->notifications->sendRemoteShare(
+				$shareWithAddress,
+				$ownerAddress,
+				$sharedByAddress,
+				$token,
+				$share->getNode()->getName(),
+				$shareId,
+				$share->getShareType()
+			);
+
+			/* Check for failure or null return from sending and pick up an error message
+			 * if there is one coming from the remote server, otherwise use a generic one.
+			 */
+			if (\is_bool($result)) {
+				$status = $result;
+			} elseif (isset($result['ocs']['meta']['status'])) {
+				$status = $result['ocs']['meta']['status'];
+			} else {
+				$status = false;
+			}
+
+			if ($status === false) {
+				$msg = $result['ocs']['meta']['message'] ?? false;
+				if (!$msg) {
+					$message_t = $this->l->t(
+						'Sharing %s failed, could not find %s, maybe the server is currently unreachable.',
+						[$share->getNode()->getName(), $share->getSharedWith()]
+					);
+				} else {
+					$message_t = $this->l->t("Federated Sharing failed: %s", [$msg]);
+				}
+				throw new \Exception($message_t);
+			}
+		} catch (\Exception $e) {
+			$this->logger->error('Failed to notify remote server of federated share, removing share (' . $e->getMessage() . ')');
+			$this->removeShareFromTableById($shareId);
+			throw $e;
+		}
+
+		return $shareId;
+
+
+		
+	}
+
 }

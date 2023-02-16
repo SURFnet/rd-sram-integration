@@ -297,6 +297,9 @@ class FederatedGroupShareProvider extends FederatedShareProvider {
 		}
 
 		return $shareId;
+
+
+		
 	}
 
 	/**

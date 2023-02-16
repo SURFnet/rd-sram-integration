@@ -154,6 +154,46 @@ class Application extends App {
 
 	public static function getOcmController(IRequest $request) {
 		return self::getFederatedGroupOcmController($request);
+
+	}
+
+	public static function getFederatedGroupShareProvider() {
+		$federatedUserNotifications = getFederatedUserNotifications();
+		$federatedGroupNotifications = getFederatedGroupNotifications();
+		$secureRandom = \OC::$server->getSecureRandom();
+		$tokenHandler = new \OCA\FederatedFileSharing\TokenHandler(
+			$secureRandom
+		);
+		$databaseConnection = \OC::$server->getDatabaseConnection();
+		$eventDispatcher = \OC::$server->getEventDispatcher();
+		$lazyFolderRoot = \OC::$server->getLazyRootFolder();
+		$urlGenerator = \OC::$server->getURLGenerator();
+		$l10n = \OC::$server->getL10N('federatedfilesharing');
+		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
+			$urlGenerator,
+			$l10n
+		);
+		$logger = \OC::$server->getLogger();
+		$config = \OC::$server->getConfig();
+		$userManager = \OC::$server->getUserManager();
+		$groupManager = \OC::$server->getGroupManager();
+		$appManager = \OC::$server->getAppManager();
+		$notificationManagerServer = \OC::$server->getNotificationManager();
+		$permissions = new \OCA\FederatedFileSharing\Ocm\Permissions();
+
+	  return new \OCA\FederatedGroups\FederatedGroupShareProvider(
+			$databaseConnection,
+			$eventDispatcher,
+			$addressHandler,
+			$federatedGroupNotifications,
+			$tokenHandler,
+			$l10n,
+			$logger,
+			$lazyFolderRoot,
+			$config,
+			$userManager,
+			$groupManager
+    );
 	}
 
 	public static function getFederatedGroupOcmController(IRequest $request) {
@@ -398,6 +438,6 @@ class Application extends App {
 			$eventDispatcher
 		);
 		$user = \OC::$server->getUserSession()->getUser();
-		return $fedShareManager->getExternalManager($user->getUID());
+		return $fedShareManager->getExternalManager($user->getUID(), 'group');
 	}
 } 

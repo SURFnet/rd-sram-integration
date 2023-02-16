@@ -270,12 +270,15 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
-			error_log("Checking if we need to send any OCM invites to $remote");
-			if (!$this->regularGroupHasForeignersFrom($remote, $regularGroupId)) {
+			error_log("Checking if we need to send any OCM invites to $remote regarding $regularGroupId");
+			if (true) { // (!$this->regularGroupHasForeignersFrom($remote, $regularGroupId)) {
 				$sharesToThisGroup = $this->getSharesToRegularGroup($regularGroupId);
+				error_log("found " .  count($sharesToThisGroup) . " shares to $regularGroupId");
 				for ($i = 0; $i < count($sharesToThisGroup); $i++) {
 					$this->sendOcmInvite($sharesToThisGroup[$i], $remote);
 				}
+			} else {
+				error_log("Server $remote already knows about group $regularGroupId");
 			}
 		} else {
 			error_log("Local user, no need to check for OCM invites to send");

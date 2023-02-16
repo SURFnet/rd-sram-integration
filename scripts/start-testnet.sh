@@ -66,6 +66,10 @@ docker exec maria2.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi
 echo Adding local user to regular group on oc2
 docker exec oc1.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "marie"}]}}]}' -H 'Content-Type: application/json' https://oc2.docker/index.php/apps/federatedgroups/scim/Groups/helpdesk
 
+echo Creating regular group 'localfirst' on oc1
+docker exec maria1.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_groups (gid) values ('localfirst');"
+echo Adding local user to regular group on oc1
+docker exec oc1.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "einstein"}]}}]}' -H 'Content-Type: application/json' https://oc1.docker/index.php/apps/federatedgroups/scim/Groups/localfirst
 
 echo Creating custom group 'custard with mustard' on oc1
 docker exec maria1.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_custom_group (group_id, uri, display_name) values (1, 'Custard with Mustard', 'Custard with Mustard');"
