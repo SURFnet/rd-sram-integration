@@ -58,6 +58,11 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	private $federatedProvider;
 
 	private $dbConnection;
+	private $shareTable = 'share';
+	private $rootFolder;
+	/** @var IUserManager */
+	private $userManager;
+	const SHARE_TYPE_REMOTE_GROUP = 7;
 
 	/**
 	 * FederatedGroupShareProvider constructor.
@@ -99,9 +104,8 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		 $config,
 		 $userManager
 		);
-		error_log("Constructing the FederatedGroupShareProvider");
 		$this->groupManager = $groupManager;
-    $this->federatedProvider = new FederatedShareProvider(
+    	$this->federatedProvider = new FederatedShareProvider(
 			$dbConnection,
 			$eventDispatcher,
 			$addressHandler,
@@ -115,6 +119,8 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		);
 		$this->notifications = $notifications;
 		$this->dbConnection = $dbConnection;
+		$this->rootFolder = $rootFolder;
+		$this->userManager = $userManager;
 		// error_log("FederatedGroups FederatedGroupShareProvider!");
 	}
 
@@ -209,5 +215,104 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
 	}
 
+	public function getExternalManager($userId){
+		return new \OCA\FederatedGroups\Files_Sharing\External\Manager(
+			$this->dbConnection,
+			\OC\Files\Filesystem::getMountManager(),
+			\OC\Files\Filesystem::getLoader(),
+			\OC::$server->getNotificationManager(),
+			\OC::$server->getEventDispatcher(),
+			$userId
+		);
+	}
+
+	public function getAllSharesBy($userId, $shareTypeArray, $nodeIDs, $reshares){
+		$shares = [];
+
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('*')
+			->from($this->shareTable);
+
+		// In federated sharing currently we have only one share_type_remote
+		$qb->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE_GROUP)));
+
+		$qb->andWhere($qb->expr()->in('file_source', $qb->createParameter('file_source_ids')));
+
+		/**
+		 * Reshares for this user are shares where they are the owner.
+		 */
+		if ($reshares === false) {
+			//Special case for old shares created via the web UI
+			$or1 = $qb->expr()->andX(
+				$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId)),
+				$qb->expr()->isNull('uid_initiator')
+			);
+
+			$qb->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId)),
+					$or1
+				)
+			);
+		} else {
+			$qb->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId)),
+					$qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId))
+				)
+			);
+		}
+
+		$qb->orderBy('id');
+		$nodeIdsChunks = \array_chunk($nodeIDs, 900);
+		foreach ($nodeIdsChunks as $nodeIdsChunk) {
+			$qb->setParameter('file_source_ids', $nodeIdsChunk, IQueryBuilder::PARAM_INT_ARRAY);
+
+			$cursor = $qb->execute();
+			while ($data = $cursor->fetch()) {
+				$shares[] = $this->createShareObject($data);
+			}
+			$cursor->closeCursor();
+		}
+		return $shares;
+	}
 	
+	private function createShareObject($data) {
+		$share = new Share($this->rootFolder, $this->userManager);
+		$share->setId($data['id'])
+			->setShareType((int)$data['share_type'])
+			->setPermissions((int)$data['permissions'])
+			->setTarget($data['file_target'])
+			->setMailSend((bool)$data['mail_send'])
+			->setToken($data['token']);
+
+		$shareTime = new \DateTime();
+		$shareTime->setTimestamp((int)$data['stime']);
+		$share->setShareTime($shareTime);
+		$share->setSharedWith($data['share_with']);
+
+		if ($data['uid_initiator'] !== null) {
+			$share->setShareOwner($data['uid_owner']);
+			$share->setSharedBy($data['uid_initiator']);
+		} else {
+			//OLD SHARE
+			$share->setSharedBy($data['uid_owner']);
+			$path = $this->getNode($share->getSharedBy(), (int)$data['file_source']);
+
+			$owner = $path->getOwner();
+			$share->setShareOwner($owner->getUID());
+		}
+
+		if ($data['expiration'] !== null) {
+			$expiration = \DateTime::createFromFormat('Y-m-d H:i:s', $data['expiration']);
+			$share->setExpirationDate($expiration);
+		}
+
+		$share->setNodeId((int)$data['file_source']);
+		$share->setNodeType($data['item_type']);
+
+		$share->setProviderId($this->identifier());
+
+		return $share;
+	}
 }
