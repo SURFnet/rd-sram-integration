@@ -16,7 +16,7 @@ export REPO_DIR=`pwd`
 echo Repo dir is $REPO_DIR
 
 echo "starting maria1.docker"
-docker run -d --network=testnet -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek --name=maria1.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
+docker run -d -p 3306:3306 --network=testnet -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek --name=maria1.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
 echo "starting oc1.docker"
 docker run -d --network=testnet --name=oc1.docker \
   -v $REPO_DIR:/var/www/html/apps/rd-sram-integration \
@@ -24,7 +24,7 @@ docker run -d --network=testnet --name=oc1.docker \
   oc1
 
 echo "starting maria2.docker"
-docker run -d --network=testnet -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek --name=maria2.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
+docker run -d -p 3307:3306 --network=testnet -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek --name=maria2.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
 echo "starting oc2.docker"
 docker run -d --network=testnet --name=oc2.docker \
   -v $REPO_DIR:/var/www/html/apps/rd-sram-integration \

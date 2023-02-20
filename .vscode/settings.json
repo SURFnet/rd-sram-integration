@@ -1,0 +1,32 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "maria1",
+            "group": "oc",
+            "database": "owncloud",
+            "username": "root",
+            "password": "eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3307,
+            "driver": "MySQL",
+            "name": "maria2",
+            "group": "oc",
+            "database": "owncloud",
+            "username": "root",
+            "password": "eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek"
+        }
+    ]
+}
