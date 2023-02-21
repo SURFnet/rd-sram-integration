@@ -156,8 +156,8 @@ class Application extends App {
 	}
 
 	public static function getFederatedGroupOcmController(IRequest $request) {
-		$federatedUserNotifications = getFederatedUserNotifications();
-		$federatedGroupNotifications = $this->getFederatedGroupNotifications();
+		$federatedUserNotifications = self::getFederatedUserNotifications();
+		$federatedGroupNotifications = self::getFederatedGroupNotifications();
 		$secureRandom = \OC::$server->getSecureRandom();
 		$tokenHandler = new \OCA\FederatedFileSharing\TokenHandler(
 			$secureRandom
