@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @author Viktar Dubiniuk <dubiniuk@owncloud.com>
  *
@@ -137,13 +138,14 @@ class FedShareManager {
 	}
 
 	private function getProviderForOcmShareType($ocmShareType) {
-		if ($ocmShareType == 'user') {
+		// error_log("oooooooo getProviderForOcmShareType ocmShareType {$ocmShareType}");
+		if ($ocmShareType == 'user' || $ocmShareType == 6) {
 			return $this->federatedUserShareProvider;
 		} else if ($ocmShareType == 'group') {
 			return $this->federatedGroupShareProvider;
 		} else {
 			error_log("Unsupported share type $ocmShareType");
-			throw new Exception("Unsupported share type");
+			throw new \Exception("Unsupported share type");
 		}
 	}
 
@@ -244,8 +246,8 @@ class FedShareManager {
 		// the recipient of the initial share is now the initiator for the re-share
 		$share->setSharedBy($share->getSharedWith());
 		$share->setSharedWith($shareWith);
-		$result = $this->getProviderForOcmShareType($share->getType())->create($share);
-		$this->getProviderForOcmShareType($share->getType())->storeRemoteId(
+		$result = $this->getProviderForOcmShareType($share->getShareType())->create($share);
+		$this->getProviderForOcmShareType($share->getShareType())->storeRemoteId(
 			(int)$result->getId(),
 			$remoteId
 		);
@@ -276,7 +278,7 @@ class FedShareManager {
 		$this->notifyRemote($share, [$this->notifications, 'sendAcceptShare']);
 	}
 
-	
+
 	/**
 	 * Delete declined share and create a activity
 	 *
@@ -401,12 +403,11 @@ class FedShareManager {
 	 * retrieve OCM group shared files
 	 * 
 	 */
-	 public function getSharedWithMyGroup($userId, $ocmShareType){
+	public function getSharedWithMyGroup($userId, $ocmShareType) {
 		return $this->getProviderForOcmShareType($ocmShareType)->getAllSharedWithMyGroup($userId);
-	 }
+	}
 
-	public function getSharedById($id, $ocmShareType)
-	{
+	public function getSharedById($id, $ocmShareType) {
 		return $this->getProviderForOcmShareType($ocmShareType)->getShareById($id);
 	}
 
@@ -414,8 +415,8 @@ class FedShareManager {
 		$this->getProviderForOcmShareType($ocmShareType)->acceptSharedFile($shareId);
 	}
 
-	public function getExternalManager($userId = null, $ocmShareType){
-		return $this->getProviderForOcmShareType($ocmShareType)->getExternalManager($userId); 
+	public function getExternalManager($userId = null, $ocmShareType) {
+		return $this->getProviderForOcmShareType($ocmShareType)->getExternalManager($userId);
 	}
 
 
