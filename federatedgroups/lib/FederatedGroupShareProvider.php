@@ -14,6 +14,7 @@ use OC\Share20\Share;
 use OC\Share20\DefaultShareProvider;
 
 use OCA\FederatedFileSharing\AddressHandler;
+use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
@@ -59,6 +60,11 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 
 	private $dbConnection;
 
+	private $tokenHandler;
+	private $userManager;
+	private $addressHandler;
+  private $logger;
+
 	/**
 	 * FederatedGroupShareProvider constructor.
 	 *
@@ -101,6 +107,10 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		);
 		error_log("Constructing the FederatedGroupShareProvider");
 		$this->groupManager = $groupManager;
+		$this->tokenHandler = $tokenHandler;
+		$this->userManager = $userManager;
+		$this->addressHandler = $addressHandler;
+		$this->logger = $logger;
     $this->federatedProvider = new FederatedShareProvider(
 			$dbConnection,
 			$eventDispatcher,
@@ -161,35 +171,36 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	 * @throws InvalidArgumentException if the share validation failed
 	 * @throws \Exception
 	 */
-	public function create(\OCP\Share\IShare $share) {
-		error_log("FederatedGroupShareProvider create calling parent");
-		// Create group share locally
-		$created = parent::create($share);
-		error_log("FederatedGroupShareProvider create called parent");
-		$remotes = [];
-		// Send OCM invites to remote group members
-		error_log("Sending OCM invites");
-		error_log($share->getSharedWith());
-		$group = $this->groupManager->get($share->getSharedWith());
-		// error_log("Got group");
-		$backend = $group->getBackend();
-		// error_log("Got backend");
-		$recipients = $backend->usersInGroup($share->getSharedWith());
-		// error_log("Got recipients");
-		error_log(var_export($recipients, true));
-		foreach($recipients as $k => $v) {
-			$parts = explode(self::SEPARATOR, $v);
-			if (count($parts) == 2) {
-				error_log("Considering remote " . $parts[1] . " because of " . $parts[0] . " there");
-				$remotes[$parts[1]] = true;
-			} else {
-				error_log("Local user: $v");
-			}
-		}
-		foreach($remotes as $remote => $_dummy) {
-			$this->sendOcmInvite($share->getSharedBy(), $share->getShareOwner(), $share->getSharedWith(), $remote, $share->getNode()->getName());
-		}
-	}
+	// I think this shouldn't be here, this is on the sending side, which is what MixedGroupProvider now deals with?
+	// public function create(\OCP\Share\IShare $share) {
+	// 	error_log("FederatedGroupShareProvider create calling parent");
+	// 	// Create group share locally
+	// 	$created = parent::create($share);
+	// 	error_log("FederatedGroupShareProvider create called parent");
+	// 	$remotes = [];
+	// 	// Send OCM invites to remote group members
+	// 	error_log("Sending OCM invites");
+	// 	error_log($share->getSharedWith());
+	// 	$group = $this->groupManager->get($share->getSharedWith());
+	// 	// error_log("Got group");
+	// 	$backend = $group->getBackend();
+	// 	// error_log("Got backend");
+	// 	$recipients = $backend->usersInGroup($share->getSharedWith());
+	// 	// error_log("Got recipients");
+	// 	error_log(var_export($recipients, true));
+	// 	foreach($recipients as $k => $v) {
+	// 		$parts = explode(self::SEPARATOR, $v);
+	// 		if (count($parts) == 2) {
+	// 			error_log("Considering remote " . $parts[1] . " because of " . $parts[0] . " there");
+	// 			$remotes[$parts[1]] = true;
+	// 		} else {
+	// 			error_log("Local user: $v");
+	// 		}
+	// 	}
+	// 	foreach($remotes as $remote => $_dummy) {
+	// 		$this->sendOcmInvite($share->getSharedBy(), $share->getShareOwner(), $share->getSharedWith(), $remote, $share->getNode()->getName());
+	// 	}
+	// }
 	public function getAllSharedWith($userId, $node){
 		error_log("you `getAllSharedWith` me on FederatedGroupShareProvider...");
 		return parent::getAllSharedWith($userId, $node);
@@ -199,6 +210,47 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		error_log("you `getSharedWith` on FederatedGroupShareProvider...");
 		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
 	}
+
+	/**
+	 * add share to the database and return the ID
+	 *
+	 * @param int $itemSource
+	 * @param string $itemType
+	 * @param string $shareWith
+	 * @param string $sharedBy
+	 * @param string $uidOwner
+	 * @param int $permissions
+	 * @param string $token
+	 * @return int
+	 */
+	private function addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $expiration, $token, $shareType = SHARE_TYPE_REMOTE ) {
+		$qb = $this->dbConnection->getQueryBuilder();
+    // this is on the sending side:
+		$qb->insert('share')
+			->setValue('share_type', $qb->createNamedParameter($shareType))
+			->setValue('item_type', $qb->createNamedParameter($itemType))
+			->setValue('item_source', $qb->createNamedParameter($itemSource))
+			->setValue('file_source', $qb->createNamedParameter($itemSource))
+			->setValue('share_with', $qb->createNamedParameter($shareWith))
+			->setValue('uid_owner', $qb->createNamedParameter($uidOwner))
+			->setValue('uid_initiator', $qb->createNamedParameter($sharedBy))
+			->setValue('permissions', $qb->createNamedParameter($permissions))
+			->setValue('expiration', $qb->createNamedParameter($expiration, IQueryBuilder::PARAM_DATE))
+			->setValue('token', $qb->createNamedParameter($token))
+			->setValue('stime', $qb->createNamedParameter(\time()));
+
+		/*
+		 * Added to fix https://github.com/owncloud/core/issues/22215
+		 * Can be removed once we get rid of ajax/share.php
+		 */
+		$qb->setValue('file_target', $qb->createNamedParameter(''));
+
+		$qb->execute();
+		$id = $qb->getLastInsertId();
+
+		return (int)$id;
+	}
+
 
 	
 	/**
