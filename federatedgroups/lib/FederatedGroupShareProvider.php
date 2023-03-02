@@ -156,7 +156,6 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	 * @return int
 	 */
 	public function addShare($remote, $token, $name, $owner, $shareWith, $remoteId) {
-		error_log("FederatedGroupShareProvider addShare calling our External Manager");
 		\OC_Util::setupFS($shareWith);
 		$externalManager = new \OCA\FederatedGroups\Files_Sharing\External\Manager(
 			$this->dbConnection,
@@ -189,7 +188,6 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	 * @throws \Exception
 	 */
 	public function create(\OCP\Share\IShare $share) {
-		error_log("FederatedGroups FederatedShareProvider create " . $share->getShareType());
 		$shareWith = $share->getSharedWith();
 		$itemSource = $share->getNodeId();
 		$itemType = $share->getNodeType();
@@ -258,12 +256,10 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		return $this->createShareObject($data);
 	}
 	public function getAllSharedWith($userId, $node){
-		error_log("you `getAllSharedWith` me on FederatedGroupShareProvider...");
 		return parent::getAllSharedWith($userId, $node);
 	}
 
 	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
-		error_log("you `getSharedWith` on FederatedGroupShareProvider...");
 		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
 	}
 
@@ -497,5 +493,61 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		}
 
 		return $data;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getSharesBy($userId, $shareType, $node, $reshares, $limit, $offset) {
+		error_log("8=======>-- [|]");
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('*')
+			->from($this->shareTable);
+
+		$qb->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE_GROUP)));
+
+		/**
+		 * Reshares for this user are shares where they are the owner.
+		 */
+		if ($reshares === false) {
+			//Special case for old shares created via the web UI
+			$or1 = $qb->expr()->andX(
+				$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId)),
+				$qb->expr()->isNull('uid_initiator')
+			);
+
+			$qb->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId)),
+					$or1
+				)
+			);
+		} else {
+			$qb->andWhere(
+				$qb->expr()->orX(
+					$qb->expr()->eq('uid_owner', $qb->createNamedParameter($userId)),
+					$qb->expr()->eq('uid_initiator', $qb->createNamedParameter($userId))
+				)
+			);
+		}
+
+		if ($node !== null) {
+			$qb->andWhere($qb->expr()->eq('file_source', $qb->createNamedParameter($node->getId())));
+		}
+
+		if ($limit !== -1) {
+			$qb->setMaxResults($limit);
+		}
+
+		$qb->setFirstResult($offset);
+		$qb->orderBy('id');
+		$cursor = $qb->execute();
+		$shares = [];
+		while ($data = $cursor->fetch()) {
+			$shares[] = $this->createShareObject($data);
+		}
+		$cursor->closeCursor();
+
+		return $shares;
 	}
 }
