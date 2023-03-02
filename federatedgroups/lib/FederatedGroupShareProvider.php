@@ -499,7 +499,6 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	 * @inheritdoc
 	 */
 	public function getSharesBy($userId, $shareType, $node, $reshares, $limit, $offset) {
-		error_log("8=======>-- [|]");
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('*')
 			->from($this->shareTable);
@@ -547,7 +546,6 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 			$shares[] = $this->createShareObject($data);
 		}
 		$cursor->closeCursor();
-
 		return $shares;
 	}
 }
