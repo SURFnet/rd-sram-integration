@@ -30,3 +30,12 @@ We discussed three possible use cases:
 * "SRAM groups" - the user sees both local custom groups and SRAM-hosted groups as possible sharees. When an SRAM group is selected, the share gets created locally, and one OCM invite gets sent to each remote site that hosts at least 1 group member. We use OCM share-to-group as the protocol, but it is understood that the remote site also looks up the member list for that group from SRAM.
 
 The current plan is to only implement the third one ("SRAM" groups) and not the other two.
+
+### Slides from milestone presentations
+
+* Milestone 1 presentation (23 Dec 2022):
+[.pdf](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress.pdf)
+[.key](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress.key)
+* Milestone 2 presentation (17 Feb 2023):
+[.pdf](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress-2.pdf)
+[.key](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress-2.key)
