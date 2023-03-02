@@ -86,7 +86,7 @@ class Storage extends DAV implements ISharedStorage {
 			// root will be adjusted lazily in init() with discovery manager
 			'root' => $root,
 			'user' => $options['token'],
-			'password' => '123',//(string)$options['password'], FIXME: https://github.com/SURFnet/rd-sram-integration/issues/72
+			'password' => (string)$options['password'],
 			// Federated sharing always uses BASIC auth
 			'authType' => Client::AUTH_BASIC
 		]);

@@ -40,15 +40,9 @@ use OCP\Share\Events\DeclineShare;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
-// use OCA\Files_Sharing\External\Cache;
-// use OCA\Files_Sharing\External\Storage;
-// use OCA\Files_Sharing\External\Mount;
-// use OCA\Files_Sharing\External\MountProvider;
-// use OCA\Files_Sharing\External\ScanExternalSharesJob;
-
 
 class Manager {
-	public const STORAGE = '\OCA\FederatedGroups\External\Storage';
+	public const STORAGE = '\OCA\FederatedGroups\Files_Sharing\External\Storage';
 
 	/**
 	 * @var string

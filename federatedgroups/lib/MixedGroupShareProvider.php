@@ -112,6 +112,15 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	}
 
 	/**
+	 * Return the identifier of this provider.
+	 *
+	 * @return string Containing only [a-zA-Z0-9]
+	 */
+	public function identifier() {
+		return 'ocMixFederatedSharing';
+	}
+
+	/**
 	 * Adapted from FederatedShareProvider::createFederatedShare
 	 * See https://github.com/owncloud/core/blob/v10.11.0/apps/federatedfilesharing/lib/FederatedShareProvider.php#L220
 	 *
@@ -297,12 +306,12 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$shares[] = $this->createShareObject($data);
 		}
 		$cursor->closeCursor();
-    error_log("returning " . count($shares) . " shares");
+    	error_log("returning " . count($shares) . " shares");
 		return $shares;
 	}
 
 	private function getSharesToCustomGroup($customGroupId) {
-    $qb = $this->dbConn->getQueryBuilder();
+    	$qb = $this->dbConn->getQueryBuilder();
 		$qb->select('uri')
 		  ->from('custom_group');
 
@@ -315,7 +324,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 		$groupUri = $data['uri'];
 		error_log("Found uri '$groupUri' for custom group $customGroupId");
-    return $this->getSharesToRegularGroup('customgroup_' . $groupUri);
+    	return $this->getSharesToRegularGroup('customgroup_' . $groupUri);
 	}
 	
 	public function notifyNewCustomGroupMember($userId, $customGroupId) {
