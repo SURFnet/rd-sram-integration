@@ -61,6 +61,9 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	/** @var TokenHandler  */
 	private $tokenHandler;
 
+	/** @var Notifications */
+	private $notifications;
+
 	/** @var IL10N */
 	private $l; 
 	/** @var ILogger */
