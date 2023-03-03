@@ -387,9 +387,14 @@ class OcmController extends Controller {
 					);
 					break;
 				case FileNotification::NOTIFICATION_TYPE_SHARE_UNSHARED:
-					$this->fedShareManager->unshare(
+					$share = $this->ocmMiddleware->getValidShare(
 						$providerId,
 						$notification['sharedSecret']
+					);
+					$this->fedShareManager->unshare(
+						$providerId,
+						$notification['sharedSecret'],
+						$share->getShareType()
 					);
 					break;
 				case FileNotification::NOTIFICATION_TYPE_RESHARE_UNDO:
