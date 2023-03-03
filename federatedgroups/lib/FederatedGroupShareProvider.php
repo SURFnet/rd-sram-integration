@@ -52,14 +52,14 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	/** @var IGroupManager */
 	private $groupManager;
 
-	/** @var FederatedShareProvider */
-	private $federatedProvider;
-
 	/** @var AddressHandler */
 	private $addressHandler; 
 
 	/** @var TokenHandler  */
 	private $tokenHandler;
+
+	/** @var Notifications */
+	private $notifications;
 
 	/** @var IL10N */
 	private $l; 
@@ -114,18 +114,6 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		 $userManager
 		);
 		$this->groupManager = $groupManager;
-    	$this->federatedProvider = new FederatedShareProvider(
-			$dbConnection,
-			$eventDispatcher,
-			$addressHandler,
-			$notifications,
-			$tokenHandler,
-			$l10n,
-			$logger,
-			$rootFolder,
-			$config,
-			$userManager
-		);
 		$this->notifications = $notifications;
 		$this->dbConnection = $dbConnection;
 		$this->rootFolder = $rootFolder;
