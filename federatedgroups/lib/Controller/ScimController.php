@@ -21,6 +21,7 @@
 
 namespace OCA\FederatedGroups\Controller;
 
+use Exception;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -60,7 +61,7 @@ class ScimController extends Controller {
 	 * @param MixedGroupShareProvider $mixedGroupShareProvider
 	 * @param IDBConnection $dbConn
 	 */
-  public function __construct(
+	public function __construct(
 		$appName,
 		IRequest $request,
 		Notifications $notifications,
@@ -157,23 +158,23 @@ class ScimController extends Controller {
 		return 0;
 	}
 
-  /**
+	/**
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
 	 * EndPoint discovery
 	 * Responds to /ocm-provider/ requests
- 	 * @return array
+	 * @return array
 	 */
-
-  public function addUserToGroup($groupId) {
+	public function addUserToGroupTest() {error_log("scimming .... wwwoowwww .... ");return new JSONResponse([ "Could not parse operations array"],Http::STATUS_BAD_REQUEST);}
+	public function addUserToGroup($groupId) {
 		// The app framework will parse JSON bodies of POST requests
 		// if the Content-Type is set to application/json, and you can
 		// we can then just write `addUserToGroup($Operations)` and it would work.
 		// However, for PATCH requests the same thing does not work.
 		// See https://github.com/pondersource/peppol-php/issues/133#issuecomment-1221297463
 		// for a very similar discussion involving PUT requests to a Nextcloud server.
-    error_log("scimming $groupId!");
+		error_log("scimming $groupId!");
 		try {
 			$body = json_decode(file_get_contents('php://input'), true);
 			$ops = $body['Operations'];
@@ -183,7 +184,7 @@ class ScimController extends Controller {
 				Http::STATUS_BAD_REQUEST
 			);
 		}
-		
+
 		error_log(var_export($body, true));
 		$success = 0;
 		for ($i = 0; $i < count($ops); $i++) {
@@ -200,5 +201,5 @@ class ScimController extends Controller {
 				Http::STATUS_BAD_REQUEST
 			);
 		}
-  }
+	}
 }
