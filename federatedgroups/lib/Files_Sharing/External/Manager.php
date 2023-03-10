@@ -266,7 +266,6 @@ class Manager {
 		if ($share) {
 			$mountPoint = $this->getShareRecipientMountPoint($share);
 			$hash = \md5($mountPoint);
-
 			$acceptShare = $this->connection->prepare('
 				UPDATE `*PREFIX*share_external_group`
 				SET `accepted` = ?,
