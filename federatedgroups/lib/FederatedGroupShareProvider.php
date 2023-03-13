@@ -536,4 +536,36 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		$cursor->closeCursor();
 		return $shares;
 	}
+
+	/**
+	 * Get a share by token
+	 *
+	 * @param string $token
+	 * @return IShare
+	 * @throws ShareNotFound
+	 */
+	public function getShareByToken($token) {
+		$qb = $this->dbConnection->getQueryBuilder();
+
+		$cursor = $qb->select('*')
+			->from($this->shareTable)
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE_GROUP)))
+			->andWhere($qb->expr()->eq('token', $qb->createNamedParameter($token)))
+			->execute();
+
+		$data = $cursor->fetch();
+
+		if ($data === false) {
+			throw new ShareNotFound();
+		}
+
+		try {
+			$share = $this->createShareObject($data);
+		} catch (InvalidShare $e) {
+			throw new ShareNotFound();
+		}
+
+		return $share;
+	}
+
 }
