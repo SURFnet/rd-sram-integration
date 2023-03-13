@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @author Michiel de Jong <michiel@pondersource.com>
  *
@@ -166,7 +167,17 @@ class ScimController extends Controller {
 	 * Responds to /ocm-provider/ requests
 	 * @return array
 	 */
-	public function addUserToGroupTest() {error_log("scimming .... wwwoowwww .... ");return new JSONResponse([ "Could not parse operations array"],Http::STATUS_BAD_REQUEST);}
+	public function getGroups() {
+		error_log("scimming .... wwwoowwww .... ");
+		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
+		$arr = explode(" ", $filter);
+		list($field, $condition, $value) = $arr; // [$field, $condition, $value] = $arr;
+
+		// TODO: get groups filtered by externalId eq to `externalId`
+		return new JSONResponse(["Could not parse operations array"], Http::STATUS_BAD_REQUEST);
+	}
+
+
 	public function addUserToGroup($groupId) {
 		// The app framework will parse JSON bodies of POST requests
 		// if the Content-Type is set to application/json, and you can
@@ -180,7 +191,7 @@ class ScimController extends Controller {
 			$ops = $body['Operations'];
 		} catch (Exception $e) {
 			return new JSONResponse(
-				[ "Could not parse operations array"],
+				["Could not parse operations array"],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
@@ -197,7 +208,7 @@ class ScimController extends Controller {
 			);
 		} else {
 			return new JSONResponse(
-				[ "Could only execute $success out of " . count($body['Operations']) . " operations"],
+				["Could only execute $success out of " . count($body['Operations']) . " operations"],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
