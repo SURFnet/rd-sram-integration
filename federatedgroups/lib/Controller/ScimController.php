@@ -174,7 +174,10 @@ class ScimController extends Controller {
 		list($field, $condition, $value) = $arr; // [$field, $condition, $value] = $arr;
 
 		// TODO: get groups filtered by externalId eq to `externalId`
-		return new JSONResponse(["Could not parse operations array"], Http::STATUS_BAD_REQUEST);
+		return new JSONResponse(
+				[],
+				Http::STATUS_OK
+			);
 	}
 
 
