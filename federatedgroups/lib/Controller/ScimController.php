@@ -165,7 +165,7 @@ class ScimController extends Controller {
 		$qs = explode(" ", $filter);
 		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
 
-		// TODO: get groups filtered by externalId eq to `externalId`
+		// TODO: get groups filtered by externalId eq to `externalId` 
 		// return new JSONResponse([], Http::STATUS_OK);
 		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
 		return new JSONResponse(
