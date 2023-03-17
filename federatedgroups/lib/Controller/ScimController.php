@@ -159,6 +159,34 @@ class ScimController extends Controller {
 		return 0;
 	}
 
+	public function getGroups() {
+		error_log("scimming .... wwwoowwww .... ");
+		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
+		$qs = explode(" ", $filter);
+		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
+
+		// TODO: get groups filtered by externalId eq to `externalId`
+		// return new JSONResponse([], Http::STATUS_OK);
+		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
+		return new JSONResponse(
+			[
+				"schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+				"id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
+				"displayName" => "Sales Reps",
+				"members" => [],
+				"meta" => [
+					"resourceType" => "Group",
+					"created" => "2010-01-23T04:56:22Z",
+					"lastModified" => "2011-05-13T04:42:34Z",
+					"version" => "W\/\"3694e05e9dff592\"",
+					"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
+				]
+			],
+			Http::STATUS_OK
+		);
+	}
+
+
 	/**
 	 * @NoCSRFRequired
 	 * @PublicPage
@@ -167,17 +195,6 @@ class ScimController extends Controller {
 	 * Responds to /ocm-provider/ requests
 	 * @return array
 	 */
-	public function getGroups() {
-		error_log("scimming .... wwwoowwww .... ");
-		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
-		$arr = explode(" ", $filter);
-		list($field, $condition, $value) = $arr; // [$field, $condition, $value] = $arr;
-
-		// TODO: get groups filtered by externalId eq to `externalId`
-		return new JSONResponse(["Could not parse operations array"], Http::STATUS_BAD_REQUEST);
-	}
-
-
 	public function addUserToGroup($groupId) {
 		// The app framework will parse JSON bodies of POST requests
 		// if the Content-Type is set to application/json, and you can
