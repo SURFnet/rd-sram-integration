@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @author Michiel de Jong <michiel@pondersource.com>
  *
@@ -21,6 +22,7 @@
 
 namespace OCA\FederatedGroups\Controller;
 
+use Exception;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -60,7 +62,7 @@ class ScimController extends Controller {
 	 * @param MixedGroupShareProvider $mixedGroupShareProvider
 	 * @param IDBConnection $dbConn
 	 */
-  public function __construct(
+	public function __construct(
 		$appName,
 		IRequest $request,
 		Notifications $notifications,
@@ -75,6 +77,7 @@ class ScimController extends Controller {
 		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		$this->dbConn = $dbConn;
 	}
+
 	private function getRegularGroupId($groupId) {
 		$queryBuilder = $this->dbConn->getQueryBuilder();
 		$cursor = $queryBuilder->select('gid')->from('groups')
@@ -130,7 +133,6 @@ class ScimController extends Controller {
 		return true;
 	}
 
-
 	private function addMember($userId, $groupId) {
 		$regularGroupId = $this->getRegularGroupId($groupId);
 		if ($regularGroupId === false) {
@@ -157,33 +159,180 @@ class ScimController extends Controller {
 		return 0;
 	}
 
-  /**
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * EndPoint discovery
+	 * Responds to /users/ requests
+	 * @return array
+	 */
+	public function createUser() {
+		error_log("scimming .... wwwoowwww .... users ");
+		$params = $this->request->getParams();
+
+		$bodyJson = json_encode($params);
+
+		error_log("=========================bodyJson=============================");
+		error_log($bodyJson);
+		error_log("=========================bodyJson=============================");
+
+		// $filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
+		// $qs = explode(" ", $filter);
+		// list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
+
+		// TODO: get groups filtered by externalId eq to `externalId` 
+		// return new JSONResponse([], Http::STATUS_OK);
+		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
+		return new JSONResponse(
+			[
+				"schemas" => ["urn:ietf:params:scim:schemas:core:2.0:User"],
+				// "id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
+				// "displayName" => "Sales Reps",
+				// "members" => [],
+				// "meta" => [
+				// 	"resourceType" => "Users",
+				// 	"created" => "2010-01-23T04:56:22Z",
+				// 	"lastModified" => "2011-05-13T04:42:34Z",
+				// 	"version" => "W\/\"3694e05e9dff592\"",
+				// 	"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
+				// ]
+			],
+			Http::STATUS_NOT_FOUND
+		);
+	}
+
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * EndPoint discovery
+	 * Responds to /groups/ requests
+	 * @return array
+	 */
+	public function createGroup() {
+		error_log("scimming .... wwwoowwww .... users ");
+		// $filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
+		// $qs = explode(" ", $filter);
+		// list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
+
+		// TODO: get groups filtered by externalId eq to `externalId` 
+		// return new JSONResponse([], Http::STATUS_OK);
+		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
+		return new JSONResponse(
+			[
+				"schemas" => ["urn:ietf:params:scim:schemas:core:2.0:User"],
+				// "id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
+				// "displayName" => "Sales Reps",
+				// "members" => [],
+				// "meta" => [
+				// 	"resourceType" => "Users",
+				// 	"created" => "2010-01-23T04:56:22Z",
+				// 	"lastModified" => "2011-05-13T04:42:34Z",
+				// 	"version" => "W\/\"3694e05e9dff592\"",
+				// 	"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
+				// ]
+			],
+			Http::STATUS_OK
+		);
+	}
+
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * EndPoint discovery
+	 * Responds to /users/ requests
+	 * @return array
+	 */
+	public function getUsers() {
+		error_log("scimming .... wwwoowwww .... users ");
+		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
+		$qs = explode(" ", $filter);
+		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
+
+		// TODO: get groups filtered by externalId eq to `externalId` 
+		// return new JSONResponse([], Http::STATUS_OK);
+		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
+		return new JSONResponse(
+			[
+				// "schemas" => ["urn:ietf:params:scim:schemas:core:2.0:User"],
+				// "id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
+				// "displayName" => "Sales Reps",
+				// "members" => [],
+				// "meta" => [
+				// 	"resourceType" => "Users",
+				// 	"created" => "2010-01-23T04:56:22Z",
+				// 	"lastModified" => "2011-05-13T04:42:34Z",
+				// 	"version" => "W\/\"3694e05e9dff592\"",
+				// 	"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
+				// ]
+			],
+			Http::STATUS_NOT_FOUND
+		);
+	}
+
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * EndPoint discovery
+	 * Responds to /groups/ requests
+	 * @return array
+	 */
+	public function getGroups() {
+		error_log("scimming .... wwwoowwww .... ");
+		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
+		$qs = explode(" ", $filter);
+		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
+
+		// TODO: get groups filtered by externalId eq to `externalId` 
+		// return new JSONResponse([], Http::STATUS_OK);
+		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
+		return new JSONResponse(
+			[
+				// "schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+				// "id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
+				// "displayName" => "Sales Reps",
+				// "members" => [],
+				// "meta" => [
+				// 	"resourceType" => "Group",
+				// 	"created" => "2010-01-23T04:56:22Z",
+				// 	"lastModified" => "2011-05-13T04:42:34Z",
+				// 	"version" => "W\/\"3694e05e9dff592\"",
+				// 	"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
+				// ]
+			],
+			Http::STATUS_NOT_FOUND
+		);
+	}
+
+	/**
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
 	 * EndPoint discovery
 	 * Responds to /ocm-provider/ requests
- 	 * @return array
+	 * @return array
 	 */
-
-  public function addUserToGroup($groupId) {
+	public function addUserToGroup($groupId) {
 		// The app framework will parse JSON bodies of POST requests
 		// if the Content-Type is set to application/json, and you can
 		// we can then just write `addUserToGroup($Operations)` and it would work.
 		// However, for PATCH requests the same thing does not work.
 		// See https://github.com/pondersource/peppol-php/issues/133#issuecomment-1221297463
 		// for a very similar discussion involving PUT requests to a Nextcloud server.
-    error_log("scimming $groupId!");
+		error_log("scimming $groupId!");
 		try {
 			$body = json_decode(file_get_contents('php://input'), true);
 			$ops = $body['Operations'];
 		} catch (Exception $e) {
 			return new JSONResponse(
-				[ "Could not parse operations array"],
+				["Could not parse operations array"],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
-		
+
 		error_log(var_export($body, true));
 		$success = 0;
 		for ($i = 0; $i < count($ops); $i++) {
@@ -196,9 +345,9 @@ class ScimController extends Controller {
 			);
 		} else {
 			return new JSONResponse(
-				[ "Could only execute $success out of " . count($body['Operations']) . " operations"],
+				["Could only execute $success out of " . count($body['Operations']) . " operations"],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
-  }
+	}
 }
