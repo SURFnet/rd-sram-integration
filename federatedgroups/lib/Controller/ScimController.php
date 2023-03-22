@@ -227,6 +227,7 @@ class ScimController extends Controller {
 		error_log("=========================bodyJson=============================");
 		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
+		$obj["id"] = $obj["externalId"];
     $this->users[$obj["externalId"]] = $obj;
 		error_log("User added, saving!");
 		$this->saveUsers();
@@ -306,6 +307,7 @@ class ScimController extends Controller {
 		error_log("=========================bodyJson=============================");
 		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
+		$obj["id"] = $obj["externalId"];
     $this->groups[$obj["externalId"]] = $obj;
 		$this->saveGroups();
 		error_log("Returning " . RESPONSE_TO_GROUP_CREATE);
