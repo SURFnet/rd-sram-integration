@@ -38,12 +38,10 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCA\FederatedGroups\MixedGroupShareProvider;
 use OCA\FederatedFileSharing\Notifications;
 
-const RESPONSE_TO_USER_GET = Http::STATUS_NOT_FOUND;
-const RESPONSE_TO_USER_CREATE = Http::STATUS_NOT_FOUND;
+const RESPONSE_TO_USER_CREATE = Http::STATUS_CREATED;
 const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
 
-const RESPONSE_TO_GROUP_GET = Http::STATUS_NOT_FOUND;
-const RESPONSE_TO_GROUP_CREATE = Http::STATUS_NOT_FOUND;
+const RESPONSE_TO_GROUP_CREATE = Http::STATUS_CREATED;
 const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
 
 /**
@@ -89,6 +87,14 @@ class ScimController extends Controller {
 		$this->dbConn = $dbConn;
 		$this->users = json_decode(file_get_contents('./users.json'), true);
 		$this->groups = json_decode(file_get_contents('./groups.json'), true);
+	}
+
+	private function saveUsers() {
+		file_put_contents('./users.json', json_encode($this->users));
+	}
+	
+	private function saveGroups() {
+		file_put_contents('./groups.json', json_encode($this->groups));
 	}
 
 	private function getRegularGroupId($groupId) {
@@ -178,7 +184,7 @@ class ScimController extends Controller {
 	 *
 	 * EndPoint discovery
 	 * Responds to /users/ requests
-	 * @return array
+	 * @return JSONResponse
 	 */
 	public function getUsers() {
 		error_log("scim get users ");
@@ -186,27 +192,21 @@ class ScimController extends Controller {
 		$qs = explode(" ", $filter);
 		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
 
-		// TODO: get groups filtered by externalId eq to `externalId` 
-		// return new JSONResponse([], Http::STATUS_OK);
-		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
-		error_log("Returning " . RESPONSE_TO_USER_GET);
-
-		return new JSONResponse(
-			[
-				"schemas" => ["urn:ietf:params:scim:schemas:core:2.0:User"],
-				// "id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
-				// "displayName" => "Sales Reps",
-				// "members" => [],
-				// "meta" => [
-				// 	"resourceType" => "Users",
-				// 	"created" => "2010-01-23T04:56:22Z",
-				// 	"lastModified" => "2011-05-13T04:42:34Z",
-				// 	"version" => "W\/\"3694e05e9dff592\"",
-				// 	"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
-				// ]
-			],
-			RESPONSE_TO_USER_GET
-		);
+		error_log("Got $field $condition $value");
+		$id = json_decode($value); // strip quotes
+		error_log(var_export(array_keys($this->users), true));
+		if (isset($this->users[$id])) {
+			error_log("User $value exists!");
+			return new JSONResponse([
+				"totalResults" => 1,
+				"Resources" => [
+					$this->users[$id],
+				],
+			], Http::STATUS_OK);
+		} else {
+			error_log("User $value exists not!");
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
 	}
 
 
@@ -216,28 +216,23 @@ class ScimController extends Controller {
 	 *
 	 * EndPoint discovery
 	 * Responds to /users/ requests
-	 * @return array
+	 * @return JSONResponse
 	 */
 	public function createUser() {
 		error_log("scim create user");
-		$params = $this->request->getParams();
-
-		$bodyJson = json_encode($params);
+		$body = file_get_contents("php://input");
+		error_log($body);
+		$obj = json_decode($body, true);
 
 		error_log("=========================bodyJson=============================");
-		error_log($bodyJson);
+		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
-
-		// $filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
-		// $qs = explode(" ", $filter);
-		// list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
-
-		// TODO: get groups filtered by externalId eq to `externalId` 
-		// return new JSONResponse([], Http::STATUS_OK);
-		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
+    $this->users[$obj["externalId"]] = $obj;
+		error_log("User added, saving!");
+		$this->saveUsers();
 		error_log("Returning " . RESPONSE_TO_USER_CREATE);
 		return new JSONResponse(
-			$bodyJson,
+			$obj,
 			RESPONSE_TO_USER_CREATE
 		);
 	}
@@ -252,36 +247,16 @@ class ScimController extends Controller {
 	 */
 	public function updateUser() {
 		error_log("scim update user");
-		$params = $this->request->getParams();
-
-		$bodyJson = json_encode($params);
+		$obj = json_decode(file_get_contents("php://input"), true);
 
 		error_log("=========================bodyJson=============================");
-		error_log($bodyJson);
+		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
-
-		// $filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
-		// $qs = explode(" ", $filter);
-		// list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
-
-		// TODO: get groups filtered by externalId eq to `externalId` 
-		// return new JSONResponse([], Http::STATUS_OK);
-		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
+    $this->users[$obj["externalId"]] = $obj;
+		$this->saveUsers();
 		error_log("Returning " . RESPONSE_TO_USER_UPDATE);
 		return new JSONResponse(
-			[
-				"schemas" => ["urn:ietf:params:scim:schemas:core:2.0:User"],
-				// "id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
-				// "displayName" => "Sales Reps",
-				// "members" => [],
-				// "meta" => [
-				// 	"resourceType" => "Users",
-				// 	"created" => "2010-01-23T04:56:22Z",
-				// 	"lastModified" => "2011-05-13T04:42:34Z",
-				// 	"version" => "W\/\"3694e05e9dff592\"",
-				// 	"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
-				// ]
-			],
+			$obj,
 			RESPONSE_TO_USER_UPDATE
 		);
 	}
@@ -292,7 +267,7 @@ class ScimController extends Controller {
 	 *
 	 * EndPoint discovery
 	 * Responds to /groups/ requests
-	 * @return array
+	 * @return JSONResponse
 	 */
 	public function getGroups() {
 		error_log("scim get groups");
@@ -300,26 +275,20 @@ class ScimController extends Controller {
 		$qs = explode(" ", $filter);
 		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
 
-		// TODO: get groups filtered by externalId eq to `externalId` 
-		// return new JSONResponse([], Http::STATUS_OK);
-		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
-		error_log("Returning " . RESPONSE_TO_GROUP_GET);
-		return new JSONResponse(
-			[
-				"schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"],
-				// "id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
-				// "displayName" => "Sales Reps",
-				// "members" => [],
-				// "meta" => [
-				// 	"resourceType" => "Group",
-				// 	"created" => "2010-01-23T04:56:22Z",
-				// 	"lastModified" => "2011-05-13T04:42:34Z",
-				// 	"version" => "W\/\"3694e05e9dff592\"",
-				// 	"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
-				// ]
-			],
-			RESPONSE_TO_GROUP_GET
-		);
+		error_log("Got $field $condition $value");
+		$id = json_decode($value); // strip quotes
+		if (isset($this->groups[$id])) {
+			error_log("Group $value exists!");
+			return new JSONResponse([
+				"totalResults" => 1,
+				"Resources" => [
+					$this->groups[$id],
+				],
+			], Http::STATUS_OK);
+		} else {
+			error_log("Group $value exists not!");
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
 	}
 
 	/**
@@ -332,24 +301,17 @@ class ScimController extends Controller {
 	 */
 	public function createGroup() {
 		error_log("scim create group");
-		$params = $this->request->getParams();
-
-		$bodyJson = json_encode($params);
+		$obj = json_decode(file_get_contents("php://input"), true);
 
 		error_log("=========================bodyJson=============================");
-		error_log($bodyJson);
+		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
-		// $filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
-		// $qs = explode(" ", $filter);
-		// list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
-		
-		// TODO: get groups filtered by externalId eq to `externalId` 
-		// return new JSONResponse([], Http::STATUS_OK);
-		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
+    $this->groups[$obj["externalId"]] = $obj;
+		$this->saveGroups();
 		error_log("Returning " . RESPONSE_TO_GROUP_CREATE);
 		return new JSONResponse(
-				$bodyJson,
-				RESPONSE_TO_GROUP_CREATE
+			$obj,
+			RESPONSE_TO_GROUP_CREATE
 		);
 	}
 
@@ -359,40 +321,21 @@ class ScimController extends Controller {
 	 *
 	 * EndPoint discovery
 	 * Responds to /groups/ requests
-	 * @return array
+	 * @return JSONResponse
 	 */
 	public function updateGroup() {
 		error_log("scim update group");
-		$params = $this->request->getParams();
-
-		$bodyJson = json_encode($params);
+		$obj = json_decode(file_get_contents("php://input"), true);
 
 		error_log("=========================bodyJson=============================");
-		error_log($bodyJson);
+		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
-		// $filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
-		// $qs = explode(" ", $filter);
-		// list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
-		
-		// TODO: get groups filtered by externalId eq to `externalId` 
-		// return new JSONResponse([], Http::STATUS_OK);
-		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
+    $this->groups[$obj["externalId"]] = $obj;
+		$this->saveGroups();
 		error_log("Returning " . RESPONSE_TO_GROUP_UPDATE);
 		return new JSONResponse(
-			[
-				"schemas" => ["urn:ietf:params:scim:schemas:core:2.0:User"],
-				// "id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
-				// "displayName" => "Sales Reps",
-				// "members" => [],
-				// "meta" => [
-					// 	"resourceType" => "Users",
-					// 	"created" => "2010-01-23T04:56:22Z",
-					// 	"lastModified" => "2011-05-13T04:42:34Z",
-					// 	"version" => "W\/\"3694e05e9dff592\"",
-					// 	"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
-					// ]
-				],
-				RESPONSE_TO_GROUP_UPDATE
+			$obj,
+			RESPONSE_TO_GROUP_UPDATE
 		);
 	}
 
