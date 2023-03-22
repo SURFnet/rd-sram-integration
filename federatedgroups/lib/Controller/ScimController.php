@@ -168,7 +168,7 @@ class ScimController extends Controller {
 	 * @return array
 	 */
 	public function createUser() {
-		error_log("scimming .... wwwoowwww .... users ");
+		error_log("scim create user");
 		$params = $this->request->getParams();
 
 		$bodyJson = json_encode($params);
@@ -211,7 +211,7 @@ class ScimController extends Controller {
 	 * @return array
 	 */
 	public function createGroup() {
-		error_log("scimming .... wwwoowwww .... users ");
+		error_log("scim create group");
 		// $filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
 		// $qs = explode(" ", $filter);
 		// list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
@@ -246,7 +246,7 @@ class ScimController extends Controller {
 	 * @return array
 	 */
 	public function getUsers() {
-		error_log("scimming .... wwwoowwww .... users ");
+		error_log("scim get users ");
 		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
 		$qs = explode(" ", $filter);
 		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
@@ -281,7 +281,7 @@ class ScimController extends Controller {
 	 * @return array
 	 */
 	public function getGroups() {
-		error_log("scimming .... wwwoowwww .... ");
+		error_log("scim get groups");
 		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
 		$qs = explode(" ", $filter);
 		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
