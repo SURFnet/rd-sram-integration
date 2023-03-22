@@ -100,7 +100,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			 $groupManager,
 			 $rootFolder
 		);
-		error_log("Constructing the MixedGroupShareProvider");
+		// error_log("Constructing the MixedGroupShareProvider");
 		$this->notifications = $notifications;
 		$this->addressHandler = $addressHandler;
 		$this->l = $l;

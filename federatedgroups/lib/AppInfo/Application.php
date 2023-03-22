@@ -25,7 +25,7 @@ class Application extends App {
 	
 	
 	public function __construct(array $urlParams = []) {
-		error_log("fg: ". get_parent_class($this));
+		// error_log("fg: ". get_parent_class($this));
 		parent::__construct('federatedgroups', $urlParams);
 		$container = $this->getContainer();
 		$server = $container->getServer();
@@ -278,7 +278,7 @@ class Application extends App {
 	}
 
   	public function getMixedGroupShareProvider() {
-		error_log("returning the \OCA\FederatedGroups\MixedGroupShareProvider from the Application getMixedGroupShareProvider method");
+		// error_log("returning the \OCA\FederatedGroups\MixedGroupShareProvider from the Application getMixedGroupShareProvider method");
 		$urlGenerator = \OC::$server->getURLGenerator();
 		$l10n = \OC::$server->getL10N('federatedfilesharing');
 		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
@@ -334,7 +334,7 @@ class Application extends App {
 			$databaseConnection = \OC::$server->getDatabaseConnection();
 			$eventDispatcher = \OC::$server->getEventDispatcher();
 			$lazyFolderRoot = \OC::$server->getLazyRootFolder();
-			error_log("our application returning our \OCA\FederatedFileSharing\FederatedShareProvider");
+			// error_log("our application returning our \OCA\FederatedFileSharing\FederatedShareProvider");
 			return new \OCA\FederatedFileSharing\FederatedShareProvider(
 				$databaseConnection,
 				$eventDispatcher,

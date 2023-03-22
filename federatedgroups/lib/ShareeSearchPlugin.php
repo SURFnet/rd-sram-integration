@@ -34,7 +34,7 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 	private $offset = 0;
 
 	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, IManager $contactsManager, UserSearch $userSearch) {
-		error_log("constructing ShareeSearchPlugin");
+		// error_log("constructing ShareeSearchPlugin");
 		$this->config = $config;
 		$this->userManager = $userManager;
 		$user = $userSession->getUser();

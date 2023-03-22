@@ -38,12 +38,12 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCA\FederatedGroups\MixedGroupShareProvider;
 use OCA\FederatedFileSharing\Notifications;
 
-const RESPONSE_TO_USER_GET = Http::STATUS_OK;
-const RESPONSE_TO_USER_CREATE = Http::STATUS_OK;
+const RESPONSE_TO_USER_GET = Http::STATUS_NOT_FOUND;
+const RESPONSE_TO_USER_CREATE = Http::STATUS_CREATED;
 const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
 
-const RESPONSE_TO_GROUP_GET = Http::STATUS_OK;
-const RESPONSE_TO_GROUP_CREATE = Http::STATUS_OK;
+const RESPONSE_TO_GROUP_GET = Http::STATUS_NOT_FOUND;
+const RESPONSE_TO_GROUP_CREATE = Http::STATUS_CREATED;
 const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
 
 /**
@@ -80,7 +80,7 @@ class ScimController extends Controller {
 		IRootFolder $rootFolder
 	) {
 		parent::__construct($appName, $request);
-		error_log("Federated Groups ScimController constructed");
+		// error_log("Federated Groups ScimController constructed");
 		$federatedGroupsApp = new \OCA\FederatedGroups\AppInfo\Application();
 		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		$this->dbConn = $dbConn;
@@ -232,19 +232,7 @@ class ScimController extends Controller {
 		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
 		error_log("Returning " . RESPONSE_TO_USER_CREATE);
 		return new JSONResponse(
-			[
-				"schemas" => ["urn:ietf:params:scim:schemas:core:2.0:User"],
-				// "id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
-				// "displayName" => "Sales Reps",
-				// "members" => [],
-				// "meta" => [
-				// 	"resourceType" => "Users",
-				// 	"created" => "2010-01-23T04:56:22Z",
-				// 	"lastModified" => "2011-05-13T04:42:34Z",
-				// 	"version" => "W\/\"3694e05e9dff592\"",
-				// 	"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
-				// ]
-			],
+			$bodyJson,
 			RESPONSE_TO_USER_CREATE
 		);
 	}
@@ -355,19 +343,7 @@ class ScimController extends Controller {
 		// return new JSONResponse(["schemas" => ["urn:ietf:params:scim:schemas:core:2.0:Group"]], Http::STATUS_OK);
 		error_log("Returning " . RESPONSE_TO_GROUP_CREATE);
 		return new JSONResponse(
-			[
-				"schemas" => ["urn:ietf:params:scim:schemas:core:2.0:User"],
-				// "id" => "e9e30dba-f08f-4109-8486-d5c6a331660a",
-				// "displayName" => "Sales Reps",
-				// "members" => [],
-				// "meta" => [
-					// 	"resourceType" => "Users",
-					// 	"created" => "2010-01-23T04:56:22Z",
-					// 	"lastModified" => "2011-05-13T04:42:34Z",
-					// 	"version" => "W\/\"3694e05e9dff592\"",
-					// 	"location" => "https://example.com/v2/Groups/e9e30dba-f08f-4109-8486-d5c6a331660a"
-					// ]
-				],
+				$bodyJson,
 				RESPONSE_TO_GROUP_CREATE
 		);
 	}
