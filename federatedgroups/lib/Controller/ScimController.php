@@ -212,6 +212,14 @@ class ScimController extends Controller {
 	 */
 	public function createGroup() {
 		error_log("scim create group");
+		$params = $this->request->getParams();
+
+		$bodyJson = json_encode($params);
+
+		error_log("=========================bodyJson=============================");
+		error_log($bodyJson);
+		error_log("=========================bodyJson=============================");
+
 		// $filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
 		// $qs = explode(" ", $filter);
 		// list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
