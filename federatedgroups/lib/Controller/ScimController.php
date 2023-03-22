@@ -39,11 +39,11 @@ use OCA\FederatedGroups\MixedGroupShareProvider;
 use OCA\FederatedFileSharing\Notifications;
 
 const RESPONSE_TO_USER_GET = Http::STATUS_NOT_FOUND;
-const RESPONSE_TO_USER_CREATE = Http::STATUS_CREATED;
+const RESPONSE_TO_USER_CREATE = Http::STATUS_NOT_FOUND;
 const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
 
 const RESPONSE_TO_GROUP_GET = Http::STATUS_NOT_FOUND;
-const RESPONSE_TO_GROUP_CREATE = Http::STATUS_CREATED;
+const RESPONSE_TO_GROUP_CREATE = Http::STATUS_NOT_FOUND;
 const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
 
 /**
@@ -61,6 +61,9 @@ class ScimController extends Controller {
 	 * @var MixedGroupShareProvider
 	 */
 	protected $mixedGroupShareProvider;
+
+	private $users;
+	private $groups;
 
 	/**
 	 * OcmController constructor.
@@ -84,6 +87,8 @@ class ScimController extends Controller {
 		$federatedGroupsApp = new \OCA\FederatedGroups\AppInfo\Application();
 		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		$this->dbConn = $dbConn;
+		$this->users = json_decode(file_get_contents('./users.json'), true);
+		$this->groups = json_decode(file_get_contents('./groups.json'), true);
 	}
 
 	private function getRegularGroupId($groupId) {
