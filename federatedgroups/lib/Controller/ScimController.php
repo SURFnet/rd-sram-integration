@@ -172,6 +172,7 @@ class ScimController extends Controller {
 		foreach ($obj["members"] as $member) {
 			$userId = $member["value"];
 			error_log("adding member $userId to $groupId");
+			$this->addMember($userId, $groupId);
 		}
 		
 		return new JSONResponse(

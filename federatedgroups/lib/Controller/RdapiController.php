@@ -94,7 +94,7 @@ class RdapiController extends Controller {
 					'http' => array(
 						'header'  => "Content-type: application/json\r\n",
 						'method'  => $method,
-					'content' => http_build_query($data)
+					'content' => json_encode($data, JSON_PRETTY_PRINT)
 					)
 				));
 				$url = SCIM_ENDPOINTS[$host] . $path;
