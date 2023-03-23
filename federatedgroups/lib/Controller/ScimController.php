@@ -106,6 +106,15 @@ class ScimController extends Controller {
 		error_log("addToRegularGroup $userId $regularGroupId calling notifyNewRegularGroupMember");
 		$this->mixedGroupShareProvider->notifyNewRegularGroupMember($userId, $regularGroupId);
 		$queryBuilder = $this->dbConn->getQueryBuilder();
+		$cursor = $queryBuilder->select('count(*)')->from('group_user')
+		  ->where($queryBuilder->expr()->eq('gid', $queryBuilder->createNamedParameter($regularGroupId, IQueryBuilder::PARAM_STR)))
+		  ->and($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($userId, IQueryBuilder::PARAM_STR)))
+		  ->execute();
+  	$row = $cursor->fetch();
+	  $cursor->closeCursor();
+		error_log("exists?");
+		error_log(var_export($row, true));
+
 		$result = $queryBuilder->insert('group_user')
 			->values([
 				'uid' => $queryBuilder->createNamedParameter($userId, IQueryBuilder::PARAM_STR),
@@ -142,11 +151,14 @@ class ScimController extends Controller {
 		return true;
 	}
 
+
 	private function addMember($userId, $groupId) {
 		$regularGroupId = $this->getRegularGroupId($groupId);
 		if ($regularGroupId === false) {
+			error_log("no regular group found called $groupId");
 			$customGroupId = $this->getCustomGroupId($groupId);
 			if ($customGroupId === false) {
+				error_log("no custom group found called $groupId");
 				return false;
 			}
 			error_log("Adding $userId to custom group $customGroupId ('$groupId')");
@@ -170,7 +182,7 @@ class ScimController extends Controller {
 		error_log("=========================bodyJson=============================");
 		$groupId = $obj["id"];
 		foreach ($obj["members"] as $member) {
-			$userId = $member["value"];
+			$userId = str_replace("@", "#", $member["value"]);
 			error_log("adding member $userId to $groupId");
 			$this->addMember($userId, $groupId);
 		}
