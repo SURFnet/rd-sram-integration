@@ -179,6 +179,28 @@ class RdapiController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
+	public function updateUser() {
+		error_log("scim update user");
+		$body = file_get_contents("php://input");
+		$obj = json_decode($body, true);
+
+		error_log("=========================bodyJson=============================");
+		error_log(var_export($obj, true));
+		error_log("=========================bodyJson=============================");
+		$obj["id"] = $this->lookupUser($obj);
+    $this->users[$obj["externalId"]] = $obj;
+		error_log("User updated, saving!");
+		$this->saveUsers();
+		return new JSONResponse(
+			$obj,
+			Http::STATUS_CREATED
+		);
+	}
+
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 */
 	public function getGroups() {
 		error_log("scim get groups");
 		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
@@ -215,6 +237,28 @@ class RdapiController extends Controller {
 		$this->saveGroups();
 		error_log("Forwarding this SCIM message");
 		$this->forwardToServers("POST", "/Groups", $obj, $this->getServersInvolved($obj));
+		return new JSONResponse(
+			$obj,
+			Http::STATUS_CREATED
+		);
+	}
+
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 */
+	public function updateGroup() {
+		error_log("scim update group");
+		$obj = json_decode(file_get_contents("php://input"), true);
+
+		error_log("=========================bodyJson=============================");
+		error_log(var_export($obj, true));
+		error_log("=========================bodyJson=============================");
+		$obj["id"] = $this->lookupGroup($obj);
+    $this->groups[$obj["externalId"]] = $obj;
+		$this->saveGroups();
+		error_log("Forwarding this SCIM message");
+		$this->forwardToServers("PUT", "/Groups", $obj, $this->getServersInvolved($obj));
 		return new JSONResponse(
 			$obj,
 			Http::STATUS_CREATED

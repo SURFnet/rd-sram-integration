@@ -85,16 +85,6 @@ class ScimController extends Controller {
 		$federatedGroupsApp = new \OCA\FederatedGroups\AppInfo\Application();
 		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		$this->dbConn = $dbConn;
-		$this->users = json_decode(file_get_contents('./users.json'), true);
-		$this->groups = json_decode(file_get_contents('./groups.json'), true);
-	}
-
-	private function saveUsers() {
-		file_put_contents('./users.json', json_encode($this->users));
-	}
-	
-	private function saveGroups() {
-		file_put_contents('./groups.json', json_encode($this->groups));
 	}
 
 	private function getRegularGroupId($groupId) {
@@ -167,138 +157,9 @@ class ScimController extends Controller {
 		}
 	}
 
-	private function executeOperation($op, $groupId) {
-		if ($op['op'] == 'add' && $op['path'] == 'members') {
-			$members = $op['value']['members'];
-			for ($i = 0; $i < count($members); $i++) {
-				$this->addMember($members[$i]['value'], $groupId);
-			}
-			return 1;
-		}
-		return 0;
-	}
-
 	/**
 	 * @NoCSRFRequired
 	 * @PublicPage
-	 *
-	 * EndPoint discovery
-	 * Responds to /users/ requests
-	 * @return JSONResponse
-	 */
-	public function getUsers() {
-		error_log("scim get users ");
-		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
-		$qs = explode(" ", $filter);
-		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
-
-		error_log("Got $field $condition $value");
-		$id = json_decode($value); // strip quotes
-		error_log(var_export(array_keys($this->users), true));
-		if (isset($this->users[$id])) {
-			error_log("User $value exists!");
-			return new JSONResponse([
-				"totalResults" => 1,
-				"Resources" => [
-					$this->users[$id],
-				],
-			], Http::STATUS_OK);
-		} else {
-			error_log("User $value exists not!");
-			return new JSONResponse([], Http::STATUS_NOT_FOUND);
-		}
-	}
-
-
-	/**
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * EndPoint discovery
-	 * Responds to /users/ requests
-	 * @return JSONResponse
-	 */
-	public function createUser() {
-		error_log("scim create user");
-		$body = file_get_contents("php://input");
-		error_log($body);
-		$obj = json_decode($body, true);
-
-		error_log("=========================bodyJson=============================");
-		error_log(var_export($obj, true));
-		error_log("=========================bodyJson=============================");
-		$obj["id"] = $obj["externalId"];
-    $this->users[$obj["externalId"]] = $obj;
-		error_log("User added, saving!");
-		$this->saveUsers();
-		error_log("Returning " . RESPONSE_TO_USER_CREATE);
-		return new JSONResponse(
-			$obj,
-			RESPONSE_TO_USER_CREATE
-		);
-	}
-
-	/**
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * EndPoint discovery
-	 * Responds to /users/ requests
-	 * @return array
-	 */
-	public function updateUser() {
-		error_log("scim update user");
-		$obj = json_decode(file_get_contents("php://input"), true);
-
-		error_log("=========================bodyJson=============================");
-		error_log(var_export($obj, true));
-		error_log("=========================bodyJson=============================");
-    $this->users[$obj["externalId"]] = $obj;
-		$this->saveUsers();
-		error_log("Returning " . RESPONSE_TO_USER_UPDATE);
-		return new JSONResponse(
-			$obj,
-			RESPONSE_TO_USER_UPDATE
-		);
-	}
-
-	/**
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * EndPoint discovery
-	 * Responds to /groups/ requests
-	 * @return JSONResponse
-	 */
-	public function getGroups() {
-		error_log("scim get groups");
-		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
-		$qs = explode(" ", $filter);
-		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
-
-		error_log("Got $field $condition $value");
-		$id = json_decode($value); // strip quotes
-		if (isset($this->groups[$id])) {
-			error_log("Group $value exists!");
-			return new JSONResponse([
-				"totalResults" => 1,
-				"Resources" => [
-					$this->groups[$id],
-				],
-			], Http::STATUS_OK);
-		} else {
-			error_log("Group $value exists not!");
-			return new JSONResponse([], Http::STATUS_NOT_FOUND);
-		}
-	}
-
-	/**
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * EndPoint discovery
-	 * Responds to /groups/ requests
-	 * @return array
 	 */
 	public function createGroup() {
 		error_log("scim create group");
@@ -307,81 +168,11 @@ class ScimController extends Controller {
 		error_log("=========================bodyJson=============================");
 		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
-		$obj["id"] = $obj["externalId"];
-    $this->groups[$obj["externalId"]] = $obj;
-		$this->saveGroups();
-		error_log("Returning " . RESPONSE_TO_GROUP_CREATE);
+		
+		
 		return new JSONResponse(
 			$obj,
 			RESPONSE_TO_GROUP_CREATE
 		);
-	}
-
-	/**
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * EndPoint discovery
-	 * Responds to /groups/ requests
-	 * @return JSONResponse
-	 */
-	public function updateGroup() {
-		error_log("scim update group");
-		$obj = json_decode(file_get_contents("php://input"), true);
-
-		error_log("=========================bodyJson=============================");
-		error_log(var_export($obj, true));
-		error_log("=========================bodyJson=============================");
-    $this->groups[$obj["externalId"]] = $obj;
-		$this->saveGroups();
-		error_log("Returning " . RESPONSE_TO_GROUP_UPDATE);
-		return new JSONResponse(
-			$obj,
-			RESPONSE_TO_GROUP_UPDATE
-		);
-	}
-
-	/**
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 *
-	 * EndPoint discovery
-	 * Responds to /ocm-provider/ requests
-	 * @return array
-	 */
-	public function addUserToGroup($groupId) {
-		// The app framework will parse JSON bodies of POST requests
-		// if the Content-Type is set to application/json, and you can
-		// we can then just write `addUserToGroup($Operations)` and it would work.
-		// However, for PATCH requests the same thing does not work.
-		// See https://github.com/pondersource/peppol-php/issues/133#issuecomment-1221297463
-		// for a very similar discussion involving PUT requests to a Nextcloud server.
-		error_log("scimming $groupId addUserToGroup!");
-		try {
-			$body = json_decode(file_get_contents('php://input'), true);
-			$ops = $body['Operations'];
-		} catch (Exception $e) {
-			return new JSONResponse(
-				["Could not parse operations array"],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		error_log(var_export($body, true));
-		$success = 0;
-		for ($i = 0; $i < count($ops); $i++) {
-			$success += $this->executeOperation($body['Operations'][$i], $groupId);
-		}
-		if ($success == count($body['Operations'])) {
-			return new JSONResponse(
-				[],
-				Http::STATUS_OK
-			);
-		} else {
-			return new JSONResponse(
-				["Could only execute $success out of " . count($body['Operations']) . " operations"],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
 	}
 }
