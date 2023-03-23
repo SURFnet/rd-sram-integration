@@ -30,6 +30,12 @@ use OCP\IRequest;
 
 const DEMO_DOMAIN = "pondersource.net";
 
+const SCIM_ENDPOINTS = [
+	     "almere.pondersource.net" =>      "https://almere.pondersource.net/index.php/apps/federatedgroups/scim",
+ 	"bergambacht.pondersource.net" => "https://bergambacht.pondersource.net/index.php/apps/federatedgroups/scim",
+  	"castricum.pondersource.net" =>   "https://castricum.pondersource.net/index.php/apps/federatedgroups/scim"
+];
+
 /**
  * Class RdapiController
  *
@@ -59,12 +65,49 @@ class RdapiController extends Controller {
 
 	private function saveUsers() {
 		error_log("Saving users.json");
-		file_put_contents('./users.json', json_encode($this->users));
+		file_put_contents('./users.json', json_encode($this->users, JSON_PRETTY_PRINT));
 	}
 	
 	private function saveGroups() {
 		error_log("Saving groups.json");
-		file_put_contents('./groups.json', json_encode($this->groups));
+		file_put_contents('./groups.json', json_encode($this->groups, JSON_PRETTY_PRINT));
+	}
+
+	private function getServersInvolved($groupObj) {
+		$ret = [];
+		foreach($groupObj["members"] as $member) {
+      $parts = explode("@", $member["value"]);
+			$ret[$parts[1]] = true;
+			error_log("Server involved: " . $parts[1]);
+		}
+		error_log("Returning:");
+		error_log(var_export(array_keys($ret), true));
+		return array_keys($ret);
+	}
+
+	private function forwardToServers($method, $path, $data, $servers) {
+		error_log("forwardToServers($method, $path, ...)");
+
+    foreach($servers as $host) {
+			if (isset(SCIM_ENDPOINTS[$host])) {
+				$context  = stream_context_create(array(
+					'http' => array(
+						'header'  => "Content-type: application/json\r\n",
+						'method'  => $method,
+					'content' => http_build_query($data)
+					)
+				));
+				$url = SCIM_ENDPOINTS[$host] . $path;
+				$result = file_get_contents($url, false, $context);
+				if ($result === FALSE) { 
+					error_log("Could not $method to " . $url);
+				}	else {
+					error_log("Succesfully forwarded SCIM $method to " . $url);
+				}
+			} else {
+				error_log("No known SCIM endpoint for $host");
+			}
+		}
 	}
 
 	private function lookupUser($user) {
@@ -170,6 +213,8 @@ class RdapiController extends Controller {
 		$obj["id"] = $this->lookupGroup($obj);
     $this->groups[$obj["externalId"]] = $obj;
 		$this->saveGroups();
+		error_log("Forwarding this SCIM message");
+		$this->forwardToServers("POST", "/Groups", $obj, $this->getServersInvolved($obj));
 		return new JSONResponse(
 			$obj,
 			Http::STATUS_CREATED
