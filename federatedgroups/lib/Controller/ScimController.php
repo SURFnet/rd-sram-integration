@@ -168,7 +168,11 @@ class ScimController extends Controller {
 		error_log("=========================bodyJson=============================");
 		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
-		
+		$groupId = $obj["id"];
+		foreach ($obj["members"] as $member) {
+			$userId = $member["value"];
+			error_log("adding member $userId to $groupId");
+		}
 		
 		return new JSONResponse(
 			$obj,

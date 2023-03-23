@@ -148,7 +148,11 @@ class RdapiController extends Controller {
 			], Http::STATUS_OK);
 		} else {
 			error_log("User $value exists not!");
-			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+			return new JSONResponse([
+				"totalResults" => 0,
+				"Resources" => [
+				],
+			], Http::STATUS_OK);
 		}
 	}
 
@@ -202,6 +206,13 @@ class RdapiController extends Controller {
 	 * @PublicPage
 	 */
 	public function getGroups() {
+		// work around https://github.com/SURFnet/rd-sram-integration/issues/124
+		return new JSONResponse([
+			"totalResults" => 0,
+			"Resources" => [
+			],
+		], Http::STATUS_OK);
+
 		error_log("scim get groups");
 		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
 		$qs = explode(" ", $filter);
@@ -217,7 +228,11 @@ class RdapiController extends Controller {
 			], Http::STATUS_OK);
 		} else {
 			error_log("Group $value exists not!");
-			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+			return new JSONResponse([
+				"totalResults" => 0,
+				"Resources" => [
+				],
+			], Http::STATUS_OK);
 		}
 	}
 
