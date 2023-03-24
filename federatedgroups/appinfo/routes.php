@@ -8,8 +8,8 @@
  *
  */
 
-$CONTROLLER = "rdapi";
-// $CONTROLLER = "scim";
+// $CONTROLLER = "rdapi";
+$CONTROLLER = "scim";
 
 return [
 	'routes' => [

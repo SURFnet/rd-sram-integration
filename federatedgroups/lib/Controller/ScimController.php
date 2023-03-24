@@ -27,11 +27,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
-use OCP\IDBConnection;
-use OCP\IUserManager;
 use OCP\IGroupManager;
-use OCP\Files\IRootFolder;
-use OCP\DB\QueryBuilder\IQueryBuilder;
 
 
 // use OCP\DB\QueryBuilder\IQueryBuilder;
@@ -43,6 +39,9 @@ const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
 
 const RESPONSE_TO_GROUP_CREATE = Http::STATUS_CREATED;
 const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
+
+const OUR_DOMAIN = "almere.pondersource.net";
+const IGNORE_DOMAIN = "sram.surf.nl";
 
 /**
  * Class ScimController
@@ -56,117 +55,60 @@ class ScimController extends Controller {
 	private $dbConn;
 
 	/**
+	 * @var IGroupManager $groupManager
+	 */
+	private $groupManager;
+
+	/**
 	 * @var MixedGroupShareProvider
 	 */
 	protected $mixedGroupShareProvider;
-
-	private $users;
-	private $groups;
 
 	/**
 	 * OcmController constructor.
 	 *
 	 * @param string $appName
 	 * @param IRequest $request
-	 * @param MixedGroupShareProvider $mixedGroupShareProvider
-	 * @param IDBConnection $dbConn
+	 * @param IGroupManager $groupManager
+
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		Notifications $notifications,
-		IDBConnection $dbConn,
-		IUserManager $userManager,
-		IGroupManager $groupManager,
-		IRootFolder $rootFolder
+		IGroupManager $groupManager
 	) {
 		parent::__construct($appName, $request);
 		// error_log("Federated Groups ScimController constructed");
 		$federatedGroupsApp = new \OCA\FederatedGroups\AppInfo\Application();
 		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
-		$this->dbConn = $dbConn;
+		$this->groupManager = $groupManager;
 	}
 
-	private function getRegularGroupId($groupId) {
-		$queryBuilder = $this->dbConn->getQueryBuilder();
-		$cursor = $queryBuilder->select('gid')->from('groups')
-			->where($queryBuilder->expr()->eq('gid', $queryBuilder->createNamedParameter($groupId, IQueryBuilder::PARAM_STR)))->execute();
-		$row = $cursor->fetch();
-		$cursor->closeCursor();
-		error_log("cursor closed");
-		if ($row === false) {
+	private function checkNeedToSend($newUser, $existingUsers) {
+		error_log("checkNeedToSend($newUser, $existingUsers)");
+		$newUserParts = explode("#", $newUser);
+		if (count($newUserParts) == 1) {
+			error_log("This user is local");
 			return false;
-		} else {
-			error_log(var_export($row, true));
-			return $row['gid'];
 		}
-	}
-
-	private function addToRegularGroup($userId, $regularGroupId) {
-		error_log("addToRegularGroup $userId $regularGroupId calling notifyNewRegularGroupMember");
-		$this->mixedGroupShareProvider->notifyNewRegularGroupMember($userId, $regularGroupId);
-		$queryBuilder = $this->dbConn->getQueryBuilder();
-		$cursor = $queryBuilder->select('count(*)')->from('group_user')
-		  ->where($queryBuilder->expr()->eq('gid', $queryBuilder->createNamedParameter($regularGroupId, IQueryBuilder::PARAM_STR)))
-		  ->and($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($userId, IQueryBuilder::PARAM_STR)))
-		  ->execute();
-  	$row = $cursor->fetch();
-	  $cursor->closeCursor();
-		error_log("exists?");
-		error_log(var_export($row, true));
-
-		$result = $queryBuilder->insert('group_user')
-			->values([
-				'uid' => $queryBuilder->createNamedParameter($userId, IQueryBuilder::PARAM_STR),
-				'gid' => $queryBuilder->createNamedParameter($regularGroupId, IQueryBuilder::PARAM_STR),
-			])->execute();
-		return true;
-	}
-
-	private function  getCustomGroupId($groupId) {
-		$queryBuilder = $this->dbConn->getQueryBuilder();
-		$cursor = $queryBuilder->select('group_id')->from('custom_group')
-			->where($queryBuilder->expr()->eq('uri', $queryBuilder->createNamedParameter($groupId, IQueryBuilder::PARAM_STR)))->execute();
-		$row = $cursor->fetch();
-		$cursor->closeCursor();
-		error_log("cursor closed");
-		if ($row === false) {
-			return false;
-		} else {
-			return $row['group_id'];
-		}
-	}
-
-	private function addToCustomGroup($userId, $customGroupId) {
-		error_log("addToCustomGroup $userId $customGroupId calling notifyNewCustomGroupMember");
-		$this->mixedGroupShareProvider->notifyNewCustomGroupMember($userId, $customGroupId);
-		$queryBuilder = $this->dbConn->getQueryBuilder();
-		$result = $queryBuilder->insert('custom_group_member')
-			->values([
-				'user_id' => $queryBuilder->createNamedParameter($userId, IQueryBuilder::PARAM_STR),
-				'group_id' => $queryBuilder->createNamedParameter($customGroupId, IQueryBuilder::PARAM_INT),
-				'role' => $queryBuilder->createNamedParameter(1, IQueryBuilder::PARAM_INT),
-			])->execute();
-		// error_log(var_export($result, true));
-		return true;
-	}
-
-
-	private function addMember($userId, $groupId) {
-		$regularGroupId = $this->getRegularGroupId($groupId);
-		if ($regularGroupId === false) {
-			error_log("no regular group found called $groupId");
-			$customGroupId = $this->getCustomGroupId($groupId);
-			if ($customGroupId === false) {
-				error_log("no custom group found called $groupId");
-				return false;
+		if (count($newUserParts) == 2) {
+			$newDomain = $newUserParts[1];
+			foreach($existingUsers as $existingUser) {
+				error_log("Considering $existingUser");
+				$existingUserParts = explode("#", $existingUser);
+				if (count($existingUserParts) == 2) {
+					error_log("Comparing $newDomain to " . var_export($existingUserParts, true));
+					if ($existingUserParts[1] == $newDomain) {
+						error_log("Already have a user there!");
+						return false;
+					}
+				}
 			}
-			error_log("Adding $userId to custom group $customGroupId ('$groupId')");
-			return $this->addToCustomGroup($userId, $customGroupId);
-		} else {
-			error_log("Adding $userId to regular group $regularGroupId ('$groupId')");
-			return $this->addToRegularGroup($userId, $regularGroupId);
+			error_log("This is the first user in this group from $newDomain");
+			return $newDomain;
 		}
+		error_log("WARNING: could not parse $newUser");
+		return false;
 	}
 
 	/**
@@ -181,12 +123,56 @@ class ScimController extends Controller {
 		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
 		$groupId = $obj["id"];
+		$group = $this->groupManager->get($groupId);
+		error_log("Got group");
+		$backend = $group->getBackend();
+		error_log("Got backend");
+		$currentMembers = $backend->usersInGroup($groupId);
+		error_log("Got current group members");
+		error_log(var_export($currentMembers, true));
+    $newMembers = [];
 		foreach ($obj["members"] as $member) {
-			$userId = str_replace("@", "#", $member["value"]);
-			error_log("adding member $userId to $groupId");
-			$this->addMember($userId, $groupId);
+			$userIdParts = explode("@", $member["value"]);
+			error_log("A: " . var_export($userIdParts, true));
+			if (count($userIdParts) == 3) {
+        $userIdParts = [ $userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
+			}
+			error_log("B: " . var_export($userIdParts, true));
+			if (count($userIdParts) != 2) {
+				throw new Exception("cannot parse OCM user " . $member["value"]);
+			}
+			error_log("C: " . var_export($userIdParts, true));
+			$newMember = $userIdParts[0];
+			error_log("D: " . var_export($newMember, true));
+			if ($userIdParts[1] !== OUR_DOMAIN) {
+				$newMember .= "#" . $userIdParts[1];
+			}
+			if ($userIdParts[1] === IGNORE_DOMAIN) {
+				continue;
+			}
+			error_log("E: " . var_export($newMember, true));
+			$newMembers[] = $newMember;
 		}
-		
+		error_log("Got new group members");
+		error_log(var_export($newMembers, true));
+
+		for ($i = 0; $i < count($currentMembers); $i++) {
+			if (! in_array($currentMembers[$i], $newMembers)) {
+				error_log("Removing from $groupId: " . $currentMembers[$i]);
+				$backend->removeFromGroup($currentMembers[$i], $groupId);
+			}
+		}
+		for ($i = 0; $i < count($newMembers); $i++) {
+			if (! in_array($newMembers[$i], $currentMembers)) {
+				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
+				if ($newDomain !== false) {
+					error_log("New domain $newDomain in group $groupId");
+					$this->mixedGroupShareProvider->newDomainInGroup($newDomain, $groupId);					
+				}
+				error_log("Adding to $groupId: " . $newMembers[$i]);
+				$backend->addToGroup($newMembers[$i], $groupId);
+			}
+		}		
 		return new JSONResponse(
 			$obj,
 			RESPONSE_TO_GROUP_CREATE

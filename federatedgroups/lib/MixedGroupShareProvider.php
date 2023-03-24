@@ -345,6 +345,14 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 	}
 
+	public function newDomainInGroup($domain, $groupId) {
+		// Note that we assume all federated groups are regular groups.
+		$shares = $this->getSharesToRegularGroup($groupId);
+		foreach ($shares as $share) {
+			$this->sendOcmInvite($share, "$groupId@$domain");
+		}
+	}
+
 	/**
 	 * Share a path
 	 *
