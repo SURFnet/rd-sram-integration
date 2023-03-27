@@ -40,7 +40,7 @@ const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
 const RESPONSE_TO_GROUP_CREATE = Http::STATUS_CREATED;
 const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
 
-const OUR_DOMAIN = "almere.pondersource.net";
+const OUR_DOMAIN = getenv("SITE") . "pondersource.net";
 const IGNORE_DOMAIN = "sram.surf.nl";
 
 /**

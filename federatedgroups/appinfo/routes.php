@@ -8,8 +8,12 @@
  *
  */
 
-// $CONTROLLER = "rdapi";
-$CONTROLLER = "scim";
+error_log("Site: " . getenv("SITE"));
+if (getenv("SITE") == "cloud") {
+	$CONTROLLER = "rdapi";
+} else {
+	$CONTROLLER = "scim";
+}
 
 return [
 	'routes' => [
