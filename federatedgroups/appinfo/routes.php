@@ -16,11 +16,11 @@ return [
 		// Groups
 		['name' => "$CONTROLLER#getGroups", 'url' => '/scim/Groups', 'verb' => 'GET'],
 		['name' => "$CONTROLLER#createGroup", 'url' => '/scim/Groups', 'verb' => 'POST'],
-		['name' => "$CONTROLLER#updateGroup", 'url' => '/scim/Groups', 'verb' => 'PUT'],
+		['name' => "$CONTROLLER#updateGroup", 'url' => '/scim/Groups/{groupId}', 'verb' => 'PUT'],
 		// Users
 		['name' => "$CONTROLLER#getUsers", 'url' => '/scim/Users', 'verb' => 'GET'],
 		['name' => "$CONTROLLER#createUser", 'url' => '/scim/Users', 'verb' => 'POST'],
-		['name' => "$CONTROLLER#updateUser", 'url' => '/scim/Users', 'verb' => 'PUT'],
+		['name' => "$CONTROLLER#updateUser", 'url' => '/scim/Users/{userId}', 'verb' => 'PUT'],
 	],
 	'resources' => []
 ];

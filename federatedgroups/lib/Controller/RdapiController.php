@@ -183,7 +183,7 @@ class RdapiController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
-	public function updateUser() {
+	public function updateUser($userId) {
 		error_log("scim update user");
 		$body = file_get_contents("php://input");
 		$obj = json_decode($body, true);
@@ -206,13 +206,6 @@ class RdapiController extends Controller {
 	 * @PublicPage
 	 */
 	public function getGroups() {
-		// work around https://github.com/SURFnet/rd-sram-integration/issues/124
-		return new JSONResponse([
-			"totalResults" => 0,
-			"Resources" => [
-			],
-		], Http::STATUS_OK);
-
 		error_log("scim get groups");
 		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
 		$qs = explode(" ", $filter);
@@ -247,7 +240,11 @@ class RdapiController extends Controller {
 		error_log("=========================bodyJson=============================");
 		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
-		$obj["id"] = $this->lookupGroup($obj);
+		$groupId = $this->lookupGroup($obj);
+		$obj["id"] = $groupId;
+		$obj["meta"] = [
+			"location" => "/Groups/$groupId"
+		];
     $this->groups[$obj["externalId"]] = $obj;
 		$this->saveGroups();
 		error_log("Forwarding this SCIM message");
@@ -262,7 +259,7 @@ class RdapiController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
-	public function updateGroup() {
+	public function updateGroup($groupId) {
 		error_log("scim update group");
 		$obj = json_decode(file_get_contents("php://input"), true);
 
