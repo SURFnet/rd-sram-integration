@@ -21,6 +21,7 @@ echo "starting oc1.docker"
 docker run -d --network=testnet --name=oc1.docker \
   -v $REPO_DIR:/var/www/html/apps/rd-sram-integration \
   -v $REPO_DIR/core/apps/files_sharing:/var/www/html/apps/files_sharing \
+  -v $REPO_DIR/core/apps/user_ldap:/var/www/html/apps/user_ldap \
   oc1
 
 echo "starting maria2.docker"
@@ -29,6 +30,7 @@ echo "starting oc2.docker"
 docker run -d --network=testnet --name=oc2.docker \
   -v $REPO_DIR:/var/www/html/apps/rd-sram-integration \
   -v $REPO_DIR/core/apps/files_sharing:/var/www/html/apps/files_sharing \
+  -v $REPO_DIR/core/apps/user_ldap:/var/www/html/apps/user_ldap \
   oc2
 
 echo "starting firefox tester"
