@@ -43,7 +43,7 @@ const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
 const IGNORE_DOMAIN = "sram.surf.nl";
 
 function getOurDomain() {
-	return getenv("SITE") . "pondersource.net";
+	return getenv("SITE") . ".pondersource.net";
 }
 
 /**
