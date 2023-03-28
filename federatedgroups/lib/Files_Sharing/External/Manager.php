@@ -112,6 +112,7 @@ class Manager {
 	 * @return Mount|null
 	 */
 	public function addShare($remote, $token, $password, $name, $owner, $accepted=false, $groupId = null, $remoteId = -1) {
+    error_log("TODO: Check if this code is run the receiving side?");
 		$group = $groupId ? $groupId : $this->uid;
 		$accepted = $accepted ? 1 : 0;
 		$name = Filesystem::normalizePath('/' . $name);

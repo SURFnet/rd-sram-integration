@@ -100,7 +100,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			 $groupManager,
 			 $rootFolder
 		);
-		// error_log("Constructing the MixedGroupShareProvider");
+		error_log("Constructing the MixedGroupShareProvider");
 		$this->notifications = $notifications;
 		$this->addressHandler = $addressHandler;
 		$this->l = $l;
@@ -211,6 +211,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 * @throws ShareNotFound
 	 */
 	private function createShareObject($data) {
+		error_log("MixedGroupShareProvider createShareObjectt");
 		$share = new Share($this->rootFolder, $this->userManager);
 		$share->setId($data['id'])
 			->setShareType((int)$data['share_type'])
@@ -250,6 +251,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	}
 
 	private function customGroupHasForeignersFrom($remote, $customGroupId) {
+		error_log("MixedGroupShareProvider customGroupHasForeignersFrom");
 		$queryBuilder = $this->dbConn->getQueryBuilder();
 		$cursor = $queryBuilder->select('user_id')->from('custom_group_member')
 			->where($queryBuilder->expr()->eq('group_id', $queryBuilder->createNamedParameter($customGroupId, IQueryBuilder::PARAM_INT)))
@@ -263,6 +265,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	}
 
 	private function regularGroupHasForeignersFrom($remote, $regularGroupId) {
+		error_log("MixedGroupShareProvider regularGroupHasForeignersFrom");
+	
 		$queryBuilder = $this->dbConn->getQueryBuilder();
 		$cursor = $queryBuilder->select('uid')->from('group_user')
 			->where($queryBuilder->expr()->eq('gid', $queryBuilder->createNamedParameter($regularGroupId, IQueryBuilder::PARAM_STR)))
@@ -276,6 +280,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	}
 
 	public function notifyNewRegularGroupMember($userId, $regularGroupId) {
+		error_log("MixedGroupShareProvider notifyNewRegularGroupMember");
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
@@ -291,6 +296,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 	}
 	private function getSharesToRegularGroup($regularGroupId) {
+		error_log("MixedGroupShareProvider getSharesToRegularGroup");
 		$qb = $this->dbConn->getQueryBuilder();
 		$qb->select('*')
 			->from('share');
@@ -311,6 +317,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	}
 
 	private function getSharesToCustomGroup($customGroupId) {
+		error_log("MixedGroupShareProvider getSharesToCustomGroup");
+
     	$qb = $this->dbConn->getQueryBuilder();
 		$qb->select('uri')
 		  ->from('custom_group');
@@ -328,6 +336,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	}
 	
 	public function notifyNewCustomGroupMember($userId, $customGroupId) {
+		error_log("MixedGroupShareProvider notifyNewCustomGroupMember");
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
@@ -345,11 +354,12 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 	}
 
-	public function newDomainInGroup($domain, $groupId) {
+	public function newDomainInGroup($remote, $groupId) {
+		error_log("MixedGroupShareProvider newDomainInGroup");
 		// Note that we assume all federated groups are regular groups.
 		$shares = $this->getSharesToRegularGroup($groupId);
 		foreach ($shares as $share) {
-			$this->sendOcmInvite($share, "$groupId@$domain");
+			$this->sendOcmInvite($share, $remote);
 		}
 	}
 

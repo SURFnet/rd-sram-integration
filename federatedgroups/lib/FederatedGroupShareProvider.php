@@ -153,6 +153,7 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 			\OC::$server->getEventDispatcher(),
 			$shareWith
 		);
+		error_log("Our FederatedGroupShareProvider calling external manager addShare");
 		$externalManager->addShare(
 			$remote,
 			$token,
