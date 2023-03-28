@@ -207,6 +207,13 @@ class RdapiController extends Controller {
 	 */
 	public function getGroups() {
 		error_log("scim get groups");
+		// work around #129
+		return new JSONResponse([
+			"totalResults" => 0,
+			"Resources" => [
+			],
+		], Http::STATUS_OK);
+
 		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
 		$qs = explode(" ", $filter);
 		list($field, $condition, $value) = $qs; // [$field, $condition, $value] = $qs;
