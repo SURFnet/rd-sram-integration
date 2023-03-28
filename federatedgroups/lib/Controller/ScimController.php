@@ -40,8 +40,11 @@ const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
 const RESPONSE_TO_GROUP_CREATE = Http::STATUS_CREATED;
 const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
 
-const OUR_DOMAIN = getenv("SITE") . "pondersource.net";
 const IGNORE_DOMAIN = "sram.surf.nl";
+
+function getOurDomain() {
+	return getenv("SITE") . "pondersource.net";
+}
 
 /**
  * Class ScimController
@@ -144,7 +147,7 @@ class ScimController extends Controller {
 			error_log("C: " . var_export($userIdParts, true));
 			$newMember = $userIdParts[0];
 			error_log("D: " . var_export($newMember, true));
-			if ($userIdParts[1] !== OUR_DOMAIN) {
+			if ($userIdParts[1] !== getOurDomain()) {
 				$newMember .= "#" . $userIdParts[1];
 			}
 			if ($userIdParts[1] === IGNORE_DOMAIN) {
@@ -204,7 +207,7 @@ class ScimController extends Controller {
 			error_log("C: " . var_export($userIdParts, true));
 			$newMember = $userIdParts[0];
 			error_log("D: " . var_export($newMember, true));
-			if ($userIdParts[1] !== OUR_DOMAIN) {
+			if ($userIdParts[1] !== getOurDomain()) {
 				$newMember .= "#" . $userIdParts[1];
 			}
 			if ($userIdParts[1] === IGNORE_DOMAIN) {

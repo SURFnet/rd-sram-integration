@@ -270,7 +270,7 @@ class RdapiController extends Controller {
     $this->groups[$obj["externalId"]] = $obj;
 		$this->saveGroups();
 		error_log("Forwarding this SCIM message");
-		$this->forwardToServers("PUT", "/Groups", $obj, $this->getServersInvolved($obj));
+		$this->forwardToServers("PUT", "/Groups/" . $groupId, $obj, $this->getServersInvolved($obj));
 		return new JSONResponse(
 			$obj,
 			Http::STATUS_CREATED
