@@ -136,7 +136,10 @@ class ScimController extends Controller {
 			error_log("C: " . var_export($userIdParts, true));
 			$newMember = $userIdParts[0];
 			error_log("D: " . var_export($newMember, true));
-			if ($userIdParts[1] !== getOurDomain()) {
+			if ($userIdParts[1] === getOurDomain()) {
+				error_log("User is local to " . getOurDomain());
+			} else {
+				error_log("User is foreign to " . getOurDomain());
 				$newMember .= "#" . $userIdParts[1];
 			}
 			if ($userIdParts[1] === IGNORE_DOMAIN) {
