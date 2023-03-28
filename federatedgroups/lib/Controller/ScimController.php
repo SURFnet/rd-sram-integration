@@ -182,7 +182,7 @@ class ScimController extends Controller {
 		// expect group to already exist
 		// we are probably receiving this create due to 
 		// https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
-		$this->doGroupUpdate($groupId, $obj);
+		$this->doUpdateGroup($groupId, $obj);
 		return new JSONResponse(
 			$obj,
 			RESPONSE_TO_GROUP_CREATE
@@ -200,7 +200,7 @@ class ScimController extends Controller {
 		error_log("=========================bodyJson=============================");
 		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
-		$this->doGroupUpdate($groupId, $obj);
+		$this->doUpdateGroup($groupId, $obj);
 		return new JSONResponse(
 			$obj,
 			RESPONSE_TO_GROUP_CREATE
