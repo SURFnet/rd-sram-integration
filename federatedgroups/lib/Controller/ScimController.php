@@ -114,78 +114,7 @@ class ScimController extends Controller {
 		return false;
 	}
 
-	/**
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 */
-	public function createGroup() {
-		error_log("scim create group");
-		$obj = json_decode(file_get_contents("php://input"), true);
-
-		error_log("=========================bodyJson=============================");
-		error_log(var_export($obj, true));
-		error_log("=========================bodyJson=============================");
-		$groupId = $obj["id"];
-		$group = $this->groupManager->get($groupId);
-		error_log("Got group");
-		$backend = $group->getBackend();
-		error_log("Got backend");
-		$currentMembers = $backend->usersInGroup($groupId);
-		error_log("Got current group members");
-		error_log(var_export($currentMembers, true));
-    $newMembers = [];
-		foreach ($obj["members"] as $member) {
-			$userIdParts = explode("@", $member["value"]);
-			error_log("A: " . var_export($userIdParts, true));
-			if (count($userIdParts) == 3) {
-        $userIdParts = [ $userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
-			}
-			error_log("B: " . var_export($userIdParts, true));
-			if (count($userIdParts) != 2) {
-				throw new Exception("cannot parse OCM user " . $member["value"]);
-			}
-			error_log("C: " . var_export($userIdParts, true));
-			$newMember = $userIdParts[0];
-			error_log("D: " . var_export($newMember, true));
-			if ($userIdParts[1] !== getOurDomain()) {
-				$newMember .= "#" . $userIdParts[1];
-			}
-			if ($userIdParts[1] === IGNORE_DOMAIN) {
-				continue;
-			}
-			error_log("E: " . var_export($newMember, true));
-			$newMembers[] = $newMember;
-		}
-		error_log("Got new group members");
-		error_log(var_export($newMembers, true));
-
-		for ($i = 0; $i < count($newMembers); $i++) {
-			$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
-			if ($newDomain !== false) {
-				error_log("New domain $newDomain in group $groupId");
-				$this->mixedGroupShareProvider->newDomainInGroup($newDomain, $groupId);					
-			}
-			error_log("Adding to $groupId: " . $newMembers[$i]);
-			$backend->addToGroup($newMembers[$i], $groupId);
-		}		
-		return new JSONResponse(
-			$obj,
-			RESPONSE_TO_GROUP_CREATE
-		);
-	}
-
-	/**
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 */
-	public function updateGroup($groupId) {
-		error_log("scim update group $groupId");
-		$obj = json_decode(file_get_contents("php://input"), true);
-
-		error_log("=========================bodyJson=============================");
-		error_log(var_export($obj, true));
-		error_log("=========================bodyJson=============================");
-		$groupId = $obj["id"];
+	private function doUpdateGroup($groupId, $obj) {
 		$group = $this->groupManager->get($groupId);
 		error_log("Got group");
 		$backend = $group->getBackend();
@@ -235,7 +164,43 @@ class ScimController extends Controller {
 				error_log("Adding to $groupId: " . $newMembers[$i]);
 				$backend->addToGroup($newMembers[$i], $groupId);
 			}
-		}		
+		}
+	}
+
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 */
+	public function createGroup() {
+		error_log("scim create group");
+		$obj = json_decode(file_get_contents("php://input"), true);
+
+		error_log("=========================bodyJson=============================");
+		error_log(var_export($obj, true));
+		error_log("=========================bodyJson=============================");
+		$groupId = $obj["id"];
+		// expect group to already exist
+		// we are probably receiving this create due to 
+		// https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
+		$this->doGroupUpdate($groupId, $obj);
+		return new JSONResponse(
+			$obj,
+			RESPONSE_TO_GROUP_CREATE
+		);
+	}
+
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 */
+	public function updateGroup($groupId) {
+		error_log("scim update group $groupId");
+		$obj = json_decode(file_get_contents("php://input"), true);
+
+		error_log("=========================bodyJson=============================");
+		error_log(var_export($obj, true));
+		error_log("=========================bodyJson=============================");
+		$this->doGroupUpdate($groupId, $obj);
 		return new JSONResponse(
 			$obj,
 			RESPONSE_TO_GROUP_CREATE
