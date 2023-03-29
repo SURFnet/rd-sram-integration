@@ -19,6 +19,7 @@ use OCP\Share\Events\AcceptShare;
 use OCP\Share\Events\DeclineShare;
 use OCP\Util;
 use OCP\IContainer;
+use OCA\FederatedGroups\FederatedFileSharing\FedShareManager;
 
 class Application extends App {
 	private $isProviderRegistered = false;
@@ -436,5 +437,21 @@ class Application extends App {
 		);
 		$user = \OC::$server->getUserSession()->getUser();
 		return $fedShareManager->getExternalManager($user->getUID(), $ocmShareType);
+	}
+
+	public static function getFedSharemanager(){
+		/*
+		return new FedShareManager(
+			FederatedShareProvider $federatedUserShareProvider,
+			FederatedGroupShareProvider $federatedGroupShareProvider,
+			\OCA\FederatedFileSharing\Notifications $federatedUserNotifications,
+			\OCA\FederatedGroups\FederatedFileSharing\Notifications $federatedGroupNotifications,
+			IUserManager $userManager,
+			ActivityManager $activityManager,
+			NotificationManager $notificationManager,
+			AddressHandler $addressHandler,
+			Permissions $permissions,
+			EventDispatcherInterface $eventDispatcher
+		);*/
 	}
 } 

@@ -605,4 +605,46 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		return $share;
 	}
 
+	/**
+	 * @param string $remoteId
+	 * @param string $shareToken
+	 * @return mixed
+	 */
+	public function unshare($remoteId, $shareToken) {
+		$query = $this->dbConnection->getQueryBuilder();
+		$query->select('*')->from($this->externalShareTable)
+			->where(
+				$query->expr()->eq(
+					'remote_id',
+					$query->createNamedParameter($remoteId)
+				)
+			)
+			->andWhere(
+				$query->expr()->eq(
+					'share_token',
+					$query->createNamedParameter($shareToken)
+				)
+			);
+		$shareRow = $query->execute()->fetch();
+		if ($shareRow !== false) {
+			$query = $this->dbConnection->getQueryBuilder();
+			$query->delete($this->externalShareTable)
+				->where(
+					$query->expr()->eq(
+						'remote_id',
+						$query->createNamedParameter($shareRow['remote_id'])
+					)
+				)
+				->andWhere(
+					$query->expr()->eq(
+						'share_token',
+						$query->createNamedParameter($shareRow['share_token'])
+					)
+				);
+			$query->execute();
+		}
+		return $shareRow;
+	}
+
+
 }

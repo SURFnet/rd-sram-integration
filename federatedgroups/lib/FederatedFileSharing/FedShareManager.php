@@ -44,7 +44,7 @@ use OCA\FederatedGroups\FederatedGroupShareProvider;
 /**
  * Class FedShareManager holds the share logic
  *
- * @package OCA\FederatedFileSharing
+ * @package OCA\FederatedGroups\FederatedFileSharing
  */
 class FedShareManager {
 	public const ACTION_URL = 'ocs/v1.php/apps/files_sharing/api/v1/remote_shares/pending/';
@@ -313,7 +313,7 @@ class FedShareManager {
 	 *
 	 * @return void
 	 */
-	public function unshare($id, $token, $ocmShareType) {
+	public function unshare($id, $token) {
 		$shareRow = $this->getProviderForOcmShareType($ocmShareType)->unshare($id, $token);
 		if ($shareRow === false) {
 			return;
