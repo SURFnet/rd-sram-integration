@@ -4,6 +4,8 @@ echo Installing Custom Groups
 php console.php app:enable customgroups
 echo Installing Federated Groups
 php console.php app:enable federatedgroups
+echo Installing user_ldap
+php console.php app:enable user_ldap
 echo Editing Config
 # sed -i "3 i\  'allow_local_remote_servers' => true," config/config.php
 sed -i "8 i\      1 => 'oc1.docker'," /var/www/html/config/config.php
