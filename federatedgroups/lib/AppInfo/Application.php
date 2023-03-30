@@ -444,7 +444,7 @@ class Application extends App {
 		$federatedUserShareProvider = self::getFederatedUserShareProvider();
 		$federatedGroupShareProvider = self::getfederatedGroupShareProvider();
 		$federatedUserNotifications = self::getFederatedUserNotifications();
-		$federatedGroupNotifications = selft::getFederatedGroupNotifications();
+		$federatedGroupNotifications = self::getFederatedGroupNotifications();
 		$userManager = \OC::$server->getUserManager();
 		$activityManager = \OC::$server->getActivityManager();
 		$notificationManager = \OC::$server->getNotificationManager();
@@ -455,7 +455,7 @@ class Application extends App {
 			$l10n
 		);	
 		$permissions = new \OCA\FederatedFileSharing\Ocm\Permissions();
-		$$eventDispatcher = \OC::$server->getEventDispatcher();
+		$eventDispatcher = \OC::$server->getEventDispatcher();
 		return new FedShareManager(
 			$federatedUserShareProvider ,
 			$federatedGroupShareProvider,

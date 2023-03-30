@@ -141,7 +141,7 @@ class FedShareManager {
 		// error_log("oooooooo getProviderForOcmShareType ocmShareType {$ocmShareType}");
 		if ($ocmShareType == 'user' || $ocmShareType == 6) {
 			return $this->federatedUserShareProvider;
-		} else if ($ocmShareType == 'group') {
+		} else if ($ocmShareType == 'group' || $ocmShareType == 7) {
 			return $this->federatedGroupShareProvider;
 		} else {
 			error_log("Unsupported share type $ocmShareType");
@@ -314,7 +314,7 @@ class FedShareManager {
 	 * @return void
 	 */
 	public function unshare($id, $token) {
-		$shareRow = $this->getProviderForOcmShareType($ocmShareType)->unshare($id, $token);
+		$shareRow = $this->getProviderForOcmShareType('group')->unshare($id, $token);
 		if ($shareRow === false) {
 			return;
 		}
