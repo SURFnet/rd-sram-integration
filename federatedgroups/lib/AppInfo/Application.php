@@ -440,18 +440,33 @@ class Application extends App {
 	}
 
 	public static function getFedSharemanager(){
-		/*
+		
+		$federatedUserShareProvider = self::getFederatedUserShareProvider();
+		$federatedGroupShareProvider = self::getfederatedGroupShareProvider();
+		$federatedUserNotifications = self::getFederatedUserNotifications();
+		$federatedGroupNotifications = selft::getFederatedGroupNotifications();
+		$userManager = \OC::$server->getUserManager();
+		$activityManager = \OC::$server->getActivityManager();
+		$notificationManager = \OC::$server->getNotificationManager();
+		$urlGenerator = \OC::$server->getURLGenerator();
+		$l10n = \OC::$server->getL10N('federatedfilesharing');
+		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
+			$urlGenerator,
+			$l10n
+		);	
+		$permissions = new \OCA\FederatedFileSharing\Ocm\Permissions();
+		$$eventDispatcher = \OC::$server->getEventDispatcher();
 		return new FedShareManager(
-			FederatedShareProvider $federatedUserShareProvider,
-			FederatedGroupShareProvider $federatedGroupShareProvider,
-			\OCA\FederatedFileSharing\Notifications $federatedUserNotifications,
-			\OCA\FederatedGroups\FederatedFileSharing\Notifications $federatedGroupNotifications,
-			IUserManager $userManager,
-			ActivityManager $activityManager,
-			NotificationManager $notificationManager,
-			AddressHandler $addressHandler,
-			Permissions $permissions,
-			EventDispatcherInterface $eventDispatcher
-		);*/
+			$federatedUserShareProvider ,
+			$federatedGroupShareProvider,
+			$federatedUserNotifications,
+			$federatedGroupNotifications,
+			$userManager,
+		    $activityManager,
+			$notificationManager,
+			$addressHandler,
+			$permissions,
+			$eventDispatcher
+		);
 	}
 } 
