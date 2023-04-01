@@ -569,4 +569,83 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		return $share;
 	}
 
+	/**
+	 * @inheritdoc
+	 */
+	public function getShareById($id, $recipientId = null) {
+		if (!ctype_digit($id)) {
+			// share id is defined as a field of type integer
+			// if someone calls the API asking for a share id like "abc" or "42.1"
+			// then there is no point trying to query the database,
+			// and, depending on the database, the query may throw an exception
+			// with a message like "invalid input syntax for type integer"
+			// So throw ShareNotFound now.
+			throw new ShareNotFound();
+		}
+		$qb = $this->dbConnection->getQueryBuilder();
+
+		
+		$qb->select('*')
+			->from($this->shareTable)
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(self::SHARE_TYPE_REMOTE_GROUP)));
+		
+			$cursor = $qb->execute();
+		$data = $cursor->fetch();
+		$cursor->closeCursor();
+
+		if ($data === false) {
+			throw new ShareNotFound();
+		}
+
+		try {
+			$share = $this->createShareObject($data);
+		} catch (InvalidShare $e) {
+			throw new ShareNotFound();
+		}
+		return $share;
+	}
+
+	/**
+	 * @param string $remoteId
+	 * @param string $shareToken
+	 * @return mixed
+	 */
+	public function unshare($remoteId, $shareToken) {
+		$query = $this->dbConnection->getQueryBuilder();
+		$query->select('*')->from($this->externalShareTable)
+			->where(
+				$query->expr()->eq(
+					'remote_id',
+					$query->createNamedParameter($remoteId)
+				)
+			)
+			->andWhere(
+				$query->expr()->eq(
+					'share_token',
+					$query->createNamedParameter($shareToken)
+				)
+			);
+		$shareRow = $query->execute()->fetch();
+		if ($shareRow !== false) {
+			$query = $this->dbConnection->getQueryBuilder();
+			$query->delete($this->externalShareTable)
+				->where(
+					$query->expr()->eq(
+						'remote_id',
+						$query->createNamedParameter($shareRow['remote_id'])
+					)
+				)
+				->andWhere(
+					$query->expr()->eq(
+						'share_token',
+						$query->createNamedParameter($shareRow['share_token'])
+					)
+				);
+			$query->execute();
+		}
+		return $shareRow;
+	}
+
+
 }

@@ -19,6 +19,7 @@ use OCP\Share\Events\AcceptShare;
 use OCP\Share\Events\DeclineShare;
 use OCP\Util;
 use OCP\IContainer;
+use OCA\FederatedGroups\FederatedFileSharing\FedShareManager;
 
 class Application extends App {
 	private $isProviderRegistered = false;
@@ -436,5 +437,36 @@ class Application extends App {
 		);
 		$user = \OC::$server->getUserSession()->getUser();
 		return $fedShareManager->getExternalManager($user->getUID(), $ocmShareType);
+	}
+
+	public static function getFedSharemanager(){
+		
+		$federatedUserShareProvider = self::getFederatedUserShareProvider();
+		$federatedGroupShareProvider = self::getfederatedGroupShareProvider();
+		$federatedUserNotifications = self::getFederatedUserNotifications();
+		$federatedGroupNotifications = self::getFederatedGroupNotifications();
+		$userManager = \OC::$server->getUserManager();
+		$activityManager = \OC::$server->getActivityManager();
+		$notificationManager = \OC::$server->getNotificationManager();
+		$urlGenerator = \OC::$server->getURLGenerator();
+		$l10n = \OC::$server->getL10N('federatedfilesharing');
+		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
+			$urlGenerator,
+			$l10n
+		);	
+		$permissions = new \OCA\FederatedFileSharing\Ocm\Permissions();
+		$eventDispatcher = \OC::$server->getEventDispatcher();
+		return new FedShareManager(
+			$federatedUserShareProvider ,
+			$federatedGroupShareProvider,
+			$federatedUserNotifications,
+			$federatedGroupNotifications,
+			$userManager,
+		    $activityManager,
+			$notificationManager,
+			$addressHandler,
+			$permissions,
+			$eventDispatcher
+		);
 	}
 } 
