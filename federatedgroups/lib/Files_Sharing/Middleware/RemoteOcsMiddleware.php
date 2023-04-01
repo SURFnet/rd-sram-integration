@@ -23,7 +23,7 @@
 namespace OCA\FederatedGroups\Files_Sharing\Middleware;
 
 use OCA\Files_Sharing\External\Manager;
-use OCA\FederatedGroups\Files_Sharing\External\Manager as GroupManager;
+use OCA\FederatedGroups\Files_Sharing\External\Manager as GroupExternalManager;
 
 /**
  * Checks whether the "sharing check" is enabled
@@ -34,32 +34,32 @@ class RemoteOcsMiddleware implements IRemoteOcsMiddleware {
 	/** @var Manager */
 	private $externalManager;
 
-	/** @var GroupManager */
-	private $externalGroupManager;
+	/** @var GroupExternalManager */
+	private $groupExternalManager;
 
 	/***
 	 * @param Manager $externalManager
-	 * @param GroupManager $externalGroupManager
+	 * @param GroupExternalManager $groupExternalManager
 	 */
 	public function __construct(
 		Manager $externalManager,
-        GroupManager $externalGroupManager
+        GroupExternalManager $groupExternalManager
 	) {
 		$this->externalManager = $externalManager;
-		$this->externalGroupManager = $externalGroupManager;
+		$this->groupExternalManager = $groupExternalManager;
 	}
 
 	public function getAcceptedShares() {
 		return \array_merge(
             $this->externalManager->getAcceptedShares(),
-            $this->externalGroupManager->getAcceptedShares()
+            $this->groupExternalManager->getAcceptedShares()
         );
 	}
 
 	public function getOpenShares() {
 		return \array_merge(
             $this->externalManager->getOpenShares(),
-            $this->externalGroupManager->getOpenShares()
+            $this->groupExternalManager->getOpenShares()
         );
 	}
 }
