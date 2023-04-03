@@ -11,3 +11,4 @@ sed -i "9 i\      2 => 'oc2.docker'," /var/www/html/config/config.php
 sed -i "3 i\  'sharing.managerFactory' => 'OCA\\\\FederatedGroups\\\\ShareProviderFactory'," /var/www/html/config/config.php
 sed -i "4 i\  'sharing.remoteShareesSearch' => 'OCA\\\\FederatedGroups\\\\ShareeSearchPlugin'," /var/www/html/config/config.php
 sed -i "5 i\  'files_sharing.ocsMiddleware' => 'OCA\\\\FederatedGroups\\\\Files_Sharing\\\\Middleware\\\\RemoteOcsMiddleware'," /var/www/html/config/config.php
+sed -i "6 i\  'federatedfilesharing.fedShareManager' => 'OCA\\\\FederatedGroups\\\\FederatedFileSharing\\\\FedShareManager'," /var/www/html/config/config.php
