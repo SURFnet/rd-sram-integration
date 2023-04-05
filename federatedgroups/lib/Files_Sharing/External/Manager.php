@@ -70,14 +70,14 @@ class Manager extends AbstractManager {
 	}
 
 	protected function insertedUnacceptedShare(array $data) {
-		$groupRowId = $this->connection->lastInsertId("*PREFIX*$this->tableName");
+		$groupRowId = $this->connection->lastInsertId("*PREFIX*{$this->tableName}");
 		$users = \OC::$server->getGroupManager()->findUsersInGroup($data['user']);
 		$data['parent'] = $groupRowId;
 		$data['share_type'] = 6;
 		foreach($users as $item){
 			$data['user'] = $item->getUID();
 			$query = $this->connection->prepare("
-				INSERT INTO `*PREFIX*$this->tableName`
+				INSERT INTO `*PREFIX*{$this->tableName}`
 					(`remote`, `share_token`, `password`, `name`, `owner`, `user`,
 					`mountpoint`, `mountpoint_hash`, `accepted`, `remote_id`, `parent`, `share_type`, `lastscan`)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -91,7 +91,7 @@ class Manager extends AbstractManager {
 
 	protected function executeDeclineShareStatement($id) {
 		$removeShare = $this->connection->prepare("
-			Update `*PREFIX*$this->tableName` set `accepted` = 2 WHERE `id` = ? AND `user` = ?");
+			Update `*PREFIX*{$this->tableName}` set `accepted` = 2 WHERE `id` = ? AND `user` = ?");
 		$removeShare->execute([$id, $this->uid]);
 	}
 
