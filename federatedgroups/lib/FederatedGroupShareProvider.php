@@ -99,5 +99,4 @@ class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
 	public function identifier() {
 		return 'ocGroupFederatedSharing';
 	}
-
 }
