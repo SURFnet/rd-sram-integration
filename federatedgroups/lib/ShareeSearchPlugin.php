@@ -34,7 +34,6 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 	private $offset = 0;
 
 	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, IManager $contactsManager, UserSearch $userSearch) {
-		// error_log("constructing ShareeSearchPlugin");
 		$this->config = $config;
 		$this->userManager = $userManager;
 		$user = $userSession->getUser();
@@ -47,9 +46,8 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 	}
 
 	public function search($search) {
-		error_log("searching $search");
 		// copied from https://github.com/owncloud/core/blob/v10.11.0/apps/files_sharing/lib/Controller/ShareesController.php#L385-L503
-    // just doubling up every result so it appears once with share type Share::SHARE_TYPE_REMOTE
+    	// just doubling up every result so it appears once with share type Share::SHARE_TYPE_REMOTE
 		// and once with share type Share::SHARE_TYPE_REMOTE_GROUP
 
 		// Fetch remote search properties from app config
