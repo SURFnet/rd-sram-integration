@@ -33,6 +33,7 @@ use OCP\ILogger;
 use OCP\IUserManager;
 use OCP\Share;
 use OCP\Share\IShare;
+use OCA\FederatedGroups\FederatedGroupShareProvider;
 
 /**
  * Class OcmMiddleware
@@ -41,9 +42,9 @@ use OCP\Share\IShare;
  */
 class OcmMiddleware {
 	/**
-	 * @var FederatedShareProvider
+	 * @var FederatedGroupShareProvider
 	 */
-	protected $federatedShareProvider;
+	protected $federatedGroupShareProvider;
 
 	/**
 	 * @var IAppManager
@@ -68,20 +69,20 @@ class OcmMiddleware {
 	/**
 	 * constructor.
 	 *
-	 * @param FederatedShareProvider $federatedShareProvider
+	 * @param FederatedGroupShareProvider $federatedGroupShareProvider
 	 * @param IAppManager $appManager
 	 * @param IUserManager $userManager
 	 * @param AddressHandler $addressHandler
 	 * @param ILogger $logger
 	 */
 	public function __construct(
-		FederatedShareProvider $federatedShareProvider,
+		FederatedGroupShareProvider $federatedGroupShareProvider,
 		IAppManager $appManager,
 		IUserManager $userManager,
 		AddressHandler $addressHandler,
 		ILogger $logger
 	) {
-		$this->federatedShareProvider = $federatedShareProvider;
+		$this->federatedGroupShareProvider = $federatedGroupShareProvider;
 		$this->appManager = $appManager;
 		$this->userManager = $userManager;
 		$this->addressHandler = $addressHandler;
@@ -129,11 +130,11 @@ class OcmMiddleware {
 	 */
 	public function getValidShare($id, $sharedSecret) {
 		try {
-			$share = $this->federatedShareProvider->getShareById($id);
+			$share = $this->federatedGroupShareProvider->getShareById($id);
 		} catch (Share\Exceptions\ShareNotFound $e) {
 			throw new BadRequestException("Share with id {$id} does not exist");
 		}
-		if ($share->getShareType() !== FederatedShareProvider::SHARE_TYPE_REMOTE) {
+		if ($share->getShareType() !== federatedGroupShareProvider::SHARE_TYPE_REMOTE_GROUP) {
 			throw new BadRequestException("Share with id {$id} does not exist");
 		}
 
@@ -180,7 +181,7 @@ class OcmMiddleware {
 	 */
 	public function assertIncomingSharingEnabled() {
 		if (!$this->appManager->isEnabledForUser('files_sharing')
-			|| !$this->federatedShareProvider->isIncomingServer2serverShareEnabled()
+			|| !$this->federatedGroupShareProvider->isIncomingServer2serverShareEnabled()
 		) {
 			throw new NotImplementedException();
 		}
@@ -195,7 +196,7 @@ class OcmMiddleware {
 	 */
 	public function assertOutgoingSharingEnabled() {
 		if (!$this->appManager->isEnabledForUser('files_sharing')
-			|| !$this->federatedShareProvider->isOutgoingServer2serverShareEnabled()
+			|| !$this->federatedGroupShareProvider->isOutgoingServer2serverShareEnabled()
 		) {
 			throw new NotImplementedException();
 		}

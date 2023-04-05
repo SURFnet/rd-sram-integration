@@ -69,6 +69,10 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	private $shareTable = 'share';
 	private $externalShareTable= 'share_external_group'; 
 	private $rootFolder;
+	
+	/** @var IConfig */
+	private $config; 
+	
 	/** @var IUserManager */
 	private $userManager;
 	const SHARE_TYPE_REMOTE_GROUP = 7;
@@ -122,6 +126,7 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		$this->tokenHandler = $tokenHandler;
 		$this->logger = $logger; 
 		$this->l = $l10n;
+		$this->config = $config;
 	}
 
 	/**
@@ -647,5 +652,9 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		return $shareRow;
 	}
 
+	public function isIncomingServer2serverShareEnabled() {
+		$result = $this->config->getAppValue('files_sharing', 'incoming_server2server_share_enabled', 'yes');
+		return ($result === 'yes') ? true : false;
+	}
 
 }
