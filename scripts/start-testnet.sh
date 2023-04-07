@@ -17,7 +17,7 @@ echo Repo dir is $REPO_DIR
 
 
 # keycloak start
-docker run -d --network=testnet -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin --name=keycloak.docker quay.io/keycloak/keycloak:21.0.2 start-dev
+# docker run -d --network=testnet -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin --name=keycloak.docker quay.io/keycloak/keycloak:21.0.2 start-dev
 # keycloak end
 
 echo "starting maria1.docker"

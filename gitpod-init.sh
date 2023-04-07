@@ -10,5 +10,6 @@ fi
 ./scripts/gencerts.sh
 ./scripts/rebuild.sh
 docker pull mariadb
+docker pull quay.io/keycloak/keycloak:12.0.4
 docker pull jlesage/firefox:v1.17.1
 docker network create testnet
