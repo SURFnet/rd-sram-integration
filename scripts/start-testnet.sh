@@ -15,6 +15,11 @@ function waitForPort {
 export REPO_DIR=`pwd`
 echo Repo dir is $REPO_DIR
 
+
+# keycloak start
+docker run -d --network=testnet -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin --name=keycloak.docker quay.io/keycloak/keycloak:21.0.2 start-dev
+# keycloak end
+
 echo "starting maria1.docker"
 docker run -d --network=testnet -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek --name=maria1.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
 echo "starting oc1.docker"
