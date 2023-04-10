@@ -205,7 +205,7 @@ class Application extends App {
 			$userManager,
 			$groupManager
     	);
-		$federeatedGroupOcmMiddleware = self::getOcmMiddleware();
+		$federatedGroupOcmMiddleware = self::getOcmMiddleware();
 		$activityManager = \OC::$server->getActivityManager();
 		$fedShareManager = new \OCA\FederatedGroups\FederatedFileSharing\FedShareManager(
 			$federatedUserShareProvider,
