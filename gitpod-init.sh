@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 
-# git clone --branch=accept-ocm-to-groups --depth=1 https://github.com/pondersource/core
-git clone --branch=surf-dev --depth=1 https://github.com/pondersource/core
+git clone --branch=ocm-cleaning --depth=1 https://github.com/pondersource/core
 ./scripts/gencerts.sh
 ./scripts/rebuild.sh
 docker pull mariadb
