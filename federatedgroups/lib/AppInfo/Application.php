@@ -27,6 +27,7 @@ use OCA\FederatedFileSharing\TokenHandler;
 use OCA\FederatedGroups\FederatedFileSharing\FedShareManager;
 use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 use OCA\FederatedGroups\FederatedGroupShareProvider;
+use OCA\FederatedGroups\Files_Sharing\Middleware\RemoteOcsMiddleware;
 
 class Application extends App {
 	private $isProviderRegistered = false;
@@ -59,8 +60,19 @@ class Application extends App {
 			return new \OCA\FederatedGroups\Files_Sharing\External\MountProvider(
 				$server->getDatabaseConnection(),
 				function () use ($c) {
-					return $c->query('ExternalManager');
+					$sharingApp = new \OCA\Files_Sharing\AppInfo\Application();
+					$externalManager = $sharingApp->getContainer()->query('ExternalManager');
+					return $externalManager;
 				}
+			);
+		});
+
+		$container->registerService('OCA\\FederatedGroups\\Files_Sharing\\Middleware\\RemoteOcsMiddleware', function (SimpleContainer $c) use ($container) {
+			$sharingApp = new \OCA\Files_Sharing\AppInfo\Application();
+			$externalManager = $sharingApp->getContainer()->query('ExternalManager');
+			return new RemoteOcsMiddleware(
+				$externalManager,
+				$container->query('GroupExternalManager')
 			);
 		});
 

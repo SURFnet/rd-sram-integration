@@ -23,6 +23,7 @@
 namespace OCA\FederatedGroups\Files_Sharing\Middleware;
 
 use OCA\Files_Sharing\External\Manager;
+use OCA\Files_Sharing\Middleware\IRemoteOcsMiddleware;
 use OCA\FederatedGroups\Files_Sharing\External\Manager as GroupExternalManager;
 
 /**
