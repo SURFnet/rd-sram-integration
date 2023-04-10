@@ -26,6 +26,8 @@
  namespace OCA\FederatedGroups\FederatedFileSharing;
 
 use OCA\FederatedFileSharing\AbstractNotifications;
+use OCA\FederatedFileSharing\AddressHandler;
+use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCP\AppFramework\Http;
 use OCP\BackgroundJob\IJobList;

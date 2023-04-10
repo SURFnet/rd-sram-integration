@@ -47,7 +47,7 @@ class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
 	const SHARE_TYPE_REMOTE_GROUP = 7;
 
 	/**
-	 * DefaultShareProvider constructor.
+	 * FederatedGroupShareProvider constructor.
 	 *
 	 * @param IDBConnection $connection
 	 * @param EventDispatcherInterface $eventDispatcher
@@ -59,7 +59,7 @@ class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
 	 * @param IRootFolder $rootFolder
 	 * @param IConfig $config
 	 * @param IUserManager $userManager
-	 * @param Manager $externalManager
+	 * @param callable $externalManagerProvider
 	 */
 	public function __construct(
 		IDBConnection $connection,
@@ -72,7 +72,7 @@ class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
 		IRootFolder $rootFolder,
 		IConfig $config,
 		IUserManager $userManager,
-		Manager $externalManager
+		callable $externalManagerProvider
 	) {
 		parent::__construct(
 			$connection,
@@ -87,7 +87,7 @@ class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
 			'share_external_group',
 			self::SHARE_TYPE_REMOTE_GROUP,
 			$userManager,
-			$externalManager
+			$externalManagerProvider
 		);
 	}
 

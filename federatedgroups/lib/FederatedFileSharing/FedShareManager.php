@@ -65,7 +65,7 @@ class FedShareManager extends AbstractFedShareManager {
 		EventDispatcherInterface $eventDispatcher
 	) {
 		parent::__construct(
-			$federatedShareProvider,
+			$federatedGroupShareProvider,
 			$notifications,
 			$userManager,
 			$activityManager,

@@ -24,6 +24,7 @@ use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
+use OCA\FederatedGroups\FederatedFileSharing\FedShareManager;
 use OCA\FederatedGroups\FederatedFileSharing\Notifications;
 use OCA\FederatedGroups\FederatedGroupShareProvider;
 
@@ -64,16 +65,41 @@ class Application extends App {
 		});
 
 		$container->registerService(
-			'FederatedGroupShareManager',
+			'OCA\\FederatedGroups\\FederatedFileSharing\\FedShareManager',
 			function ($c) use ($server) {
+				error_log('before event dispatcher');
+				$ed = $server->getEventDispatcher();
+				error_log('after event dispatcher> '.get_class($ed));
+
+				$addressHandler = new AddressHandler(
+					\OC::$server->getURLGenerator(),
+					\OC::$server->getL10N('federatedfilesharing')
+				);
+				$discoveryManager = new DiscoveryManager(
+					\OC::$server->getMemCacheFactory(),
+					\OC::$server->getHTTPClientService()
+				);
+				$permissions = new Permissions();
+				$notificationManager = new NotificationManager(
+					$permissions
+				);
+				$notifications = new Notifications(
+					$addressHandler,
+					\OC::$server->getHTTPClientService(),
+					$discoveryManager,
+					$notificationManager,
+					\OC::$server->getJobList(),
+					\OC::$server->getConfig()
+				);
+
 				return new FedShareManager(
-					$this->getFederatedShareProvider(),
-					$c->query('Notifications'),
+					$this->getFederatedGroupShareProvider(),
+					$notifications,
 					$server->getUserManager(),
 					$server->getActivityManager(),
 					$server->getNotificationManager(),
-					$c->query('AddressHandler'),
-					$c->query('Permissions'),
+					$addressHandler,
+					$permissions,
 					$server->getEventDispatcher()
 				);
 			}
@@ -119,7 +145,7 @@ class Application extends App {
 			\OC::$server->getSecureRandom()
 		);
 
-		$this->federatedShareProvider = new FederatedGroupShareProvider(
+		$this->federatedGroupShareProvider = new FederatedGroupShareProvider(
 			\OC::$server->getDatabaseConnection(),
 			\OC::$server->getEventDispatcher(),
 			$addressHandler,
@@ -130,7 +156,9 @@ class Application extends App {
 			\OC::$server->getLazyRootFolder(),
 			\OC::$server->getConfig(),
 			\OC::$server->getUserManager(),
-			$this->getContainer()->query('GroupExternalManager')
+			function () {
+				return $this->getContainer()->query('GroupExternalManager');
+			}
 		);
 	}
 
