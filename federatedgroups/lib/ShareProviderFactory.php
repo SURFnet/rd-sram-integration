@@ -10,6 +10,7 @@ namespace OCA\FederatedGroups;
 
 use OC\Share20\Exception\ProviderException;
 use OC\Share20\ProviderFactory;
+use OCA\FederatedGroups\AppInfo\Application;
 use OCP\IServerContainer;
 
 class ShareProviderFactory extends ProviderFactory {
@@ -28,7 +29,9 @@ class ShareProviderFactory extends ProviderFactory {
 	 */
 	protected function federatedGroupShareProvider() {
 		if ($this->federatedGroupShareProvider === null) {
-			$this->federatedGroupShareProvider = \OC::$server->query('OCA\FederatedGroups\FederatedGroupShareProvider');
+			//$this->federatedGroupShareProvider = \OC::$server->query('OCA\FederatedGroups\FederatedGroupShareProvider');
+			$app = new Application();
+			$this->federatedGroupShareProvider = $app->getFederatedGroupShareProvider();
 		}
 		return $this->federatedGroupShareProvider;
 	}
@@ -50,7 +53,7 @@ class ShareProviderFactory extends ProviderFactory {
 			return parent::getProvider($id);
 		} catch(ProviderException $e) {
 			if ($id === 'ocGroupFederatedSharing') {
-				return $this->federatedShareProvider();
+				return $this->federatedGroupShareProvider();
 			}
 		}
 		

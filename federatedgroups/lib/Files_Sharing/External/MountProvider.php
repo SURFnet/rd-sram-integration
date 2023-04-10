@@ -19,8 +19,9 @@
  *
  */
 
- namespace OCA\FederatedGroups\Files_Sharing\External;
+namespace OCA\FederatedGroups\Files_Sharing\External;
 
+use OCA\Files_Sharing\External\AbstractMountProvider;
 use OCP\Files\Storage\IStorageFactory;
 use OCP\IDBConnection;
 
