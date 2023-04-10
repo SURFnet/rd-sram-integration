@@ -24,7 +24,7 @@ sed -i "3 i\  'http.cookie.samesite' => 'None'," /var/www/html/config/config.php
 
 # insert OIDC config START
 # please don't insert any othe line in between (order matters) 
-sed -i "3 i\  'openid-connect'      => [" /var/www/html/config/config.php
+sed -i "3 i\  'openid-connect' => [" /var/www/html/config/config.php
 sed -i "4 i\    'auto-provision'    => ['enabled' => false]," /var/www/html/config/config.php
 sed -i "5 i\    'provider-url'      => 'https://idp.example.net'," /var/www/html/config/config.php
 sed -i "6 i\    'client-id'         => 'fc9b5c78-ec73-47bf-befc-59d4fe780f6f'," /var/www/html/config/config.php
