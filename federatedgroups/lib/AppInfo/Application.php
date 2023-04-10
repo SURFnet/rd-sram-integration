@@ -176,7 +176,6 @@ class Application extends App {
 		$config = \OC::$server->getConfig();
 		$userManager = \OC::$server->getUserManager();
 		$groupManager = \OC::$server->getGroupManager();
-		$appManager = \OC::$server->getAppManager();
 		$notificationManagerServer = \OC::$server->getNotificationManager();
 		$permissions = new \OCA\FederatedFileSharing\Ocm\Permissions();
 
@@ -206,13 +205,7 @@ class Application extends App {
 			$userManager,
 			$groupManager
     	);
-		$federeatedGroupOcmMiddleware = new \OCA\FederatedGroups\FederatedFileSharing\Middleware\OcmMiddleware(
-			$federatedGroupShareProvider,
-			$appManager,
-			$userManager,
-			$addressHandler,
-			$logger
-		);
+		$federatedGroupOcmMiddleware = self::getOcmMiddleware();
 		$activityManager = \OC::$server->getActivityManager();
 		$fedShareManager = new \OCA\FederatedGroups\FederatedFileSharing\FedShareManager(
 			$federatedUserShareProvider,
@@ -407,13 +400,6 @@ class Application extends App {
 			$userManager
 		);
 		
-		$ocmMiddleware = new \OCA\FederatedGroups\FederatedFileSharing\Middleware\OcmMiddleware(
-			self::getfederatedGroupShareProvider(),
-			$appManager,
-			$userManager,
-			$addressHandler,
-			$logger
-		);
 		$federatedGroupNotifications = new \OCA\FederatedGroups\FederatedFileSharing\Notifications(
 			$addressHandler,
 			\OC::$server->getHTTPClientService(),
@@ -439,6 +425,25 @@ class Application extends App {
 		return $fedShareManager->getExternalManager($user->getUID(), $ocmShareType);
 	}
 
+	public static function getOcmMiddleware(){
+		$urlGenerator = \OC::$server->getURLGenerator();
+		$l10n = \OC::$server->getL10N('federatedfilesharing');
+		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
+			$urlGenerator,
+			$l10n
+		);
+		$logger = \OC::$server->getLogger();
+		$userManager = \OC::$server->getUserManager();
+		$appManager = \OC::$server->getAppManager();
+			$ocmMiddleware = new \OCA\FederatedGroups\FederatedFileSharing\Middleware\OcmMiddleware(
+			self::getfederatedGroupShareProvider(),
+			$appManager,
+			$userManager,
+			$addressHandler,
+			$logger
+		);
+		return $ocmMiddleware;
+	}
 	public static function getFedSharemanager(){
 		
 		$federatedUserShareProvider = self::getFederatedUserShareProvider();
