@@ -21,6 +21,8 @@ RUN DEBIAN_FRONTEND="noninteractive" apt install -yq \
   php-xdebug \
   php-zip \
   php-ldap \
+  php-apcu \
+  php-apcu-bc \
   vim \
   wget
 # Trust all the certificates:
