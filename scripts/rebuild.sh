@@ -21,7 +21,7 @@ cd ../oc2
 touch Dockerfile # work around https://github.com/orgs/community/discussions/38878
 docker build -t oc2 .
 
-cd ../keycloak
-# touch Dockerfile
-docker-compose up -d --build
-# docker-compose -f ../keycloak/docker-compose.yml up -d --build
+# cd ../keycloak
+# # touch Dockerfile
+# docker-compose up -d --build
+# # docker-compose -f ../keycloak/docker-compose.yml up -d --build

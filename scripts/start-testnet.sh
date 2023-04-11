@@ -17,18 +17,17 @@ echo Repo dir is $REPO_DIR
 
 
 # keycloak start
-# docker run -d --network=testnet -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin --name=keycloak.docker quay.io/keycloak/keycloak:21.0.2 start-dev
-# docker run --name=keycloak.docker \
-#     --name=keycloak.docker -p 8080:8080 \
-#     -e DB_VENDOR=h2 \
-#     -e PROXY_ADDRESS_FORWARDING="true" \
-#     -e KEYCLOAK_USER=admin \
-#     -e KEYCLOAK_PASSWORD=password \
-#     -e KEYCLOAK_STATISTICS=all \
-#     -e KEYCLOAK_LOGLEVEL=INFO \
-#     --network=testnet \
-#     --name=keycloak.docker \
-#     quay.io/keycloak/keycloak:12.0.4
+docker run --name=keycloak.docker \
+    --name=keycloak.docker -p 8080:8080 \
+    -e DB_VENDOR=h2 \
+    -e PROXY_ADDRESS_FORWARDING="true" \
+    -e KEYCLOAK_USER=admin \
+    -e KEYCLOAK_PASSWORD=password \
+    -e KEYCLOAK_STATISTICS=all \
+    -e KEYCLOAK_LOGLEVEL=INFO \
+    --network=testnet \
+    --name=keycloak.docker \
+    quay.io/keycloak/keycloak:12.0.4
 # keycloak end
 
 echo "starting maria1.docker"
