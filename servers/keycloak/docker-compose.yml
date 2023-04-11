@@ -18,3 +18,4 @@ services:
 
 networks:
   testnet:
+    external: true
