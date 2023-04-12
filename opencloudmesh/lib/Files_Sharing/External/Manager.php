@@ -29,7 +29,6 @@
 
 namespace OCA\OpenCloudMesh\Files_Sharing\External;
 
-use OCA\Files_Sharing\External\AbstractManager;
 use OCP\Notification\IManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
