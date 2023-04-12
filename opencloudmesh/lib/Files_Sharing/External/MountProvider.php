@@ -19,14 +19,14 @@
  *
  */
 
-namespace OCA\FederatedGroups\Files_Sharing\External;
+namespace OCA\OpenCloudMesh\Files_Sharing\External;
 
 use OCA\Files_Sharing\External\AbstractMountProvider;
 use OCP\Files\Storage\IStorageFactory;
 use OCP\IDBConnection;
 
 class MountProvider extends AbstractMountProvider {
-	public const STORAGE = '\OCA\FederatedGroups\Files_Sharing\External\Storage';
+	public const STORAGE = '\OCA\OpenCloudMesh\Files_Sharing\External\Storage';
 
 	/**
 	 * @param \OCP\IDBConnection $connection

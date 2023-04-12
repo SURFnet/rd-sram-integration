@@ -6,11 +6,11 @@
 
 /**
  */
-namespace OCA\FederatedGroups;
+namespace OCA\OpenCloudMesh;
 
 use OC\Share20\Exception\ProviderException;
 use OC\Share20\ProviderFactory;
-use OCA\FederatedGroups\AppInfo\Application;
+use OCA\OpenCloudMesh\AppInfo\Application;
 use OCP\IServerContainer;
 
 class ShareProviderFactory extends ProviderFactory {
@@ -29,7 +29,7 @@ class ShareProviderFactory extends ProviderFactory {
 	 */
 	protected function federatedGroupShareProvider() {
 		if ($this->federatedGroupShareProvider === null) {
-			//$this->federatedGroupShareProvider = \OC::$server->query('OCA\FederatedGroups\FederatedGroupShareProvider');
+			//$this->federatedGroupShareProvider = \OC::$server->query('OCA\OpenCloudMesh\FederatedGroupShareProvider');
 			$app = new Application();
 			$this->federatedGroupShareProvider = $app->getFederatedGroupShareProvider();
 		}

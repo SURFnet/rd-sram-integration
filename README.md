@@ -11,8 +11,8 @@ This app is still in alpha testing, so don't be surprised if it doesn't work for
 This app requires you to run [this branch of ownCloud](https://github.com/pondersource/core/tree/ocm-cleaning)
 (sorry, this will become easier once the PR is merged!) and add the following line to your config.php:
 ```php
-  'sharing.managerFactory' => 'OCA\\FederatedGroups\\ShareProviderFactory',
-  'sharing.remoteShareesSearch' => 'OCA\\FederatedGroups\\ShareeSearchPlugin'
+  'sharing.managerFactory' => 'OCA\\OpenCloudMesh\\ShareProviderFactory',
+  'sharing.remoteShareesSearch' => 'OCA\\OpenCloudMesh\\ShareeSearchPlugin'
 ```
 
 ## Development

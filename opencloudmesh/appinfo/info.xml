@@ -7,21 +7,21 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <info>
-	<id>federatedgroups</id>
+	<id>opencloudmesh</id>
 	<name>Federated Groups</name>
-	<namespace>FederatedGroups</namespace>
+	<namespace>OpenCloudMesh</namespace>
 	<summary>Support groups with both local and foreign users</summary>
 	<description>
 	</description>
-	<website>https://github.com/SURFnet/rd-sram-integration</website>
-	<bugs>https://github.com/SURFnet/rd-sram-integration/issues</bugs>
-	<repository type="git">https://github.com/SURFnet/rd-sram-integration.git</repository>
+	<website>https://github.com/Spondersource/oc-opencloudmesh</website>
+	<bugs>https://github.com/Spondersource/oc-opencloudmesh/issues</bugs>
+	<repository type="git">https://github.com/Spondersource/oc-opencloudmesh.git</repository>
 	<licence>TBD</licence>
-	<author>SURF</author>
+	<author>SURF with contributions from Ponder Source</author>
 	<version>0.1.0</version>
 	<documentation>
-    		<user>https://github.com/SURFnet/rd-sram-integration</user>
-		<admin>https://github.com/SURFnet/rd-sram-integration</admin>
+    		<user>https://github.com/Spondersource/oc-opencloudmesh</user>
+		<admin>https://github.com/Spondersource/oc-opencloudmesh</admin>
 	</documentation>
 	<category>collaboration</category>
 	<types>

@@ -8,5 +8,5 @@
  *
  */
 
-$app = new \OCA\FederatedGroups\AppInfo\Application();
+$app = new \OCA\OpenCloudMesh\AppInfo\Application();
 $app->registerMountProviders();

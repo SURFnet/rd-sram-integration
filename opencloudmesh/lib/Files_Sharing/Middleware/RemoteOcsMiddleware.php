@@ -20,11 +20,11 @@
  *
  */
 
-namespace OCA\FederatedGroups\Files_Sharing\Middleware;
+namespace OCA\OpenCloudMesh\Files_Sharing\Middleware;
 
 use OCA\Files_Sharing\External\Manager;
 use OCA\Files_Sharing\Middleware\IRemoteOcsMiddleware;
-use OCA\FederatedGroups\Files_Sharing\External\Manager as GroupExternalManager;
+use OCA\OpenCloudMesh\Files_Sharing\External\Manager as GroupExternalManager;
 
 /**
  * Checks whether the "sharing check" is enabled

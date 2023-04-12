@@ -8,7 +8,7 @@
  *
  */
 
-namespace OCA\FederatedGroups\AppInfo;
+namespace OCA\OpenCloudMesh\AppInfo;
 
 use OC\AppFramework\Utility\SimpleContainer;
 use OCP\AppFramework\App;
@@ -24,10 +24,10 @@ use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
-use OCA\FederatedGroups\FederatedFileSharing\FedShareManager;
-use OCA\FederatedGroups\FederatedFileSharing\Notifications;
-use OCA\FederatedGroups\FederatedGroupShareProvider;
-use OCA\FederatedGroups\Files_Sharing\Middleware\RemoteOcsMiddleware;
+use OCA\OpenCloudMesh\FederatedFileSharing\FedShareManager;
+use OCA\OpenCloudMesh\FederatedFileSharing\Notifications;
+use OCA\OpenCloudMesh\FederatedGroupShareProvider;
+use OCA\OpenCloudMesh\Files_Sharing\Middleware\RemoteOcsMiddleware;
 
 class Application extends App {
 	private $isProviderRegistered = false;
@@ -36,7 +36,7 @@ class Application extends App {
 	protected $federatedGroupShareProvider;
 	
 	public function __construct(array $urlParams = []) {
-		parent::__construct('federatedgroups', $urlParams);
+		parent::__construct('opencloudmesh', $urlParams);
 
 		$container = $this->getContainer();
 		$server = $container->getServer();
@@ -44,7 +44,7 @@ class Application extends App {
 		$container->registerService('GroupExternalManager', function (SimpleContainer $c) use ($server) {
 			$user = $server->getUserSession()->getUser();
 			$uid = $user ? $user->getUID() : null;
-			return new \OCA\FederatedGroups\Files_Sharing\External\Manager(
+			return new \OCA\OpenCloudMesh\Files_Sharing\External\Manager(
 				$server->getDatabaseConnection(),
 				\OC\Files\Filesystem::getMountManager(),
 				\OC\Files\Filesystem::getLoader(),
@@ -57,7 +57,7 @@ class Application extends App {
 		$container->registerService('ExternalMountProvider', function (IContainer $c) {
 			/** @var \OCP\IServerContainer $server */
 			$server = $c->query('ServerContainer');
-			return new \OCA\FederatedGroups\Files_Sharing\External\MountProvider(
+			return new \OCA\OpenCloudMesh\Files_Sharing\External\MountProvider(
 				$server->getDatabaseConnection(),
 				function () use ($c) {
 					$sharingApp = new \OCA\Files_Sharing\AppInfo\Application();
@@ -67,7 +67,7 @@ class Application extends App {
 			);
 		});
 
-		$container->registerService('OCA\\FederatedGroups\\Files_Sharing\\Middleware\\RemoteOcsMiddleware', function (SimpleContainer $c) use ($container) {
+		$container->registerService('OCA\\OpenCloudMesh\\Files_Sharing\\Middleware\\RemoteOcsMiddleware', function (SimpleContainer $c) use ($container) {
 			$sharingApp = new \OCA\Files_Sharing\AppInfo\Application();
 			$externalManager = $sharingApp->getContainer()->query('ExternalManager');
 			return new RemoteOcsMiddleware(
@@ -77,7 +77,7 @@ class Application extends App {
 		});
 
 		$container->registerService(
-			'OCA\\FederatedGroups\\FederatedFileSharing\\FedShareManager',
+			'OCA\\OpenCloudMesh\\FederatedFileSharing\\FedShareManager',
 			function ($c) use ($server) {
 				error_log('before event dispatcher');
 				$ed = $server->getEventDispatcher();

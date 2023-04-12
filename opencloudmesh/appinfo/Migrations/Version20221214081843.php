@@ -4,7 +4,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-namespace OCA\FederatedGroups\Migrations;
+namespace OCA\OpenCloudMesh\Migrations;
 
 use Doctrine\DBAL\Schema\Schema;
 use OCP\Migration\ISchemaMigration;

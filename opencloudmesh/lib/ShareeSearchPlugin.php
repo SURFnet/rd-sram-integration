@@ -1,6 +1,6 @@
 <?php
 
-namespace OCA\FederatedGroups;
+namespace OCA\OpenCloudMesh;
 
 use OCP\IConfig;
 use OCP\IUserManager;

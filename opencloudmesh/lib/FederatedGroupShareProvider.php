@@ -5,7 +5,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-namespace OCA\FederatedGroups;
+namespace OCA\OpenCloudMesh;
 
 use OC\Share20\Exception\BackendError;
 use OC\Share20\Exception\InvalidShare;
@@ -19,8 +19,8 @@ use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
-use OCA\FederatedGroups\FederatedFileSharing\Notifications;
-use OCA\FederatedGroups\Files_Sharing\External\Manager;
+use OCA\OpenCloudMesh\FederatedFileSharing\Notifications;
+use OCA\OpenCloudMesh\Files_Sharing\External\Manager;
 use OCP\Files\File;
 use OCP\Share\IAttributes;
 use OCP\Share\IShare;

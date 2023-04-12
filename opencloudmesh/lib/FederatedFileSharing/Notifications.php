@@ -23,7 +23,7 @@
  *
  */
 
- namespace OCA\FederatedGroups\FederatedFileSharing;
+ namespace OCA\OpenCloudMesh\FederatedFileSharing;
 
 use OCA\FederatedFileSharing\AbstractNotifications;
 use OCA\FederatedFileSharing\AddressHandler;

@@ -19,13 +19,13 @@
  *
  */
 
-namespace OCA\FederatedGroups\FederatedFileSharing;
+namespace OCA\OpenCloudMesh\FederatedFileSharing;
 
 use OCA\FederatedFileSharing\AbstractFedShareManager;
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Ocm\Permissions;
-use OCA\FederatedGroups\FederatedGroupShareProvider;
+use OCA\OpenCloudMesh\FederatedGroupShareProvider;
 use OCA\Files_Sharing\Activity;
 use OCP\Activity\IManager as ActivityManager;
 use OCP\Files\NotFoundException;

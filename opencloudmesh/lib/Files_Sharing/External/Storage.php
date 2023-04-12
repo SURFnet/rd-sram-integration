@@ -1,6 +1,6 @@
 <?php
 
-namespace OCA\FederatedGroups\Files_Sharing\External;
+namespace OCA\OpenCloudMesh\Files_Sharing\External;
 
 class Storage extends \OCA\Files_Sharing\External\Storage {
 
