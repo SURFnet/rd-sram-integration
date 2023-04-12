@@ -28,9 +28,9 @@ sed -i "3 i\  'openid-connect' => [" /var/www/html/config/config.php
 sed -i "4 i\    'auto-provision'    => ['enabled' => false]," /var/www/html/config/config.php
 sed -i "5 i\    'provider-url'      => 'http://keycloak.docker:8080/auth/realms/master/'," /var/www/html/config/config.php
 sed -i "6 i\    'client-id'         => 'oc_oidc_client'," /var/www/html/config/config.php
-# sed -i "7 i\    'client-secret'     => 'e3e5b04a-3c3c-4f4d-b16c-2a6e9fdd3cd1'," /var/www/html/config/config.php
-sed -i "7 i\    'loginButtonName'   => 'OIDC Login'," /var/www/html/config/config.php
-sed -i "8 i\  ]," /var/www/html/config/config.php
+sed -i "7 i\    'client-secret'     => '643342df-206f-4be8-b775-3a65eabb3f74'," /var/www/html/config/config.php
+sed -i "8 i\    'loginButtonName'   => 'OIDC Login'," /var/www/html/config/config.php
+sed -i "9 i\  ]," /var/www/html/config/config.php
 # insert OIDC config END
 
 
