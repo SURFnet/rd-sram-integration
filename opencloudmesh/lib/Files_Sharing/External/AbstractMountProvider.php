@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\Files_Sharing\External;
+namespace OCA\OpenCloudMesh\Files_Sharing\External;
 
 use OCP\Files\Config\IMountProvider;
 use OCP\Files\Storage\IStorageFactory;

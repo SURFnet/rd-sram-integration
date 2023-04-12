@@ -27,7 +27,7 @@
  *
  */
 
-namespace OCA\Files_Sharing\External;
+namespace OCA\OpenCloudMesh\Files_Sharing\External;
 
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use OC\Files\Filesystem;
