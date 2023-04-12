@@ -12,7 +12,10 @@ This app requires you to run [this branch of ownCloud](https://github.com/ponder
 (sorry, this will become easier once the PR is merged!) and add the following line to your config.php:
 ```php
   'sharing.managerFactory' => 'OCA\\OpenCloudMesh\\ShareProviderFactory',
-  'sharing.remoteShareesSearch' => 'OCA\\OpenCloudMesh\\ShareeSearchPlugin'
+  'sharing.remoteShareesSearch' => 'OCA\\OpenCloudMesh\\ShareeSearchPlugin',
+  'sharing.ocmController' => 'OCA\\OpenCloudMesh\\OcmController',
+  'sharing.groupExternalManager' => 'OCA\\OpenCloudMesh\\GroupExternalManager',
+
 ```
 
 ## Development
