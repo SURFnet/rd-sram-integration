@@ -8,7 +8,7 @@ but also user-to-group sharing becomes possible.
 This app is still in alpha testing, so don't be surprised if it doesn't work for you yet!
 
 ## Usage
-This app requires you to run [this branch of ownCloud](https://github.com/pondersource/core/tree/ocm-cleaning)
+This app requires you to run [this branch of ownCloud](https://github.com/pondersource/core/tree/accept-ocm-to-groups)
 (sorry, this will become easier once the PR is merged!) and add the following line to your config.php:
 ```php
   'sharing.managerFactory' => 'OCA\\OpenCloudMesh\\ShareProviderFactory',
