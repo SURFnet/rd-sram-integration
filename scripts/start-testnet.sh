@@ -18,7 +18,7 @@ echo Repo dir is $REPO_DIR
 
 # keycloak start
 docker run --name=keycloak.docker \
-    --name=keycloak.docker -p 8080:8080 \
+    -p 8080:8080 \
     -e DB_VENDOR=h2 \
     -e PROXY_ADDRESS_FORWARDING="true" \
     -e KEYCLOAK_USER=admin \
@@ -26,9 +26,17 @@ docker run --name=keycloak.docker \
     -e KEYCLOAK_STATISTICS=all \
     -e KEYCLOAK_LOGLEVEL=INFO \
     --network=testnet \
-    --name=keycloak.docker \
     quay.io/keycloak/keycloak:12.0.4
 # keycloak end
+
+# ldap start
+# docker run --name=ldap.docker \
+#     -p 389:389 -p 636:636 \
+#     --network=testnet \
+#     --detach \
+#     osixia/openldap:1.5.0
+# ldap end
+
 
 echo "starting maria1.docker"
 docker run -d --network=testnet -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek --name=maria1.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
