@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\FederatedFileSharing\Controller;
+namespace OCA\OpenCloudMesh\FederatedFileSharing\Controller;
 
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
