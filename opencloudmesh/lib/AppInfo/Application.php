@@ -42,7 +42,7 @@ class Application extends App {
 		$container = $this->getContainer();
 		$server = $container->getServer();
 
-		$container->registerService('GroupExternalManager', function (SimpleContainer $c) use ($server) {
+		$container->registerService('OCA\\OpenCloudMesh\\GroupExternalManager', function (SimpleContainer $c) use ($server) {
 			$user = $server->getUserSession()->getUser();
 			$uid = $user ? $user->getUID() : null;
 			return new \OCA\OpenCloudMesh\Files_Sharing\External\Manager(
@@ -73,7 +73,7 @@ class Application extends App {
 			$externalManager = $sharingApp->getContainer()->query('ExternalManager');
 			return new RemoteOcsMiddleware(
 				$externalManager,
-				$container->query('GroupExternalManager')
+				$container->query('OCA\\OpenCloudMesh\\GroupExternalManager')
 			);
 		});
 
