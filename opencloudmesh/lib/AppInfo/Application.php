@@ -27,6 +27,7 @@ use OCA\FederatedFileSharing\TokenHandler;
 use OCA\OpenCloudMesh\FederatedFileSharing\FedShareManager;
 use OCA\OpenCloudMesh\FederatedFileSharing\Notifications;
 use OCA\OpenCloudMesh\FederatedGroupShareProvider;
+use OCA\OpenCloudMesh\Controller\OcmController;
 use OCA\OpenCloudMesh\Files_Sharing\Middleware\RemoteOcsMiddleware;
 use OCA\OpenCloudMesh\ShareProviderFactory;
 

@@ -19,7 +19,7 @@
  *
  */
 
-namespace OCA\OpenCloudMesh\FederatedFileSharing\Controller;
+namespace OCA\OpenCloudMesh\Controller;
 
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
@@ -187,6 +187,7 @@ class OcmController extends Controller {
 		$resourceType,
 		$protocol
 	) {
+		error_log("In our OCM controller!");
 		try {
 			$this->ocmMiddleware->assertIncomingSharingEnabled();
 			$this->ocmMiddleware->assertNotNull(
