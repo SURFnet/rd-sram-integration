@@ -14,7 +14,7 @@ use OC\Share20\Share;
 use OC\Share20\DefaultShareProvider;
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
-use OCA\FederatedFileSharing\AbstractFederatedShareProvider;
+use OCA\OpenCloudMesh\FederatedFileSharing\AbstractFederatedShareProvider;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
