@@ -142,7 +142,7 @@ class OcmController extends \OCA\OpenCloudMesh\FederatedFileSharing\Controller\O
 		$providerId,
 		$notification
 	) {
-		error_log("Our createShare!");
+		error_log("Our processNotification!");
 		error_log(var_export(func_get_args(), true));
 		return parent::processNotification(...func_get_args());
 	}
