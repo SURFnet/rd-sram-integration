@@ -31,3 +31,4 @@ openssl req -new -x509 -days 365 \
 
 createCert oc1
 createCert oc2
+createCert oc3
