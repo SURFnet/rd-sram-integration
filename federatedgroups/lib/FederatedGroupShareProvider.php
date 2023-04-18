@@ -435,7 +435,7 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 		return $shareId;
 	}
 
-	private function addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $expiration, $token, $shareType = SHARE_TYPE_REMOTE ) {
+	private function addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $expiration, $token, $shareType = SHARE_TYPE_REMOTE_GROUP ) {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert($this->shareTable)
 			->setValue('share_type', $qb->createNamedParameter($shareType))
@@ -655,6 +655,27 @@ class FederatedGroupShareProvider extends FederatedShareProvider implements ISha
 	public function isIncomingServer2serverShareEnabled() {
 		$result = $this->config->getAppValue('files_sharing', 'incoming_server2server_share_enabled', 'yes');
 		return ($result === 'yes') ? true : false;
+	}
+
+	/**
+	 * get federated share from the share_external table but exclude mounted link shares
+	 *
+	 * @param IShare $share
+	 * @return array
+	 * @throws ShareNotFound
+	 */
+	protected function getShareFromExternalShareTable(IShare $share) {
+		$query = $this->dbConnection->getQueryBuilder();
+		$query->select('*')->from($this->externalShareTable)
+			->where($query->expr()->eq('user', $query->createNamedParameter($share->getShareOwner())))
+			->andWhere($query->expr()->eq('mountpoint', $query->createNamedParameter($share->getTarget())));
+		$result = $query->execute()->fetchAll();
+
+		if (isset($result[0]) && $result[0]['remote_id'] !== "") {
+			return $result[0];
+		}
+
+		throw new ShareNotFound('share not found in share_external_group table');
 	}
 
 }
