@@ -118,7 +118,97 @@ class OcmController extends \OCA\OpenCloudMesh\FederatedFileSharing\Controller\O
 	) {
 		error_log("Our createShare!");
 		error_log(var_export(func_get_args(), true));
-		return parent::createShare(...func_get_args());
+
+/* START COPY-PASTE BLOCK https://github.com/owncloud/core/blob/v10.12.1/apps/federatedfilesharing/lib/Controller/OcmController.php#L180-L233 */
+		try {
+			$this->ocmMiddleware->assertIncomingSharingEnabled();
+			$this->ocmMiddleware->assertNotNull(
+				[
+					'shareWith' => $shareWith,
+					'name' => $name,
+					'providerId' => $providerId,
+					'owner' => $owner,
+					'shareType' => $shareType,
+					'resourceType' => $resourceType
+				]
+			);
+			if (!\is_array($protocol)
+				|| !isset($protocol['name'])
+				|| !isset($protocol['options'])
+				|| !\is_array($protocol['options'])
+				|| !isset($protocol['options']['sharedSecret'])
+			) {
+				throw new BadRequestException(
+					'server can not add federated share, missing parameter'
+				);
+			}
+			if (!\OCP\Util::isValidFileName($name)) {
+				throw new BadRequestException(
+					'The mountpoint name contains invalid characters.'
+				);
+			}
+
+			if ($this->isSupportedProtocol($protocol['name']) === false) {
+				throw new NotImplementedException(
+					"Protocol {$protocol['name']} is not supported"
+				);
+			}
+
+			if ($this->isSupportedShareType($shareType) === false) {
+				throw new NotImplementedException(
+					"ShareType {$shareType} is not supported"
+				);
+			}
+
+			if ($this->isSupportedResourceType($resourceType) === false) {
+				throw new NotImplementedException(
+					"ResourceType {$resourceType} is not supported"
+				);
+			}
+
+			$shareWithAddress = new Address($shareWith);
+			$localShareWith = $shareWithAddress->toLocalUid();
+			if (!$this->userManager->userExists($localShareWith)) {
+				throw new BadRequestException("User $localShareWith does not exist");
+			}
+
+			$ownerAddress = new Address($owner, $ownerDisplayName);
+			$sharedByAddress = new Address($sender, $senderDisplayName);
+/* END COPY-PASTE BLOCK https://github.com/owncloud/core/blob/v10.12.1/apps/federatedfilesharing/lib/Controller/OcmController.php#L180-L233 */
+
+			$this->fedShareManager->createShare(
+				$ownerAddress,
+				$sharedByAddress,
+				$localShareWith,
+				$providerId,
+				$name,
+				$protocol['options']['sharedSecret'],
+				$shareType // this is not a Share::SHARE_TYPE_.. constant, but the OCM POST param of the same name, so 'user' or 'group'
+			);
+
+/* START COPY-PASTE BLOCK https://github.com/owncloud/core/blob/v10.12.1/apps/federatedfilesharing/lib/Controller/OcmController.php#L243-L263 */
+		} catch (OcmException $e) {
+			return new JSONResponse(
+				['message' => $e->getMessage()],
+				$e->getHttpStatusCode()
+			);
+		} catch (\Exception $e) {
+			$this->logger->error(
+				"server can not add federated share, {$e->getMessage()}",
+				['app' => 'federatefilesharing']
+			);
+			return new JSONResponse(
+				[
+					'message' => "internal server error, was not able to add share from {$owner}"
+				],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}
+		return new JSONResponse(
+			[],
+			Http::STATUS_CREATED
+		);
+/* END COPY-PASTE BLOCK https://github.com/owncloud/core/blob/v10.12.1/apps/federatedfilesharing/lib/Controller/OcmController.php#L243-L263 */
 	}
 
 	/**
@@ -147,4 +237,12 @@ class OcmController extends \OCA\OpenCloudMesh\FederatedFileSharing\Controller\O
 		return parent::processNotification(...func_get_args());
 	}
 
+	/**
+	 * @param string $shareType
+	 * @return bool
+	 */
+	protected function isSupportedShareType($shareType) {
+		// TODO: make it a constant
+		return $shareType === 'user' || $shareType === 'group';
+	}
 }

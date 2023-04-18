@@ -26,6 +26,7 @@
 namespace OCA\OpenCloudMesh\FederatedFileSharing;
 
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
+use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCP\AppFramework\Http;
