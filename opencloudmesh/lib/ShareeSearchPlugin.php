@@ -183,14 +183,14 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 				|| !$this->isInstanceDomain($search))
 		) {
 			$this->result['exact']['remotes'][] = [
-				'label' => "U:$search",
+				'label' => "$search",
 				'value' => [
 					'shareType' => Share::SHARE_TYPE_REMOTE,
 					'shareWith' => $search,
 				],
 			];
 			$this->result['exact']['remotes'][] = [
-				'label' => "G:$search",
+				'label' => "$search",
 				'value' => [
 					'shareType' => Share::SHARE_TYPE_REMOTE_GROUP,
 					'shareWith' => $search,
