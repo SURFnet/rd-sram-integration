@@ -1,41 +1,29 @@
-# RD - SRAM Integration
+# opencloudmesh app for ownCloud version 10
 
-This repository contains the [issue tracking](https://github.com/SURFnet/rd-sram-integration/milestones) and artifacts of the rd-sram-integration project.
-All intellectual property in this project, including source code, ideas and documentation, is attributed to SURF.
+In ownCloud version 10, the OpenCloudMesh protocol is partially implemented. This app, combined with
+our "ocm-cleaning" branch of owncloud/core, completes the implementation, so that not only user-to-user
+but also user-to-group sharing becomes possible.
 
+## Status
+This app is still in alpha testing, so don't be surprised if it doesn't work for you yet!
 
-### NB: The following functionality is still under construction
+## Usage
+This app requires you to run [this branch of ownCloud](https://github.com/pondersource/core/tree/accept-ocm-to-groups)
+(sorry, this will become easier once the PR is merged!) and add the following line to your config.php:
+```php
+  'sharing.managerFactory' => 'OCA\\OpenCloudMesh\\ShareProviderFactory',
+  'sharing.remoteShareesSearch' => 'OCA\\OpenCloudMesh\\ShareeSearchPlugin',
+  'sharing.ocmController' => 'OCA\\OpenCloudMesh\\Controller\\OcmController',
+  'sharing.groupExternalManager' => 'OCA\\OpenCloudMesh\\GroupExternalManager',
 
-To see the basic testnet for milestone 1, take a linux machine with Docker installed, and run the following:
 ```
-git clone https://github.com/SURFnet/rd-sram-integration
-cd rd-sram-integration
-git clone --branch=ocm-cleaning https://github.com/pondersource/core
-./scripts/gencerts.sh
-./scripts/rebuild.sh
-docker network create testnet
-./scripts/start-testnet.sh
-```
-Now point your browser to port 5800 on that server, and in the browser-in-browser view, 
-* open a tab, and log in to https://oc1.docker as einstein / relativity
-* share a file with the group called 'federalists'
-* open a tab, and log in to https://oc2.docker as marie / radioactivity
-* you will see the file in question under 'Shared with you'
 
-### Use case
-
-We discussed three possible use cases:
-* "addressbook" - allow the user to easily share with for instance the group of "people I invited for my birthday", but without making that list public. 
-* "OCM groups" - as defined in the OCM spec, share to a group that is local at a remote site. For instance helpdesk@ (you know to which site your share goes, but not which users there are in that group)
-* "SRAM groups" - the user sees both local custom groups and SRAM-hosted groups as possible sharees. When an SRAM group is selected, the share gets created locally, and one OCM invite gets sent to each remote site that hosts at least 1 group member. We use OCM share-to-group as the protocol, but it is understood that the remote site also looks up the member list for that group from SRAM.
-
-The current plan is to only implement the third one ("SRAM" groups) and not the other two.
-
-### Slides from milestone presentations
-
-* Milestone 1 presentation (23 Dec 2022):
-[.pdf](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress.pdf)
-[.key](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress.key)
-* Milestone 2 presentation (17 Feb 2023):
-[.pdf](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress-2.pdf)
-[.key](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress-2.key)
+## Development
+To debug it, you can open https://github.com/pondersource/dev-stock/tree/oc-opencloudmesh-testing
+on GitPod and run `./scripts/init-oc-opencloudmesh.sh` followed by `./scripts/oc-opencloudmesh-testing.sh`.
+Then:
+* open the browser-in-a-browser that will be started on port 5800
+* log in to https://oc1.docker as einstein / relativity
+* share something with scientists@oc2.docker
+* log in to https://oc2.docker as marie / radioactivity
+* accept the share from einstein
