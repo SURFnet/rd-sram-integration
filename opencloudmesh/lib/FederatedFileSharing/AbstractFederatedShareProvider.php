@@ -162,6 +162,7 @@ abstract class AbstractFederatedShareProvider implements IShareProvider {
 	 * @throws \Exception
 	 */
 	public function create(IShare $share) {
+		error_log("AbstractFederatedShareProvider create");
 		$shareWith = $share->getSharedWith();
 		$itemSource = $share->getNodeId();
 		$itemType = $share->getNodeType();

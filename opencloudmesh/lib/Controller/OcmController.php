@@ -28,7 +28,7 @@ use OCA\FederatedFileSharing\Ocm\Exception\BadRequestException;
 use OCA\FederatedFileSharing\Ocm\Exception\NotImplementedException;
 use OCA\FederatedFileSharing\Ocm\Notification\FileNotification;
 use OCP\AppFramework\Http\JSONResponse;
-use OCA\FederatedFileSharing\FedShareManager;
+use OCA\OpenCloudMesh\FederatedFileSharing\FedShareManager;
 use OCA\FederatedFileSharing\Ocm\Exception\OcmException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
