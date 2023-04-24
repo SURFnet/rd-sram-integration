@@ -19,7 +19,6 @@ use OCP\Share\Events\AcceptShare;
 use OCP\Share\Events\DeclineShare;
 use OCP\Util;
 use OCP\IContainer;
-use OCA\FederatedGroups\FederatedFileSharing\FedShareManager;
 
 class Application extends App {
 	private $isProviderRegistered = false;
@@ -56,68 +55,7 @@ class Application extends App {
 		 	);
 		});
 	}
-
-	public static function getFederatedUserNotifications() {
-		$appManager = \OC::$server->getAppManager();
-		$userManager = \OC::$server->getUserManager();
-		$logger = \OC::$server->getLogger();
-		$urlGenerator = \OC::$server->getURLGenerator();
-		$l10n = \OC::$server->getL10N('federatedfilesharing');
-		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
-			$urlGenerator,
-			$l10n
-		);
-		$httpClientService = \OC::$server->getHTTPClientService();
-		$memCacheFactory = \OC::$server->getMemCacheFactory();
-		$discoveryManager = new \OCA\FederatedFileSharing\DiscoveryManager(
-			$memCacheFactory,
-			$httpClientService
-		);
-		$permissions = new \OCA\FederatedFileSharing\Ocm\Permissions();
-		$notificationManagerFFS = new \OCA\FederatedFileSharing\Ocm\NotificationManager($permissions);
-		$notificationManagerServer = \OC::$server->getNotificationManager();
-		$jobList = \OC::$server->getJobList();
-		$config = \OC::$server->getConfig();
-		return new \OCA\FederatedFileSharing\Notifications(
-			$addressHandler,
-			$httpClientService,
-			$discoveryManager,
-			$notificationManagerFFS,
-			$jobList,
-			$config
-		);
-	}
 		
-	public static function getFederatedGroupNotifications() {
-		$appManager = \OC::$server->getAppManager();
-		$userManager = \OC::$server->getUserManager();
-		$logger = \OC::$server->getLogger();
-		$urlGenerator = \OC::$server->getURLGenerator();
-		$l10n = \OC::$server->getL10N('federatedgroups');
-		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
-			$urlGenerator,
-			$l10n
-		);
-		$httpClientService = \OC::$server->getHTTPClientService();
-		$memCacheFactory = \OC::$server->getMemCacheFactory();
-		$discoveryManager = new \OCA\FederatedFileSharing\DiscoveryManager(
-			$memCacheFactory,
-			$httpClientService
-		);
-		$permissions = new \OCA\FederatedFileSharing\Ocm\Permissions();
-		$notificationManagerFFS = new \OCA\FederatedFileSharing\Ocm\NotificationManager($permissions);
-		$notificationManagerServer = \OC::$server->getNotificationManager();
-		$jobList = \OC::$server->getJobList();
-		$config = \OC::$server->getConfig();
-		return new \OCA\FederatedGroups\FederatedFileSharing\Notifications(
-			$addressHandler,
-			$httpClientService,
-			$discoveryManager,
-			$notificationManagerFFS,
-			$jobList,
-			$config
-		);
-	}
 	public function registerMountProviders() {
 		// We need to prevent adding providers more than once
 		// Doing this on MountProviderCollection level makes a lot tests to fail
@@ -130,149 +68,7 @@ class Application extends App {
 		}
 	}
 
-	public static function getRemoteOcsController(
-		IRequest $request,
-		\OCA\Files_Sharing\External\Manager $externalManager,
-		$uid
-	) {
-		$a = \OC::$server->getDatabaseConnection();
-		$b = \OC\Files\Filesystem::getMountManager();
-		$c = \OC\Files\Filesystem::getLoader();
-		$d = \OC::$server->getNotificationManager();
-		$e = \OC::$server->getEventDispatcher();
-		$f = $uid;
-		$externalGroupManager = new \OCA\FederatedGroups\Files_Sharing\External\Manager($a, $b, $c, $d, $e, $f);
-		$controller = new \OCA\FederatedGroups\Files_Sharing\Controller\RemoteOcsController(
-			'files_sharing',
-			$request,
-			$externalManager,
-			$externalGroupManager,
-			$uid
-		);
-		return $controller;
-	}
-
-	public static function getOcmController(IRequest $request) {
-		return self::getFederatedGroupOcmController($request);
-	}
-
-	public static function getFederatedGroupOcmController(IRequest $request) {
-		$federatedUserNotifications = self::getFederatedUserNotifications();
-		$federatedGroupNotifications = self::getFederatedGroupNotifications();
-		$secureRandom = \OC::$server->getSecureRandom();
-		$tokenHandler = new \OCA\FederatedFileSharing\TokenHandler(
-			$secureRandom
-		);
-		$databaseConnection = \OC::$server->getDatabaseConnection();
-		$eventDispatcher = \OC::$server->getEventDispatcher();
-		$lazyFolderRoot = \OC::$server->getLazyRootFolder();
-		$urlGenerator = \OC::$server->getURLGenerator();
-		$l10n = \OC::$server->getL10N('federatedfilesharing');
-		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
-			$urlGenerator,
-			$l10n
-		);
-		$logger = \OC::$server->getLogger();
-		$config = \OC::$server->getConfig();
-		$userManager = \OC::$server->getUserManager();
-		$groupManager = \OC::$server->getGroupManager();
-		$notificationManagerServer = \OC::$server->getNotificationManager();
-		$permissions = new \OCA\FederatedFileSharing\Ocm\Permissions();
-
-	  $federatedUserShareProvider = new \OCA\FederatedFileSharing\FederatedShareProvider(
-			$databaseConnection,
-			$eventDispatcher,
-			$addressHandler,
-			$federatedUserNotifications,
-			$tokenHandler,
-			$l10n,
-			$logger,
-			$lazyFolderRoot,
-			$config,
-			$userManager
-    	);
-
-	  $federatedGroupShareProvider = new \OCA\FederatedGroups\FederatedGroupShareProvider(
-			$databaseConnection,
-			$eventDispatcher,
-			$addressHandler,
-			$federatedGroupNotifications,
-			$tokenHandler,
-			$l10n,
-			$logger,
-			$lazyFolderRoot,
-			$config,
-			$userManager,
-			$groupManager
-    	);
-		$federatedGroupOcmMiddleware = self::getOcmMiddleware();
-		$activityManager = \OC::$server->getActivityManager();
-		$fedShareManager = new \OCA\FederatedGroups\FederatedFileSharing\FedShareManager(
-			$federatedUserShareProvider,
-			$federatedGroupShareProvider,
-			$federatedUserNotifications,
-			$federatedGroupNotifications,
-			$userManager,
-			$activityManager,
-			$notificationManagerServer,
-			$addressHandler,
-			$permissions,
-			$eventDispatcher
-		);
-		$user = \OC::$server->getUserSession()->getUser();
-		$uid = $user ? $user->getUID() : null;
-		return new \OCA\FederatedGroups\Controller\OcmController(
-			'federatedgroups',
-			$request,
-			$federeatedGroupOcmMiddleware,
-			$urlGenerator,
-			$userManager,
-			$addressHandler,
-			$fedShareManager,
-			$uid,
-			$logger
-		);
-	}
-
-
-	public static function getfederatedGroupShareProvider(){
-		$federatedUserNotifications = self::getFederatedUserNotifications();
-		$federatedGroupNotifications = self::getFederatedGroupNotifications();
-		$secureRandom = \OC::$server->getSecureRandom();
-		$tokenHandler = new \OCA\FederatedFileSharing\TokenHandler(
-			$secureRandom
-		);
-		$databaseConnection = \OC::$server->getDatabaseConnection();
-		$eventDispatcher = \OC::$server->getEventDispatcher();
-		$lazyFolderRoot = \OC::$server->getLazyRootFolder();
-		$l10n = \OC::$server->getL10N('federatedfilesharing');
-		$urlGenerator = \OC::$server->getURLGenerator();
-		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
-			$urlGenerator,
-			$l10n
-		);
-		$logger = \OC::$server->getLogger();
-		$config = \OC::$server->getConfig();
-		$userManager = \OC::$server->getUserManager();
-		$groupManager = \OC::$server->getGroupManager();
-
-	  return new \OCA\FederatedGroups\FederatedGroupShareProvider(
-			$databaseConnection,
-			$eventDispatcher,
-			$addressHandler,
-			$federatedGroupNotifications,
-			$tokenHandler,
-			$l10n,
-			$logger,
-			$lazyFolderRoot,
-			$config,
-			$userManager,
-			$groupManager
-    	);
-	}
-
   	public function getMixedGroupShareProvider() {
-		// error_log("returning the \OCA\FederatedGroups\MixedGroupShareProvider from the Application getMixedGroupShareProvider method");
 		$urlGenerator = \OC::$server->getURLGenerator();
 		$l10n = \OC::$server->getL10N('federatedfilesharing');
 		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
