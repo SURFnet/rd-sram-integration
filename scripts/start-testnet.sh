@@ -15,6 +15,9 @@ function waitForPort {
 export REPO_DIR=`pwd`
 echo Repo dir is $REPO_DIR
 
+# ldap start
+docker compose -f "$REPO_DIR/servers/ldap/docker-compose.yml" up -d --build
+# ldap end
 
 # keycloak start
 docker run -d --name=keycloak.docker \
@@ -29,44 +32,53 @@ docker run -d --name=keycloak.docker \
     quay.io/keycloak/keycloak:12.0.4
 # keycloak end
 
-# ldap start
-# docker run --name=ldap.docker \
-#     -p 389:389 -p 636:636 \
-#     --network=testnet \
-#     --detach \
-#     osixia/openldap:1.5.0
-# ldap end
-
-
+# oc1 start
 echo "starting maria1.docker"
-docker run -d --network=testnet -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek --name=maria1.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
+docker run -d --network=testnet -p 3301:3306 -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek \
+    --name=maria1.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW \
+    --innodb-file-per-table=1 --skip-innodb-read-only-compressed
+
 echo "starting oc1.docker"
 docker run -d --network=testnet --name=oc1.docker \
   -v $REPO_DIR:/var/www/html/apps/rd-sram-integration \
   -v $REPO_DIR/core/apps/files_sharing:/var/www/html/apps/files_sharing \
   -v $REPO_DIR/core/apps/user_ldap:/var/www/html/apps/user_ldap \
   oc1
+# oc1 end
 
+
+# oc2 start
 echo "starting maria2.docker"
-docker run -d --network=testnet -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek --name=maria2.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
+docker run -d --network=testnet -p 3302:3306 -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek \
+    --name=maria2.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW \
+    --innodb-file-per-table=1 --skip-innodb-read-only-compressed
+
 echo "starting oc2.docker"
 docker run -d --network=testnet --name=oc2.docker \
   -v $REPO_DIR:/var/www/html/apps/rd-sram-integration \
   -v $REPO_DIR/core/apps/files_sharing:/var/www/html/apps/files_sharing \
   -v $REPO_DIR/core/apps/user_ldap:/var/www/html/apps/user_ldap \
   oc2
+# oc2 end
 
+# oc3 start
 echo "starting maria3.docker"
-docker run -d --network=testnet -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek --name=maria3.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
+docker run -d --network=testnet -p 3303:3306 -e MARIADB_ROOT_PASSWORD=eilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek \
+    --name=maria3.docker mariadb --transaction-isolation=READ-COMMITTED --binlog-format=ROW \
+    --innodb-file-per-table=1 --skip-innodb-read-only-compressed
+
 echo "starting oc3.docker"
 docker run -d --network=testnet --name=oc3.docker \
   -v $REPO_DIR:/var/www/html/apps/rd-sram-integration \
   -v $REPO_DIR/core/apps/files_sharing:/var/www/html/apps/files_sharing \
   -v $REPO_DIR/core/apps/user_ldap:/var/www/html/apps/user_ldap \
   oc3
+# oc3 end
 
 echo "starting firefox tester"
-docker run -d --name=firefox -p 5800:5800 -v /tmp/shm:/config:rw --network=testnet --shm-size 2g jlesage/firefox:v1.17.1
+docker run -d --name=firefox -p 5800:5800 -v /tmp/shm:/config:rw --network=testnet --shm-size 2g -e "DISPLAY_WIDTH=1920" -e "DISPLAY_HEIGHT=1080" jlesage/firefox
+# docker run -d --name=firefox -p 5800:5800 -v /tmp/shm:/config:rw --network=testnet --shm-size 2g jlesage/firefox:v1.17.1
+# docker run -d --name=firefox-t -p 5700:5800 -v /tmp/shm:/config:rw --network=testnet --shm-size 2g -e "DISPLAY_WIDTH=1920" -e "DISPLAY_HEIGHT=1080" jlesage/firefox:v1.17.1
 
 waitForPort maria1.docker 3306
 waitForPort oc1.docker 443
@@ -104,10 +116,10 @@ docker exec oc2.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "mem
 
 echo Creating regular group 'federalists' on oc3
 docker exec maria3.docker mariadb -u root -peilohtho9oTahsuongeeTh7reedahPo1Ohwi3aek owncloud -e "insert into oc_groups (gid) values ('federalists');"
-echo Adding foreign user to regular group on oc2
+echo Adding foreign user to regular group on oc3
 docker exec oc3.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "einstein#oc1.docker"}]}}]}' -H 'Content-Type: application/json' https://oc3.docker/index.php/apps/federatedgroups/scim/Groups/federalists
 docker exec oc3.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "marie#oc2.docker"}]}}]}' -H 'Content-Type: application/json' https://oc3.docker/index.php/apps/federatedgroups/scim/Groups/federalists
-echo Adding local user to regular group on oc2
+echo Adding local user to regular group on oc3
 docker exec oc3.docker curl -X PATCH -d'{"Operations":[{"op": "add","path": "members","value": {"members": [{"value": "adorno"}]}}]}' -H 'Content-Type: application/json' https://oc3.docker/index.php/apps/federatedgroups/scim/Groups/federalists
 
 

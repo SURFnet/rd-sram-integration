@@ -2,8 +2,8 @@ version: '3.7'
 services:
   openldap:
     image: osixia/openldap:latest
-    container_name: openldap
-    hostname: openldap
+    container_name: ldap.docker
+    hostname: ldap.docker
     ports: 
       - "389:389"
       - "636:636"
@@ -29,12 +29,12 @@ services:
   
   phpldapadmin:
     image: osixia/phpldapadmin:latest
-    container_name: phpldapadmin
-    hostname: phpldapadmin
+    container_name: phpldapadmin.docker
+    hostname: phpldapadmin.docker
     ports: 
       - "8081:80"
     environment: 
-      - PHPLDAPADMIN_LDAP_HOSTS=openldap
+      - PHPLDAPADMIN_LDAP_HOSTS=ldap.docker
       - PHPLDAPADMIN_HTTPS=false
     depends_on:
       - openldap
