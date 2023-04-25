@@ -19,8 +19,10 @@
  *
  */
 
-namespace OCA\FederatedFileSharing;
+namespace OCA\OpenCloudMesh\FederatedFileSharing;
 
+use OCA\FederatedFileSharing\Address;
+use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\Files_Sharing\Activity;
 use OCP\Activity\IManager as ActivityManager;

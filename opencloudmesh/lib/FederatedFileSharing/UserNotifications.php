@@ -35,7 +35,7 @@ use OCP\Http\Client\IClientService;
 use OCP\IConfig;
 use GuzzleHttp\Exception\ClientException;
 
-class Notifications extends AbstractNotifications {
+class UserNotifications extends AbstractNotifications {
 	/**
 	 * @param AddressHandler $addressHandler
 	 * @param IClientService $httpClientService
@@ -58,7 +58,7 @@ class Notifications extends AbstractNotifications {
 			$notificationManager,
 			$jobList,
 			$config,
-			'group'
+			'user'
 		);
 	}
 }

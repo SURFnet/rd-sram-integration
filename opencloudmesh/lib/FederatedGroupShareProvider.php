@@ -19,10 +19,11 @@ use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
-use OCA\OpenCloudMesh\FederatedFileSharing\Notifications;
+use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
 use OCA\OpenCloudMesh\Files_Sharing\External\Manager;
 use OCP\Files\File;
 use OCP\Share\IAttributes;
+use OCP\Share\IProviderFactory;
 use OCP\Share\IShare;
 use OCP\Share\IShareProvider;
 use OCP\Share\Exceptions\ShareNotFound;
@@ -41,7 +42,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 /**
  * Class FederatedGroupShareProvider
  *
- * @package OC\Share20
+ * @package OCA\OpenCloudMesh
  */
 class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
 	const SHARE_TYPE_REMOTE_GROUP = 7;
@@ -52,28 +53,28 @@ class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
 	 * @param IDBConnection $connection
 	 * @param EventDispatcherInterface $eventDispatcher
 	 * @param AddressHandler $addressHandler
-	 * @param Notifications $notifications
+	 * @param GroupNotifications $notifications
 	 * @param TokenHandler $tokenHandler
 	 * @param IL10N $l10n
 	 * @param ILogger $logger
 	 * @param IRootFolder $rootFolder
 	 * @param IConfig $config
 	 * @param IUserManager $userManager
-	 * @param IManager $shareManager
+	 * @param IProviderFactory $shareProviderFactory
 	 * @param callable $externalManagerProvider
 	 */
 	public function __construct(
 		IDBConnection $connection,
 		EventDispatcherInterface $eventDispatcher,
 		AddressHandler $addressHandler,
-		Notifications $notifications,
+		GroupNotifications $notifications,
 		TokenHandler $tokenHandler,
 		IL10N $l10n,
 		ILogger $logger,
 		IRootFolder $rootFolder,
 		IConfig $config,
 		IUserManager $userManager,
-		IManager $shareManager,
+		IProviderFactory $shareProviderFactory,
 		callable $externalManagerProvider
 	) {
 		parent::__construct(
@@ -89,7 +90,7 @@ class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
 			'share_external_group',
 			self::SHARE_TYPE_REMOTE_GROUP,
 			$userManager,
-			$shareManager,
+			$shareProviderFactory,
 			$externalManagerProvider
 		);
 	}

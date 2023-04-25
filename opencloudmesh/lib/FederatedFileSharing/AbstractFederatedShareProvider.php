@@ -45,8 +45,9 @@ use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IUserManager;
 use OCP\Share\Exceptions\ShareNotFound;
-use OCP\Share\IManager;
+use OCP\Share\IProviderFactory;
 use OCP\Share\IShare;
+use OCP\Share\IShareProvider;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
@@ -97,8 +98,8 @@ abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 	/** @var IUserManager */
 	private $userManager;
 
-    /** @var IManager */
-	private $shareManager;
+    /** @var IProviderFactory */
+	private $shareProviderFactory;
 
 	/** @var callable */
 	private $externalManagerProvider;
@@ -118,7 +119,7 @@ abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 	 * @param string $externalShareTable
 	 * @param string $shareType Must be one of \OCP\Share share types
 	 * @param IUserManager $userManager
-	 * @param IManager $shareManager
+	 * @param IProviderFactory $shareProviderFactory
 	 * @param callable $externalManagerProvider
 	 */
 	public function __construct(
@@ -134,7 +135,7 @@ abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 		string $externalShareTable,
 		int $shareType,
 		IUserManager $userManager,
-		IManager $shareManager,
+		IProviderFactory $shareProviderFactory,
 		callable $externalManagerProvider
 	) {
 		$this->dbConnection = $connection;
@@ -149,7 +150,7 @@ abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 		$this->externalShareTable = $externalShareTable;
 		$this->shareType = $shareType;
 		$this->userManager = $userManager;
-		$this->shareManager = $shareManager;
+		$this->shareProviderFactory = $shareProviderFactory;
 		$this->externalManagerProvider = $externalManagerProvider;
 	}
 
@@ -169,7 +170,6 @@ abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 	 * @throws \Exception
 	 */
 	public function create(IShare $share) {
-		error_log("AbstractFederatedShareProvider create");
 		$shareWith = $share->getSharedWith();
 		$itemSource = $share->getNodeId();
 		$itemType = $share->getNodeType();
@@ -345,7 +345,7 @@ abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 	 * @throws ShareNotFound
 	 */
 	public function getShareFromExternalShareTable(IShare $share) {
-		foreach($this->shareManager->getProviders() as $provider) {
+		foreach($this->shareProviderFactory->getProviders() as $provider) {
 			if ($provider instanceof IRemoteShareProvider) {
 				try {
 					return $provider->getShareFromLocalTable($share);

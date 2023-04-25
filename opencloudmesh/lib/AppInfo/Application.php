@@ -26,7 +26,8 @@ use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\OpenCloudMesh\FederatedFileSharing\FedGroupShareManager;
 use OCA\OpenCloudMesh\FederatedFileSharing\FedUserShareManager;
-use OCA\OpenCloudMesh\FederatedFileSharing\Notifications;
+use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
+use OCA\OpenCloudMesh\FederatedFileSharing\UserNotifications;
 use OCA\OpenCloudMesh\FederatedGroupShareProvider;
 use OCA\OpenCloudMesh\FederatedUserShareProvider;
 use OCA\OpenCloudMesh\Controller\OcmController;
@@ -96,7 +97,7 @@ class Application extends App {
 				$notificationManager = new NotificationManager(
 					$permissions
 				);
-				$notifications = new Notifications(
+				$notifications = new GroupNotifications(
 					$addressHandler,
 					\OC::$server->getHTTPClientService(),
 					$discoveryManager,
@@ -133,7 +134,7 @@ class Application extends App {
 				$notificationManager = new NotificationManager(
 					$permissions
 				);
-				$notifications = new \OCA\FederatedFileSharing\Notifications(
+				$notifications = new UserNotifications(
 					$addressHandler,
 					\OC::$server->getHTTPClientService(),
 					$discoveryManager,
@@ -216,7 +217,7 @@ class Application extends App {
 		$notificationManager = new NotificationManager(
 			new Permissions()
 		);
-		$notifications = new Notifications(
+		$notifications = new GroupNotifications(
 			$addressHandler,
 			\OC::$server->getHTTPClientService(),
 			$discoveryManager,
@@ -239,9 +240,9 @@ class Application extends App {
 			\OC::$server->getLazyRootFolder(),
 			\OC::$server->getConfig(),
 			\OC::$server->getUserManager(),
-			\OC::$server->getShareManager(),
+			$this->getContainer()->query('OCA\\OpenCloudMesh\\ShareProviderFactory'),
 			function () {
-				return $this->getContainer()->query('GroupExternalManager');
+				return $this->getContainer()->query('OCA\\OpenCloudMesh\\GroupExternalManager');
 			}
 		);
 	}
@@ -261,7 +262,7 @@ class Application extends App {
 		$notificationManager = new NotificationManager(
 			new Permissions()
 		);
-		$notifications = new \OCA\FederatedFileSharing\Notifications(
+		$notifications = new UserNotifications(
 			$addressHandler,
 			\OC::$server->getHTTPClientService(),
 			$discoveryManager,
@@ -284,7 +285,7 @@ class Application extends App {
 			\OC::$server->getLazyRootFolder(),
 			\OC::$server->getConfig(),
 			\OC::$server->getUserManager(),
-			\OC::$server->getShareManager(),
+			$this->getContainer()->query('OCA\\OpenCloudMesh\\ShareProviderFactory'),
 			function () {
 				$sharingApp = new \OCA\Files_Sharing\AppInfo\Application();
 				$externalManager = $sharingApp->getContainer()->query('ExternalManager');

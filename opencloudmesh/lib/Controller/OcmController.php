@@ -491,4 +491,34 @@ class OcmController extends Controller {
 		// TODO: make it a constant
 		return $shareType === 'user' || $shareType === 'group';
 	}
+
+	/**
+	 * Get list of supported protocols
+	 *
+	 * @return array
+	 */
+	protected function getProtocols() {
+		return [
+			'webdav' => '/public.php/webdav/'
+		];
+	}
+	
+	/**
+	 * @param string $resourceType
+	 *
+	 * @return bool
+	 */
+	protected function isSupportedResourceType($resourceType) {
+		return $resourceType === FileNotification::RESOURCE_TYPE_FILE;
+	}
+	
+	/**
+	 * @param string $protocolName
+	 * @return bool
+	 */
+	protected function isSupportedProtocol($protocolName) {
+		$supportedProtocols = $this->getProtocols();
+		$supportedProtocolNames = \array_keys($supportedProtocols);
+		return \in_array($protocolName, $supportedProtocolNames);
+	}
 }

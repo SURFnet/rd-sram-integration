@@ -19,10 +19,11 @@ use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
-use OCA\FederatedFileSharing\Notifications;
+use OCA\OpenCloudMesh\FederatedFileSharing\UserNotifications;
 use OCA\OpenCloudMesh\Files_Sharing\External\Manager;
 use OCP\Files\File;
 use OCP\Share\IAttributes;
+use OCP\Share\IProviderFactory;
 use OCP\Share\IShare;
 use OCP\Share\IShareProvider;
 use OCP\Share\Exceptions\ShareNotFound;
@@ -52,28 +53,28 @@ class FederatedUserShareProvider extends AbstractFederatedShareProvider {
 	 * @param IDBConnection $connection
 	 * @param EventDispatcherInterface $eventDispatcher
 	 * @param AddressHandler $addressHandler
-	 * @param Notifications $notifications
+	 * @param UserNotifications $notifications
 	 * @param TokenHandler $tokenHandler
 	 * @param IL10N $l10n
 	 * @param ILogger $logger
 	 * @param IRootFolder $rootFolder
 	 * @param IConfig $config
 	 * @param IUserManager $userManager
-	 * @param IManager $shareManager
+	 * @param IProviderFactory $shareProviderFactory
 	 * @param callable $externalManagerProvider
 	 */
 	public function __construct(
 		IDBConnection $connection,
 		EventDispatcherInterface $eventDispatcher,
 		AddressHandler $addressHandler,
-		Notifications $notifications,
+		UserNotifications $notifications,
 		TokenHandler $tokenHandler,
 		IL10N $l10n,
 		ILogger $logger,
 		IRootFolder $rootFolder,
 		IConfig $config,
 		IUserManager $userManager,
-		IManager $shareManager,
+		IProviderFactory $shareProviderFactory,
 		callable $externalManagerProvider
 	) {
 		parent::__construct(
@@ -89,7 +90,7 @@ class FederatedUserShareProvider extends AbstractFederatedShareProvider {
 			'share_external',
 			self::SHARE_TYPE_REMOTE,
 			$userManager,
-			$shareManager,
+			$shareProviderFactory,
 			$externalManagerProvider
 		);
 	}

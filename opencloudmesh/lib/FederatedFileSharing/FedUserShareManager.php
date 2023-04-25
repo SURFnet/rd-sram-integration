@@ -21,7 +21,7 @@
 
 namespace OCA\OpenCloudMesh\FederatedFileSharing;
 
-use OCA\FederatedFileSharing\AbstractFedShareManager;
+use OCA\OpenCloudMesh\FederatedFileSharing\AbstractFedShareManager;
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Ocm\Permissions;
@@ -46,7 +46,7 @@ class FedUserShareManager extends AbstractFedShareManager {
 	 * FedShareManager constructor.
 	 *
 	 * @param FederatedUserShareProvider $federatedUserShareProvider
-	 * @param Notifications $notifications
+	 * @param UserNotifications $notifications
 	 * @param IUserManager $userManager
 	 * @param ActivityManager $activityManager
 	 * @param NotificationManager $notificationManager
@@ -56,7 +56,7 @@ class FedUserShareManager extends AbstractFedShareManager {
 	 */
 	public function __construct(
 		FederatedUserShareProvider $federatedUserShareProvider,
-		Notifications $notifications,
+		UserNotifications $notifications,
 		IUserManager $userManager,
 		ActivityManager $activityManager,
 		NotificationManager $notificationManager,
