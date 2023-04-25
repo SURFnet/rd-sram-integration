@@ -24,9 +24,11 @@ use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
-use OCA\OpenCloudMesh\FederatedFileSharing\FedShareManager;
+use OCA\OpenCloudMesh\FederatedFileSharing\FedGroupShareManager;
+use OCA\OpenCloudMesh\FederatedFileSharing\FedUserShareManager;
 use OCA\OpenCloudMesh\FederatedFileSharing\Notifications;
 use OCA\OpenCloudMesh\FederatedGroupShareProvider;
+use OCA\OpenCloudMesh\FederatedUserShareProvider;
 use OCA\OpenCloudMesh\Controller\OcmController;
 use OCA\OpenCloudMesh\Files_Sharing\Middleware\RemoteOcsMiddleware;
 use OCA\OpenCloudMesh\ShareProviderFactory;
@@ -36,6 +38,9 @@ class Application extends App {
 
 	/** @var FederatedGroupShareProvider */
 	protected $federatedGroupShareProvider;
+
+	/** @var FederatedUserShareProvider */
+	protected $federatedUserShareProvider;
 	
 	public function __construct(array $urlParams = []) {
 		parent::__construct('opencloudmesh', $urlParams);
@@ -62,9 +67,7 @@ class Application extends App {
 			return new \OCA\OpenCloudMesh\Files_Sharing\External\MountProvider(
 				$server->getDatabaseConnection(),
 				function () use ($c) {
-					$sharingApp = new \OCA\Files_Sharing\AppInfo\Application();
-					$externalManager = $sharingApp->getContainer()->query('ExternalManager');
-					return $externalManager;
+					return $c->query('OCA\\OpenCloudMesh\\GroupExternalManager');
 				}
 			);
 		});
@@ -79,12 +82,8 @@ class Application extends App {
 		});
 
 		$container->registerService(
-			'OCA\\OpenCloudMesh\\FederatedFileSharing\\FedShareManager',
+			'OCA\\OpenCloudMesh\\FederatedFileSharing\\FedGroupShareManager',
 			function ($c) use ($server) {
-				error_log('before event dispatcher');
-				$ed = $server->getEventDispatcher();
-				error_log('after event dispatcher> '.get_class($ed));
-
 				$addressHandler = new AddressHandler(
 					\OC::$server->getURLGenerator(),
 					\OC::$server->getL10N('federatedfilesharing')
@@ -106,7 +105,7 @@ class Application extends App {
 					\OC::$server->getConfig()
 				);
 
-				return new FedShareManager(
+				return new FedGroupShareManager(
 					$this->getFederatedGroupShareProvider(),
 					$notifications,
 					$server->getUserManager(),
@@ -118,18 +117,88 @@ class Application extends App {
 				);
 			}
 		);
+
+		$container->registerService(
+			'OCA\\OpenCloudMesh\\FederatedFileSharing\\FedUserShareManager',
+			function ($c) use ($server) {
+				$addressHandler = new AddressHandler(
+					\OC::$server->getURLGenerator(),
+					\OC::$server->getL10N('federatedfilesharing')
+				);
+				$discoveryManager = new DiscoveryManager(
+					\OC::$server->getMemCacheFactory(),
+					\OC::$server->getHTTPClientService()
+				);
+				$permissions = new Permissions();
+				$notificationManager = new NotificationManager(
+					$permissions
+				);
+				$notifications = new \OCA\FederatedFileSharing\Notifications(
+					$addressHandler,
+					\OC::$server->getHTTPClientService(),
+					$discoveryManager,
+					$notificationManager,
+					\OC::$server->getJobList(),
+					\OC::$server->getConfig()
+				);
+
+				return new FedUserShareManager(
+					$this->getFederatedUserShareProvider(),
+					$notifications,
+					$server->getUserManager(),
+					$server->getActivityManager(),
+					$server->getNotificationManager(),
+					$addressHandler,
+					$permissions,
+					$server->getEventDispatcher()
+				);
+			}
+		);
+
+		$container->registerService(
+			'OCA\\OpenCloudMesh\\Controller\\OcmController',
+			function ($c) use ($server) {
+				$app = new \OCA\FederatedFileSharing\AppInfo\Application();
+				$appContainer = $app->getContainer();
+
+				return new OcmController(
+					$c->query('AppName'),
+					$c->query('Request'),
+					$appContainer->query('OcmMiddleware'),
+					$server->getURLGenerator(),
+					$server->getUserManager(),
+					$appContainer->query('AddressHandler'),
+					$c->query('OCA\\OpenCloudMesh\\FederatedFileSharing\\FedGroupShareManager'),
+					$c->query('OCA\\OpenCloudMesh\\FederatedFileSharing\\FedUserShareManager'),
+					$server->getLogger(),
+					$server->getConfig()
+				);
+			}
+		);
 	}
 
 	/**
 	 * get instance of federated share provider
 	 *
-	 * @return FederatedShareProvider
+	 * @return FederatedGroupShareProvider
 	 */
 	public function getFederatedGroupShareProvider() {
 		if ($this->federatedGroupShareProvider === null) {
 			$this->initFederatedGroupShareProvider();
 		}
 		return $this->federatedGroupShareProvider;
+	}
+
+	/**
+	 * get instance of federated share provider
+	 *
+	 * @return FederatedUserShareProvider
+	 */
+	public function getFederatedUserShareProvider() {
+		if ($this->federatedUserShareProvider === null) {
+			$this->initFederatedUserShareProvider();
+		}
+		return $this->federatedUserShareProvider;
 	}
 
 	/**
@@ -170,8 +239,56 @@ class Application extends App {
 			\OC::$server->getLazyRootFolder(),
 			\OC::$server->getConfig(),
 			\OC::$server->getUserManager(),
+			\OC::$server->getShareManager(),
 			function () {
 				return $this->getContainer()->query('GroupExternalManager');
+			}
+		);
+	}
+
+	/**
+	 * initialize federated share provider
+	 */
+	protected function initFederatedUserShareProvider() {
+		$addressHandler = new AddressHandler(
+			\OC::$server->getURLGenerator(),
+			\OC::$server->getL10N('federatedfilesharing')
+		);
+		$discoveryManager = new DiscoveryManager(
+			\OC::$server->getMemCacheFactory(),
+			\OC::$server->getHTTPClientService()
+		);
+		$notificationManager = new NotificationManager(
+			new Permissions()
+		);
+		$notifications = new \OCA\FederatedFileSharing\Notifications(
+			$addressHandler,
+			\OC::$server->getHTTPClientService(),
+			$discoveryManager,
+			$notificationManager,
+			\OC::$server->getJobList(),
+			\OC::$server->getConfig()
+		);
+		$tokenHandler = new TokenHandler(
+			\OC::$server->getSecureRandom()
+		);
+
+		$this->federatedUserShareProvider = new FederatedUserShareProvider(
+			\OC::$server->getDatabaseConnection(),
+			\OC::$server->getEventDispatcher(),
+			$addressHandler,
+			$notifications,
+			$tokenHandler,
+			\OC::$server->getL10N('federatedfilesharing'),
+			\OC::$server->getLogger(),
+			\OC::$server->getLazyRootFolder(),
+			\OC::$server->getConfig(),
+			\OC::$server->getUserManager(),
+			\OC::$server->getShareManager(),
+			function () {
+				$sharingApp = new \OCA\Files_Sharing\AppInfo\Application();
+				$externalManager = $sharingApp->getContainer()->query('ExternalManager');
+				return $externalManager;
 			}
 		);
 	}

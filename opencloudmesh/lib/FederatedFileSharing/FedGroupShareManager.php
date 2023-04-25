@@ -37,11 +37,11 @@ use Symfony\Component\EventDispatcher\GenericEvent;
 use OCP\Share\Exceptions\ShareNotFound;
 
 /**
- * Class FedShareManager holds the share logic
+ * Class FedGroupShareManager holds the share logic
  *
- * @package OCA\FederatedFileSharing
+ * @package OCA\OpenCloudMesh\FederatedFileSharing
  */
-class FedShareManager extends AbstractFedShareManager {
+class FedGroupShareManager extends AbstractFedShareManager {
 	/**
 	 * FedShareManager constructor.
 	 *

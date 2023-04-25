@@ -118,6 +118,10 @@ abstract class AbstractFedShareManager {
 
 	abstract public function localShareWithExists($localShareWith);
 
+	public function getShareById($id) {
+		return $this->federatedShareProvider->getShareById($id);
+	}
+
 	/**
 	 * Create an incoming share
 	 *

@@ -28,7 +28,8 @@ use OCA\FederatedFileSharing\Ocm\Exception\BadRequestException;
 use OCA\FederatedFileSharing\Ocm\Exception\NotImplementedException;
 use OCA\FederatedFileSharing\Ocm\Notification\FileNotification;
 use OCP\AppFramework\Http\JSONResponse;
-use OCA\OpenCloudMesh\FederatedFileSharing\FedShareManager;
+use OCA\OpenCloudMesh\FederatedFileSharing\FedGroupShareManager;
+use OCA\OpenCloudMesh\FederatedFileSharing\FedUserShareManager;
 use OCA\FederatedFileSharing\Ocm\Exception\OcmException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -44,7 +45,49 @@ use OCP\Share\Exceptions\ShareNotFound;
  *
  * @package OCA\OpenCloudMesh\Controller
  */
-class OcmController extends \OCA\OpenCloudMesh\FederatedFileSharing\Controller\OcmController {
+class OcmController extends Controller {
+	public const API_VERSION = '1.0-proposal1';
+
+	/**
+	 * @var OcmMiddleware
+	 */
+	private $ocmMiddleware;
+
+	/**
+	 * @var IURLGenerator
+	 */
+	protected $urlGenerator;
+
+	/**
+	 * @var IUserManager
+	 */
+	protected $userManager;
+
+	/**
+	 * @var AddressHandler
+	 */
+	protected $addressHandler;
+
+	/**
+	 * @var FedGroupShareManager
+	 */
+	protected $fedGroupShareManager;
+
+	/**
+	 * @var FedUserShareManager
+	 */
+	protected $fedUserShareManager;
+
+	/**
+	 * @var ILogger
+	 */
+	protected $logger;
+
+	/**
+	 * @var IConfig
+	 */
+	protected $config;
+
 	/**
 	 * OcmController constructor.
 	 *
@@ -54,7 +97,8 @@ class OcmController extends \OCA\OpenCloudMesh\FederatedFileSharing\Controller\O
 	 * @param IURLGenerator $urlGenerator
 	 * @param IUserManager $userManager
 	 * @param AddressHandler $addressHandler
-	 * @param FedShareManager $fedShareManager
+	 * @param FedGroupShareManager $fedGroupShareManager
+	 * @param FedUserShareManager $fedUserShareManager
 	 * @param ILogger $logger
 	 * @param IConfig $config
 	 */
@@ -65,11 +109,21 @@ class OcmController extends \OCA\OpenCloudMesh\FederatedFileSharing\Controller\O
 		IURLGenerator $urlGenerator,
 		IUserManager $userManager,
 		AddressHandler $addressHandler,
-		FedShareManager $fedShareManager,
+		FedGroupShareManager $fedGroupShareManager,
+		FedUserShareManager $fedUserShareManager,
 		ILogger $logger,
 		IConfig $config
 	) {
-		parent::__construct(...func_get_args());
+		parent::__construct($appName, $request);
+
+		$this->ocmMiddleware = $ocmMiddleware;
+		$this->urlGenerator = $urlGenerator;
+		$this->userManager = $userManager;
+		$this->addressHandler = $addressHandler;
+		$this->fedGroupShareManager = $fedGroupShareManager;
+		$this->fedUserShareManager = $fedUserShareManager;
+		$this->logger = $logger;
+		$this->config = $config;
 	}
 
 	/**
@@ -116,9 +170,6 @@ class OcmController extends \OCA\OpenCloudMesh\FederatedFileSharing\Controller\O
 		$resourceType,
 		$protocol
 	) {
-		error_log("Our createShare!");
-		error_log(var_export(func_get_args(), true));
-
 /* START COPY-PASTE BLOCK https://github.com/owncloud/core/blob/v10.12.1/apps/federatedfilesharing/lib/Controller/OcmController.php#L180-L233 */
 		try {
 			$this->ocmMiddleware->assertIncomingSharingEnabled();
@@ -168,15 +219,15 @@ class OcmController extends \OCA\OpenCloudMesh\FederatedFileSharing\Controller\O
 
 			$shareWithAddress = new Address($shareWith);
 			$localShareWith = $shareWithAddress->toLocalUid();
-			if (!$this->userManager->userExists($localShareWith)) {
-				throw new BadRequestException("User $localShareWith does not exist");
+			if (!$this->fedGroupShareManager->localShareWithExists($localShareWith)) {
+				throw new BadRequestException("Group $localShareWith does not exist");
 			}
 
 			$ownerAddress = new Address($owner, $ownerDisplayName);
 			$sharedByAddress = new Address($sender, $senderDisplayName);
 /* END COPY-PASTE BLOCK https://github.com/owncloud/core/blob/v10.12.1/apps/federatedfilesharing/lib/Controller/OcmController.php#L180-L233 */
 
-			$this->fedShareManager->createShare(
+			$this->fedGroupShareManager->createShare(
 				$ownerAddress,
 				$sharedByAddress,
 				$localShareWith,
@@ -232,9 +283,204 @@ class OcmController extends \OCA\OpenCloudMesh\FederatedFileSharing\Controller\O
 		$providerId,
 		$notification
 	) {
-		error_log("Our processNotification!");
-		error_log(var_export(func_get_args(), true));
-		return parent::processNotification(...func_get_args());
+		try {
+			if (!\is_array($notification)) {
+				throw new BadRequestException(
+					'server can not add federated share, missing parameter'
+				);
+			}
+
+			$notification = \array_merge(
+				['sharedSecret' => null],
+				$notification
+			);
+
+			$this->ocmMiddleware->assertNotNull(
+				[
+					'notificationType' => $notificationType,
+					'resourceType' => $resourceType,
+					'providerId' => $providerId,
+					'sharedSecret' => $notification['sharedSecret']
+				]
+			);
+
+			if ($this->isSupportedResourceType($resourceType) === false) {
+				throw new NotImplementedException(
+					"ResourceType {$resourceType} is not supported"
+				);
+			}
+
+			switch ($notificationType) {
+				case FileNotification::NOTIFICATION_TYPE_SHARE_ACCEPTED:
+					$this->ocmMiddleware->assertOutgoingSharingEnabled();
+					$share = $this->getValidShare(
+						$providerId,
+						$notification['sharedSecret']
+					);
+					$fedShareManager = $this->getFedShareManagerForShareType($share->getShareType());
+					$fedShareManager->acceptShare($share);
+					break;
+				case FileNotification::NOTIFICATION_TYPE_SHARE_DECLINED:
+					$this->ocmMiddleware->assertOutgoingSharingEnabled();
+					$share = $this->getValidShare(
+						$providerId,
+						$notification['sharedSecret']
+					);
+					$fedShareManager = $this->getFedShareManagerForShareType($share->getShareType());
+					$fedShareManager->declineShare($share);
+					break;
+				case FileNotification::NOTIFICATION_TYPE_REQUEST_RESHARE:
+					$this->ocmMiddleware->assertOutgoingSharingEnabled();
+					$this->ocmMiddleware->assertNotNull(
+						[
+							'shareWith' => $notification['shareWith'],
+							'senderId' => $notification['senderId'],
+						]
+					);
+					$share = $this->getValidShare(
+						$providerId,
+						$notification['sharedSecret']
+					);
+
+					// don't allow to share a file back to the owner
+					$owner = $share->getShareOwner();
+					$ownerAddress = $this->addressHandler->getLocalUserFederatedAddress($owner);
+					$shareWithAddress = new Address($notification['shareWith']);
+					$this->ocmMiddleware->assertNotSameUser($ownerAddress, $shareWithAddress);
+					$this->ocmMiddleware->assertSharingPermissionSet($share);
+
+					$fedShareManager = $this->getFedShareManagerForShareType($share->getShareType());
+					$reShare = $fedShareManager->reShare(
+						$share,
+						$notification['senderId'],
+						$notification['shareWith']
+					);
+					return new JSONResponse(
+						[
+							'sharedSecret' => $reShare->getToken(),
+							'providerId' => $reShare->getId()
+						],
+						Http::STATUS_CREATED
+					);
+					break;
+				case FileNotification::NOTIFICATION_TYPE_RESHARE_CHANGE_PERMISSION:
+					$this->ocmMiddleware->assertNotNull(
+						[
+							'permission' => $notification['permission']
+						]
+					);
+					$share = $this->getValidShare(
+						$providerId,
+						$notification['sharedSecret']
+					);
+					$fedShareManager = $this->getFedShareManagerForShareType($share->getShareType());
+					$fedShareManager->updateOcmPermissions(
+						$share,
+						$notification['permission']
+					);
+					break;
+				case FileNotification::NOTIFICATION_TYPE_SHARE_UNSHARED:
+					{
+						try {
+							$fedGroupShareManager->unshare(
+								$providerId,
+								$notification['sharedSecret']
+							);
+							break;
+						} catch(ShareNotFound $e2) {
+							// Ignore failure to move on to the default implementation
+						}
+
+						try {
+							$fedUserShareManager->unshare(
+								$providerId,
+								$notification['sharedSecret']
+							);
+							break;
+						} catch(ShareNotFound $e2) {
+							// Ignore failure to move on to the default implementation
+						}
+						break;
+					}
+				case FileNotification::NOTIFICATION_TYPE_RESHARE_UNDO:
+					// Stub. Let it fallback to the prev endpoint for now
+					return new JSONResponse(
+						['message' => "Notification of type {$notificationType} is not supported"],
+						Http::STATUS_NOT_IMPLEMENTED
+					);
+				default:
+					return new JSONResponse(
+						['message' => "Notification of type {$notificationType} is not supported"],
+						Http::STATUS_NOT_IMPLEMENTED
+					);
+			}
+		} catch (OcmException $e) {
+			return new JSONResponse(
+				['message' => $e->getMessage()],
+				$e->getHttpStatusCode()
+			);
+		} catch (\Exception $e) {
+			$this->logger->error(
+				"server can not process notification, {$e->getMessage()}",
+				['app' => 'federatefilesharing']
+			);
+			return new JSONResponse(
+				[
+					'message' => "internal server error, was not able to process notification"
+				],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}
+		return new JSONResponse(
+			[],
+			Http::STATUS_CREATED
+		);
+	}
+
+	private function getFedShareManagerForShareType($shareType) {
+		if ($shareType === 'group') {
+			return $this->fedGroupShareManager;
+		}
+		else if ($shareType === 'user') {
+			return $this->fedUserShareManager;
+		}
+
+		throw new NotImplementedException(
+			"ShareType {$shareType} is not supported"
+		);
+	}
+
+	private function getValidShare($id, $sharedSecret) {
+		try {
+			$share = $this->getShareById($id);
+		} catch (Share\Exceptions\ShareNotFound $e) {
+			throw new BadRequestException("Share with id {$id} does not exist");
+		}
+
+		if ($share->getToken() !== $sharedSecret) {
+			throw new ForbiddenException("The secret does not match");
+		}
+		return $share;
+	}
+
+	/**
+	 * Since we have multiple providers but the OCS Share API v1 does
+	 * not support this we need to check all backends.
+	 *
+	 * @param string $id
+	 * @return IShare
+	 * @throws ShareNotFound
+	 */
+	private function getShareById($id) {
+		if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
+			throw new ShareNotFound();
+		}
+
+		try {
+			return $this->fedGroupShareManager->getShareById($id);
+		} catch (ShareNotFound $e) {
+			return $this->fedUserShareManager->getShareById($id);
+		}
 	}
 
 	/**

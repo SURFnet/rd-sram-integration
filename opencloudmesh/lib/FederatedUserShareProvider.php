@@ -19,7 +19,7 @@ use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
-use OCA\OpenCloudMesh\FederatedFileSharing\Notifications;
+use OCA\FederatedFileSharing\Notifications;
 use OCA\OpenCloudMesh\Files_Sharing\External\Manager;
 use OCP\Files\File;
 use OCP\Share\IAttributes;
@@ -39,12 +39,12 @@ use OCA\FederatedFileSharing;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
- * Class FederatedGroupShareProvider
+ * Class FederatedUserShareProvider
  *
  * @package OC\Share20
  */
-class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
-	const SHARE_TYPE_REMOTE_GROUP = 7;
+class FederatedUserShareProvider extends AbstractFederatedShareProvider {
+	const SHARE_TYPE_REMOTE = 6;
 
 	/**
 	 * FederatedGroupShareProvider constructor.
@@ -86,8 +86,8 @@ class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
 			$logger,
 			$rootFolder,
 			$config,
-			'share_external_group',
-			self::SHARE_TYPE_REMOTE_GROUP,
+			'share_external',
+			self::SHARE_TYPE_REMOTE,
 			$userManager,
 			$shareManager,
 			$externalManagerProvider
@@ -100,6 +100,6 @@ class FederatedGroupShareProvider extends AbstractFederatedShareProvider {
 	 * @return string Containing only [a-zA-Z0-9]
 	 */
 	public function identifier() {
-		return 'ocGroupFederatedSharing';
+		return 'ocFederatedSharing';
 	}
 }

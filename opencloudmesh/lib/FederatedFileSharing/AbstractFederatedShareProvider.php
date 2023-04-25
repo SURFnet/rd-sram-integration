@@ -30,6 +30,7 @@ use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
+use OCA\OpenCloudMesh\IRemoteShareProvider;
 
 use OC\Share20\Exception\InvalidShare;
 use OC\Share20\Share;
@@ -44,8 +45,8 @@ use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IUserManager;
 use OCP\Share\Exceptions\ShareNotFound;
+use OCP\Share\IManager;
 use OCP\Share\IShare;
-use OCP\Share\IShareProvider;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
@@ -56,7 +57,7 @@ use Symfony\Component\EventDispatcher\GenericEvent;
  *
  * @package OCA\FederatedFileSharing
  */
-abstract class AbstractFederatedShareProvider implements IShareProvider {
+abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 	/** @var IDBConnection */
 	private $dbConnection;
 
@@ -96,6 +97,9 @@ abstract class AbstractFederatedShareProvider implements IShareProvider {
 	/** @var IUserManager */
 	private $userManager;
 
+    /** @var IManager */
+	private $shareManager;
+
 	/** @var callable */
 	private $externalManagerProvider;
 
@@ -114,6 +118,7 @@ abstract class AbstractFederatedShareProvider implements IShareProvider {
 	 * @param string $externalShareTable
 	 * @param string $shareType Must be one of \OCP\Share share types
 	 * @param IUserManager $userManager
+	 * @param IManager $shareManager
 	 * @param callable $externalManagerProvider
 	 */
 	public function __construct(
@@ -129,6 +134,7 @@ abstract class AbstractFederatedShareProvider implements IShareProvider {
 		string $externalShareTable,
 		int $shareType,
 		IUserManager $userManager,
+		IManager $shareManager,
 		callable $externalManagerProvider
 	) {
 		$this->dbConnection = $connection;
@@ -143,6 +149,7 @@ abstract class AbstractFederatedShareProvider implements IShareProvider {
 		$this->externalShareTable = $externalShareTable;
 		$this->shareType = $shareType;
 		$this->userManager = $userManager;
+		$this->shareManager = $shareManager;
 		$this->externalManagerProvider = $externalManagerProvider;
 	}
 
@@ -337,7 +344,28 @@ abstract class AbstractFederatedShareProvider implements IShareProvider {
 	 * @return array
 	 * @throws ShareNotFound
 	 */
-	protected function getShareFromExternalShareTable(IShare $share) {
+	public function getShareFromExternalShareTable(IShare $share) {
+		foreach($this->shareManager->getProviders() as $provider) {
+			if ($provider instanceof IRemoteShareProvider) {
+				try {
+					return $provider->getShareFromLocalTable($share);
+				} catch(ShareNotFound $e) {
+					// Move on to next provider.
+				}
+			}
+		}
+
+		throw new ShareNotFound('share not found in any remote provider\'s local table');
+	}
+
+	/**
+	 * get federated share from the share_external table but exclude mounted link shares
+	 *
+	 * @param IShare $share
+	 * @return array
+	 * @throws ShareNotFound
+	 */
+	public function getShareFromLocalTable(IShare $share) {
 		$query = $this->dbConnection->getQueryBuilder();
 		$query->select('*')->from($this->externalShareTable)
 			->where($query->expr()->eq('user', $query->createNamedParameter($share->getShareOwner())))
