@@ -62,6 +62,29 @@ class Application extends App {
 			);
 		});
 
+		$container->registerService('GroupNotifications', function (SimpleContainer $c) use ($server) {
+			$addressHandler = new AddressHandler(
+				\OC::$server->getURLGenerator(),
+				\OC::$server->getL10N('federatedfilesharing')
+			);
+			$discoveryManager = new DiscoveryManager(
+				\OC::$server->getMemCacheFactory(),
+				\OC::$server->getHTTPClientService()
+			);
+			$permissions = new Permissions();
+			$notificationManager = new NotificationManager(
+				$permissions
+			);
+			return new GroupNotifications(
+				$addressHandler,
+				\OC::$server->getHTTPClientService(),
+				$discoveryManager,
+				$notificationManager,
+				\OC::$server->getJobList(),
+				\OC::$server->getConfig()
+			);
+		});
+
 		$container->registerService('ExternalMountProvider', function (IContainer $c) {
 			/** @var \OCP\IServerContainer $server */
 			$server = $c->query('ServerContainer');
@@ -73,15 +96,6 @@ class Application extends App {
 			);
 		});
 
-		$container->registerService('OCA\\OpenCloudMesh\\Files_Sharing\\Middleware\\RemoteOcsMiddleware', function (SimpleContainer $c) use ($container) {
-			$sharingApp = new \OCA\Files_Sharing\AppInfo\Application();
-			$externalManager = $sharingApp->getContainer()->query('ExternalManager');
-			return new RemoteOcsMiddleware(
-				$externalManager,
-				$container->query('OCA\\OpenCloudMesh\\GroupExternalManager')
-			);
-		});
-
 		$container->registerService(
 			'OCA\\OpenCloudMesh\\FederatedFileSharing\\FedGroupShareManager',
 			function ($c) use ($server) {
@@ -89,26 +103,11 @@ class Application extends App {
 					\OC::$server->getURLGenerator(),
 					\OC::$server->getL10N('federatedfilesharing')
 				);
-				$discoveryManager = new DiscoveryManager(
-					\OC::$server->getMemCacheFactory(),
-					\OC::$server->getHTTPClientService()
-				);
 				$permissions = new Permissions();
-				$notificationManager = new NotificationManager(
-					$permissions
-				);
-				$notifications = new GroupNotifications(
-					$addressHandler,
-					\OC::$server->getHTTPClientService(),
-					$discoveryManager,
-					$notificationManager,
-					\OC::$server->getJobList(),
-					\OC::$server->getConfig()
-				);
 
 				return new FedGroupShareManager(
 					$this->getFederatedGroupShareProvider(),
-					$notifications,
+					$c->query('GroupNotifications'),
 					$server->getUserManager(),
 					$server->getActivityManager(),
 					$server->getNotificationManager(),
