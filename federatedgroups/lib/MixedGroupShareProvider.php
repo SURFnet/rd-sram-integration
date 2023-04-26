@@ -129,7 +129,6 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 * @return void
 	 */
 	private function sendOcmInvite($share, $remote) {
-		error_log("Send OCM invite (share, $remote)");
 		try {
 			$sharedBy = $share->getSharedBy();
 			if ($this->userManager->userExists($sharedBy)) {
@@ -143,22 +142,14 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$sharedWith = $share->getSharedWith() . "@" . $remote;
 			$shareWithAddress = new Address($sharedWith);
 			$token = "a good question"; // FIXME this will be null because the DefaultShareProvider doesn't set this?
-			error_log("Calling sendRemoteShare!");
+			/*error_log("Calling sendRemoteShare!");
 			error_log(var_export([				$shareWithAddress,
 			$ownerAddress,
 			$sharedByAddress,
 			$token,
 			$share->getNode()->getName(),
 			$share->getId(),
-			\OCP\Share::SHARE_TYPE_REMOTE_GROUP], true));
-			// protected function sendOcmRemoteShare(
-			// 	Address $shareWithAddress,
-			// 	Address $ownerAddress,
-			// 	Address $sharedByAddress,
-			// 	$token,
-			// 	$name,
-			// 	$remote_id,
-			// 	$remoteShareType = 6) {
+			\OCP\Share::SHARE_TYPE_REMOTE_GROUP], true));*/
 
 			$result = $this->notifications->sendRemoteShare(
 				$shareWithAddress,
@@ -376,22 +367,14 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		error_log("MixedGroupShareProvider create calling parent");
 		// Create group share locally
 		$created = parent::create($share);
-		error_log("MixedGroupShareProvider create called parent");
 		$remotes = [];
 		// Send OCM invites to remote group members
-		error_log("Sending OCM invites");
-		error_log($share->getSharedWith());
 		$group = $this->groupManager->get($share->getSharedWith());
-		error_log("Got group");
 		$backend = $group->getBackend();
-		error_log("Got backend");
 		$recipients = $backend->usersInGroup($share->getSharedWith());
-		error_log("Got recipients");
-		error_log(var_export($recipients, true));
 		foreach($recipients as $k => $v) {
 			$parts = explode(self::SEPARATOR, $v);
 			if (count($parts) == 2) {
-				error_log("Considering remote " . $parts[1] . " because of " . $parts[0] . " there");
 				$remotes[$parts[1]] = true;
 			} else {
 				error_log("Local user: $v");
@@ -402,12 +385,10 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 	}
 	public function getAllSharedWith($userId, $node){
-		error_log("you `getAllSharedWith` me on MixedGroupShareProvider...");
 		return parent::getAllSharedWith($userId, $node);
 	}
 
 	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
-		error_log("you `getSharedWith` on MixedGroupShareProvider...");
 		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
 	}
 
