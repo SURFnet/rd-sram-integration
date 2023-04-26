@@ -43,7 +43,7 @@ class Application extends App {
 			\OC::$server->getUserManager(),
 			\OC::$server->getGroupManager(),
 			\OC::$server->getLazyRootFolder(),
-			$this->getContainer()->query("GroupNotifications"),
+			$this->getContainer()->query("ServerContainer")->query("GroupNotifications"),
 			$addressHandler,
 			$l10n,
 			\OC::$server->getLogger()
