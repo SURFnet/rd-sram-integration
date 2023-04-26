@@ -23,12 +23,9 @@ use OCP\IContainer;
 class Application extends App {
 	private $isProviderRegistered = false;
 	
-	
 	public function __construct(array $urlParams = []) {
 		// error_log("fg: ". get_parent_class($this));
 		parent::__construct('federatedgroups', $urlParams);
-		$container = $this->getContainer();
-		$server = $container->getServer();
 	}
 		
   	public function getMixedGroupShareProvider() {
@@ -38,12 +35,15 @@ class Application extends App {
 			$urlGenerator,
 			$l10n
 		);
-	  return new \OCA\FederatedGroups\MixedGroupShareProvider(
+
+		$ocmApp = new \OCA\OpenCloudMesh\AppInfo\Application();
+
+	  	return new \OCA\FederatedGroups\MixedGroupShareProvider(
 			\OC::$server->getDatabaseConnection(),
 			\OC::$server->getUserManager(),
 			\OC::$server->getGroupManager(),
 			\OC::$server->getLazyRootFolder(),
-			$this->getContainer()->query("ServerContainer")->query("GroupNotifications"),
+			$ocmApp->getContainer()->query("GroupNotifications"),
 			$addressHandler,
 			$l10n,
 			\OC::$server->getLogger()
