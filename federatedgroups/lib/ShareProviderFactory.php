@@ -68,7 +68,6 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	 * @return FederatedGroupShareProvider
 	 */
 	protected function federatedGroupShareProvider() {
-		error_log("our factory getting our FederatedShareProvider for OCM to group");
 		if ($this->federatedGroupShareProvider === null) {
 			$federatedGroupsApp = new Application();
 			$this->federatedGroupShareProvider = $federatedGroupsApp->getFederatedGroupShareProvider();
@@ -81,12 +80,10 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	 * @return MixedGroupShareProvider
 	 */
 	protected function mixedGroupShareProvider() {
-		error_log("our factory getting our FederatedShareProvider for OCM to group");
 		if ($this->mixedGroupShareProvider === null) {
 			$federatedGroupsApp = new Application();
 			$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		}
-    error_log("returning the MixedGroupShareProvider from the ShareProviderFactory");
 		return $this->mixedGroupShareProvider;
 	}
 
@@ -96,7 +93,6 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	 * @return FederatedShareProvider
 	 */
 	protected function federatedUserShareProvider() {
-		error_log("our factory getting our FederatedShareProvider for OCM to user");
 		if ($this->federatedUserShareProvider === null) {
 			$federatedFileSharingApp = new \OCA\FederatedFileSharing\AppInfo\Application();
 			$this->federatedUserShareProvider = $federatedFileSharingApp->getFederatedShareProvider();
@@ -109,7 +105,6 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	 * @inheritdoc
 	 */
 	public function getProviderForType($shareType) {
-		error_log("getProviderForType $shareType");
 		$provider = null;
 
 		// SHARE_TYPE_USER = 0;
@@ -139,7 +134,7 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 		}
 
 		if ($provider === null) {
-						throw new ProviderException('No share provider for share type ' . $shareType);
+			throw new ProviderException('No share provider for share type ' . $shareType);
 		}
 
 		return $provider;

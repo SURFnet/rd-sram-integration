@@ -7,7 +7,7 @@
 
 namespace OCA\FederatedGroups;
 
-use OCA\FederatedGroups\FederatedFileSharing\Notifications;
+use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Address;
 use OC\Share20\DefaultShareProvider;
@@ -32,8 +32,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	// e.g. 'marie#oc2.docker'
 	public const SEPARATOR = '#';
 
-	/** @var Notifications */
-	private $notifications;
+	/** @var GroupNotifications */
+	private $groupNotifications;
 
 	/** @var AddressHandler */
 	private $addressHandler;
@@ -79,7 +79,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 * @param IUserManager $userManager
 	 * @param IGroupManager $groupManager
 	 * @param IRootFolder $rootFolder
-	 * @param Notifications $notifications
+	 * @param GroupNotifications $groupNotifications
 	 * @param AddressHandler $addressHandler
 	 * @param IL10N $l
 	 * @param ILogger $logger
@@ -89,7 +89,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		IUserManager $userManager,
 		IGroupManager $groupManager,
 		IRootFolder $rootFolder,
-		Notifications $notifications,
+		GroupNotifications $groupNotifications,
 		AddressHandler $addressHandler,
 		IL10N $l,
 		ILogger $logger
@@ -101,7 +101,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			 $rootFolder
 		);
 		error_log("Constructing the MixedGroupShareProvider");
-		$this->notifications = $notifications;
+		$this->groupNotifications = $groupNotifications;
 		$this->addressHandler = $addressHandler;
 		$this->l = $l;
 		$this->logger = $logger;
@@ -151,7 +151,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$share->getId(),
 			\OCP\Share::SHARE_TYPE_REMOTE_GROUP], true));*/
 
-			$result = $this->notifications->sendRemoteShare(
+			$result = $this->groupNotifications->sendRemoteShare(
 				$shareWithAddress,
 				$ownerAddress,
 				$sharedByAddress,
