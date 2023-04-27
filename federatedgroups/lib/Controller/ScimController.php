@@ -96,7 +96,7 @@ class ScimController extends Controller {
 		}
 		if (count($newUserParts) == 2) {
 			$newDomain = $newUserParts[1];
-			foreach($existingUsers as $existingUser) {
+			foreach ($existingUsers as $existingUser) {
 				error_log("Considering $existingUser");
 				$existingUserParts = explode("#", $existingUser);
 				if (count($existingUserParts) == 2) {
@@ -127,7 +127,7 @@ class ScimController extends Controller {
 			$userIdParts = explode("@", $member["value"]);
 			error_log("A: " . var_export($userIdParts, true));
 			if (count($userIdParts) == 3) {
-				$userIdParts = [ $userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
+				$userIdParts = [$userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
 			}
 			error_log("B: " . var_export($userIdParts, true));
 			if (count($userIdParts) != 2) {
@@ -223,6 +223,34 @@ class ScimController extends Controller {
 		error_log("Got backend");
 		$currentMembers = $backend->usersInGroup($groupId);
 
+
+
+		$res = [
+			"displayName" => $group->getDisplayName(),
+			"members" => $currentMembers,
+			// "members" => [
+			// 	[
+			// 		"value" => "22",
+			// 		"ref" => "https://aax5785.my.idaptive.qa/Scim/v2/Users/22",
+			// 		"display" => "lcm223p_admin"
+			// 	]
+			// ],
+			"schemas" => [
+				"urn:ietf:params:scim:schemas:core:2.0:Group",
+				"urn:ietf:params:scim:schemas:cyberark:1.0:Group"
+			],
+			"id" => $group->getGID(),
+			"meta" => [
+				"resourceType" => "Group",
+				"created" => "2022-04-12T09:21:40.2319276Z",
+				"lastModified" => "2022-04-12T09:21:40.2319276Z",
+				"location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
+
+			],
+			"urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
+				"directoryType" => "Vault"
+			]
+		];
 
 		return new JSONResponse([
 			"totalResults" => 0,
