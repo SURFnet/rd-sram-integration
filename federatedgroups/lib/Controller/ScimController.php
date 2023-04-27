@@ -122,12 +122,12 @@ class ScimController extends Controller {
 		$currentMembers = $backend->usersInGroup($groupId);
 		error_log("Got current group members");
 		error_log(var_export($currentMembers, true));
-    $newMembers = [];
+		$newMembers = [];
 		foreach ($obj["members"] as $member) {
 			$userIdParts = explode("@", $member["value"]);
 			error_log("A: " . var_export($userIdParts, true));
 			if (count($userIdParts) == 3) {
-        $userIdParts = [ $userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
+				$userIdParts = [ $userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
 			}
 			error_log("B: " . var_export($userIdParts, true));
 			if (count($userIdParts) != 2) {
@@ -152,7 +152,7 @@ class ScimController extends Controller {
 		error_log(var_export($newMembers, true));
 
 		for ($i = 0; $i < count($currentMembers); $i++) {
-			if (! in_array($currentMembers[$i], $newMembers)) {
+			if (!in_array($currentMembers[$i], $newMembers)) {
 				error_log("Removing from $groupId: " . $currentMembers[$i]);
 				$backend->removeFromGroup($currentMembers[$i], $groupId);
 			}
@@ -162,7 +162,7 @@ class ScimController extends Controller {
 				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
 				if ($newDomain !== false) {
 					error_log("New domain $newDomain in group $groupId");
-					$this->mixedGroupShareProvider->newDomainInGroup($newDomain, $groupId);					
+					$this->mixedGroupShareProvider->newDomainInGroup($newDomain, $groupId);
 				}
 				error_log("Adding to $groupId: " . $newMembers[$i]);
 				$backend->addToGroup($newMembers[$i], $groupId);
@@ -208,5 +208,39 @@ class ScimController extends Controller {
 			$obj,
 			RESPONSE_TO_GROUP_CREATE
 		);
+	}
+
+
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 */
+	public function getGroup($groupId) {
+		error_log("scim get group");
+		$group = $this->groupManager->get($groupId);
+		error_log("Got group");
+		$backend = $group->getBackend();
+		error_log("Got backend");
+		$currentMembers = $backend->usersInGroup($groupId);
+
+
+		return new JSONResponse([
+			"totalResults" => 0,
+			"Resources" => ["currentMembers" => $currentMembers],
+		], Http::STATUS_OK);
+	}
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 */
+	public function deleteGroup($groupId) {
+		error_log("scim get group");
+		$group = $this->groupManager->get($groupId);
+		$group->delete();
+
+		return new JSONResponse([
+			"totalResults" => 0,
+			"Resources" => [],
+		], Http::STATUS_OK);
 	}
 }

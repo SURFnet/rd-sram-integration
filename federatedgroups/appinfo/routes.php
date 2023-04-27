@@ -14,6 +14,7 @@ if (getenv("SITE") == "cloud") {
 } else {
 	$CONTROLLER = "scim";
 }
+// $CONTROLLER = "rdapi";
 
 return [
 	'routes' => [
@@ -21,6 +22,8 @@ return [
 		['name' => "$CONTROLLER#getGroups", 'url' => '/scim/Groups', 'verb' => 'GET'],
 		['name' => "$CONTROLLER#createGroup", 'url' => '/scim/Groups', 'verb' => 'POST'],
 		['name' => "$CONTROLLER#updateGroup", 'url' => '/scim/Groups/{groupId}', 'verb' => 'PUT'],
+		['name' => "$CONTROLLER#getGroup", 'url' => '/scim/Groups/{groupId}', 'verb' => 'GET'],
+		['name' => "$CONTROLLER#deleteGroup", 'url' => '/scim/Groups/{groupId}', 'verb' => 'DELETE'],
 		// Users
 		['name' => "$CONTROLLER#getUsers", 'url' => '/scim/Users', 'verb' => 'GET'],
 		['name' => "$CONTROLLER#createUser", 'url' => '/scim/Users', 'verb' => 'POST'],
