@@ -146,15 +146,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$ownerAddress = $this->addressHandler->getLocalUserFederatedAddress($owner);
 			$sharedWith = $share->getSharedWith() . "@" . $remote;
 			$shareWithAddress = new Address($sharedWith);
-			/*error_log("Calling sendRemoteShare!");
-			error_log(var_export([				$shareWithAddress,
-			$ownerAddress,
-			$sharedByAddress,
-			$token,
-			$share->getNode()->getName(),
-			$share->getId(),
-			\OCP\Share::SHARE_TYPE_REMOTE_GROUP], true));*/
-
+			
+			///// TODO =>>> set sharedSecret
 			$result = $this->groupNotifications->sendRemoteShare(
 				$shareWithAddress,
 				$ownerAddress,
