@@ -19,6 +19,7 @@ use OCP\Share\Events\AcceptShare;
 use OCP\Share\Events\DeclineShare;
 use OCP\Util;
 use OCP\IContainer;
+use OCA\FederatedFileSharing\TokenHandler;
 
 class Application extends App {
 	private $isProviderRegistered = false;
@@ -36,6 +37,9 @@ class Application extends App {
 			$l10n
 		);
 
+		$tokenHandler = new TokenHandler(
+			\OC::$server->getSecureRandom()
+		);
 		$ocmApp = new \OCA\OpenCloudMesh\AppInfo\Application();
 
 	  	return new \OCA\FederatedGroups\MixedGroupShareProvider(
@@ -44,6 +48,7 @@ class Application extends App {
 			\OC::$server->getGroupManager(),
 			\OC::$server->getLazyRootFolder(),
 			$ocmApp->getContainer()->query("GroupNotifications"),
+			$tokenHandler,
 			$addressHandler,
 			$l10n,
 			\OC::$server->getLogger()

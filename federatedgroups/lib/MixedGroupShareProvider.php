@@ -20,7 +20,7 @@ use OCP\Files\IRootFolder;
 use OCP\IL10N;
 use OCP\ILogger;
 use OCP\DB\QueryBuilder\IQueryBuilder;
-
+use OCA\FederatedFileSharing\TokenHandler;
 
 /**
  * Class MixedGroupShareProvider
@@ -34,6 +34,9 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 
 	/** @var GroupNotifications */
 	private $groupNotifications;
+		
+	/** @var TokenHandler */
+	private $tokenHandler;
 
 	/** @var AddressHandler */
 	private $addressHandler;
@@ -80,6 +83,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 * @param IGroupManager $groupManager
 	 * @param IRootFolder $rootFolder
 	 * @param GroupNotifications $groupNotifications
+	 * @param TokenHandler $tokenHandler
 	 * @param AddressHandler $addressHandler
 	 * @param IL10N $l
 	 * @param ILogger $logger
@@ -90,6 +94,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		IGroupManager $groupManager,
 		IRootFolder $rootFolder,
 		GroupNotifications $groupNotifications,
+		TokenHandler $tokenHandler,
 		AddressHandler $addressHandler,
 		IL10N $l,
 		ILogger $logger
@@ -108,6 +113,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		$this->userManager = $userManager;
 		$this->groupManager = $groupManager;
 		$this->rootFolder = $rootFolder;
+		$this->tokenHandler = $tokenHandler; 
 	}
 
 	/**
@@ -140,7 +146,6 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$ownerAddress = $this->addressHandler->getLocalUserFederatedAddress($owner);
 			$sharedWith = $share->getSharedWith() . "@" . $remote;
 			$shareWithAddress = new Address($sharedWith);
-			$token = "a good question"; // FIXME this will be null because the DefaultShareProvider doesn't set this?
 			/*error_log("Calling sendRemoteShare!");
 			error_log(var_export([				$shareWithAddress,
 			$ownerAddress,
@@ -154,7 +159,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 				$shareWithAddress,
 				$ownerAddress,
 				$sharedByAddress,
-				$token,
+				$share->getToken(),
 				$share->getNode()->getName(),
 				$share->getId(),
 				\OCP\Share::SHARE_TYPE_REMOTE_GROUP
@@ -236,7 +241,6 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		$share->setNodeType($data['item_type']);
 
 		$share->setProviderId($this->identifier());
-
 		return $share;
 	}
 
@@ -344,24 +348,26 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 */
 	public function create(\OCP\Share\IShare $share) {
 		// Create group share locally
+		$share->setToken($this->tokenHandler->generateToken());
 		$created = parent::create($share);
 		$remotes = [];
 		// Send OCM invites to remote group members
 		$group = $this->groupManager->get($share->getSharedWith());
 		$backend = $group->getBackend();
 		$recipients = $backend->usersInGroup($share->getSharedWith());
-		foreach($recipients as $k => $v) {
+
+		foreach ($recipients as $k => $v) {
 			$parts = explode(self::SEPARATOR, $v);
-			if (count($parts) == 2) {
+			if (count($parts) > 1) {
 				$remotes[$parts[1]] = true;
 			} else {
 				error_log("Local user: $v");
 			}
 		}
-		foreach($remotes as $remote => $_dummy) {
-			$this->sendOcmInvite($share, $remote);
+
+		foreach ($remotes as $remote => $_dummy) {
+			$this->sendOcmInvite($created, $remote);
 		}
-		
 		return $created;
 	}
 	public function getAllSharedWith($userId, $node){
