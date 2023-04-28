@@ -28,7 +28,7 @@ class Application extends App {
 		parent::__construct('federatedgroups', $urlParams);
 	}
 		
-  	public function getMixedGroupShareProvider() {
+  	public static  function getMixedGroupShareProvider() {
 		$urlGenerator = \OC::$server->getURLGenerator();
 		$l10n = \OC::$server->getL10N('federatedfilesharing');
 		$addressHandler = new \OCA\FederatedFileSharing\AddressHandler(
