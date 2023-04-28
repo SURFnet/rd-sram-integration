@@ -100,7 +100,6 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			 $groupManager,
 			 $rootFolder
 		);
-		error_log("Constructing the MixedGroupShareProvider");
 		$this->groupNotifications = $groupNotifications;
 		$this->addressHandler = $addressHandler;
 		$this->l = $l;
@@ -362,6 +361,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		foreach($remotes as $remote => $_dummy) {
 			$this->sendOcmInvite($share, $remote);
 		}
+		
+		return $created;
 	}
 	public function getAllSharedWith($userId, $node){
 		return parent::getAllSharedWith($userId, $node);
