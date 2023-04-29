@@ -382,7 +382,7 @@ class OcmController extends Controller {
 				case FileNotification::NOTIFICATION_TYPE_SHARE_UNSHARED:
 					{
 						try {
-							$fedGroupShareManager->unshare(
+							$this->fedGroupShareManager->unshare(
 								$providerId,
 								$notification['sharedSecret']
 							);
@@ -392,7 +392,7 @@ class OcmController extends Controller {
 						}
 
 						try {
-							$fedUserShareManager->unshare(
+							$this->fedUserShareManager->unshare(
 								$providerId,
 								$notification['sharedSecret']
 							);
@@ -438,10 +438,10 @@ class OcmController extends Controller {
 	}
 
 	private function getFedShareManagerForShareType($shareType) {
-		if ($shareType === 'group') {
+		if ($shareType === 'group' || $shareType === 7) {
 			return $this->fedGroupShareManager;
 		}
-		else if ($shareType === 'user') {
+		else if ($shareType === 'user' || $shareType === 6) {
 			return $this->fedUserShareManager;
 		}
 
@@ -472,7 +472,7 @@ class OcmController extends Controller {
 	 * @throws ShareNotFound
 	 */
 	private function getShareById($id) {
-		if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
+		if (!$this->fedGroupShareManager->isOutgoingServer2serverShareEnabled()) {
 			throw new ShareNotFound();
 		}
 

@@ -903,6 +903,9 @@ abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 			throw new ShareNotFound();
 		}
 
+		error_log("GET SHARE BY TOKEN ".(new \Exception())->getTraceAsString());
+		error_log("share permissions are ".var_export($share->getPermissions(), true));
+
 		return $share;
 	}
 

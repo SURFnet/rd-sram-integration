@@ -18,6 +18,9 @@ class ShareProviderFactory extends ProviderFactory {
 	/** @var FederatedGroupShareProvider */
 	private $federatedGroupShareProvider = null;
 
+	/** @var FederatedUserShareProvider */
+	private $federatedUserShareProvider = null;
+
 	public function __construct(IServerContainer $serverContainer) {
 		parent::__construct($serverContainer);
 	}
@@ -29,7 +32,6 @@ class ShareProviderFactory extends ProviderFactory {
 	 */
 	protected function federatedGroupShareProvider() {
 		if ($this->federatedGroupShareProvider === null) {
-			//$this->federatedGroupShareProvider = \OC::$server->query('OCA\OpenCloudMesh\FederatedGroupShareProvider');
 			$app = new Application();
 			$this->federatedGroupShareProvider = $app->getFederatedGroupShareProvider();
 		}
@@ -37,10 +39,29 @@ class ShareProviderFactory extends ProviderFactory {
 	}
 
 	/**
+	 * Create the federated share provider for OCM to users
+	 *
+	 * @return FederatedUserShareProvider
+	 */
+	protected function federatedUserShareProvider() {
+		if ($this->federatedUserShareProvider === null) {
+			$app = new Application();
+			$this->federatedUserShareProvider = $app->getFederatedUserShareProvider();
+		}
+		return $this->federatedUserShareProvider;
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public function getProviders() {
 		$providers = parent::getProviders();
+
+		$providers = \array_filter($providers, function($provider) {
+			return $provider->identifier() !== 'ocFederatedSharing';
+		});
+
+		array_push($providers, $this->federatedUserShareProvider());
 		array_push($providers, $this->federatedGroupShareProvider());
 		return $providers;
 	}
@@ -49,28 +70,29 @@ class ShareProviderFactory extends ProviderFactory {
 	 * @inheritdoc
 	 */
 	public function getProvider($id) {
-		try {
-			return parent::getProvider($id);
-		} catch(ProviderException $e) {
-			if ($id === 'ocGroupFederatedSharing') {
-				return $this->federatedGroupShareProvider();
-			}
+		if ($id === 'ocFederatedSharing') {
+			return $this->federatedUserShareProvider();
 		}
-		
-		throw new ProviderException('No provider with id .' . $id . ' found.');
+		else if ($id === 'ocGroupFederatedSharing') {
+			return $this->federatedGroupShareProvider();
+		}
+		else {
+			return parent::getProvider($id);
+		}
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	public function getProviderForType($shareType) {
-		try {
-			return parent::getProviderForType($shareType);
-		} catch(ProviderException $e) {
-			if ($shareType === \OCP\Share::SHARE_TYPE_REMOTE_GROUP) {
-				return $this->federatedGroupShareProvider();
-			}
+		if ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
+			return $this->federatedUserShareProvider();
 		}
-		throw new ProviderException('No share provider for share type ' . $shareType);
+		else if ($shareType === \OCP\Share::SHARE_TYPE_REMOTE_GROUP) {
+			return $this->federatedGroupShareProvider();
+		}
+		else {
+			return parent::getProviderForType($shareType);
+		}
 	}
 }

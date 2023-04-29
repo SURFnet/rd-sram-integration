@@ -120,6 +120,10 @@ abstract class AbstractFedShareManager {
 
 	abstract public function localShareWithExists($localShareWith);
 
+	public function isOutgoingServer2serverShareEnabled() {
+		return $this->federatedShareProvider->isOutgoingServer2serverShareEnabled();
+	}
+
 	public function getShareById($id) {
 		return $this->federatedShareProvider->getShareById($id);
 	}
