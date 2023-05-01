@@ -23,6 +23,7 @@
 namespace OCA\FederatedGroups\Controller;
 
 use Exception;
+use OC\Group\MetaData;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -217,44 +218,55 @@ class ScimController extends Controller {
 	 */
 	public function getGroup($groupId) {
 		error_log("scim get group");
-		$group = $this->groupManager->get($groupId);
-		error_log("Got group");
-		$backend = $group->getBackend();
-		error_log("Got backend");
-		$currentMembers = $backend->usersInGroup($groupId);
+		// work around #129
+
+		$manager = $this->groupManager->get($groupId);
+
+		$id = $manager->getGID();
+		$displayName = $manager->getDisplayName();
+		$members = $manager->getUsers();
+
+		$backend = $manager->getBackend();
+		$usersInGroup = $backend->usersInGroup($groupId);
 
 
-
-		$res = [
-			"displayName" => $group->getDisplayName(),
-			"members" => $currentMembers,
-			// "members" => [
-			// 	[
-			// 		"value" => "22",
-			// 		"ref" => "https://aax5785.my.idaptive.qa/Scim/v2/Users/22",
-			// 		"display" => "lcm223p_admin"
-			// 	]
-			// ],
-			"schemas" => [
-				"urn:ietf:params:scim:schemas:core:2.0:Group",
-				"urn:ietf:params:scim:schemas:cyberark:1.0:Group"
-			],
-			"id" => $group->getGID(),
-			"meta" => [
-				"resourceType" => "Group",
-				"created" => "2022-04-12T09:21:40.2319276Z",
-				"lastModified" => "2022-04-12T09:21:40.2319276Z",
-				"location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
-
-			],
-			"urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
-				"directoryType" => "Vault"
-			]
-		];
+		$_members = array_reduce($usersInGroup, function ($result, $item) {
+			$result["value"] = $item;
+			$result["ref"] = "route to resource";
+			$result["displayName"] = $item;
+			return $result;
+		}, []);
 
 		return new JSONResponse([
 			"totalResults" => 0,
-			"Resources" => ["currentMembers" => $currentMembers],
+			"Resources" => [
+				"id" => $id,
+				"displayName" => $displayName,
+				'usersInGroup' => $usersInGroup,
+				'_members' => $_members,
+				'members' => $members,
+				// "members" => [
+				// 	[
+				// 		"value" => "22",
+				// 		"ref" => "https://aax5785.my.idaptive.qa/Scim/v2/Users/22",
+				// 		"display" => "lcm223p_admin"
+				// 	]
+				// ],
+				// "schemas" => [
+				// 	"urn:ietf:params:scim:schemas:core:2.0:Group",
+				// 	"urn:ietf:params:scim:schemas:cyberark:1.0:Group"
+				// ],
+				// "meta" => [
+				// 	"resourceType" => "Group",
+				// 	"created" => "2022-04-12T09:21:40.2319276Z",
+				// 	"lastModified" => "2022-04-12T09:21:40.2319276Z",
+				// 	"location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
+
+				// ],
+				// "urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
+				// 	"directoryType" => "Vault"
+				// ]
+			],
 		], Http::STATUS_OK);
 	}
 	/**
@@ -262,13 +274,74 @@ class ScimController extends Controller {
 	 * @PublicPage
 	 */
 	public function deleteGroup($groupId) {
-		error_log("scim get group");
-		$group = $this->groupManager->get($groupId);
-		$group->delete();
+		// error_log("scim get group");
+		$group = $this->groupManager->get(\urldecode($groupId));
+		
+		if ($group) {
+			$deleted = $group->delete();
+			if ($deleted) {
+				return new JSONResponse(
+					[
+						'status' => 'success',
+						'data' => [
+							'message' => "Succesfully deleted group: {$groupId}"
+						]
+					],
+					Http::STATUS_OK
+				);
+			} else {
+				return new JSONResponse(
+					[
+						'status' => 'error',
+						'data' => [
+							'message' => "Error in Deleting Group: {$groupId}"
+						],
+					],
+					Http::STATUS_BAD_REQUEST
+				);
+			}
+		}
+		return new JSONResponse(
+			[
+				'status' => 'error',
+				'data' => [
+					'message' => 'Unable to delete group.'
+				],
+			],
+			Http::STATUS_FORBIDDEN
+		);
+	}
+
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 */
+	public function getGroups() {
+		error_log("scim get groups");
+		// work around #129
+
+		$_groups = [];
+		$assignableGroups = [];
+		$removableGroups = [];
+
+		foreach ($this->groupManager->getBackends() as $backend) {
+			$groups = $backend->getGroups();
+			\array_push($_groups, ...$groups);
+			if ($backend->implementsActions($backend::ADD_TO_GROUP)) {
+				\array_push($assignableGroups, ...$groups);
+			}
+			if ($backend->implementsActions($backend::REMOVE_FROM_GROUP)) {
+				\array_push($removableGroups, ...$groups);
+			}
+		}
 
 		return new JSONResponse([
 			"totalResults" => 0,
-			"Resources" => [],
+			"Resources" => [
+				'_groups' => $_groups,
+				'assignableGroups' => $assignableGroups,
+				'removableGroups' => $removableGroups,
+			],
 		], Http::STATUS_OK);
 	}
 }
