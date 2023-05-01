@@ -341,7 +341,6 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 */
 	public function create(\OCP\Share\IShare $share) {
 		// Create group share locally
-		$share->setToken($this->tokenHandler->generateToken());
 		$created = parent::create($share);
 		$remotes = [];
 		// Send OCM invites to remote group members
@@ -358,8 +357,20 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			}
 		}
 
-		foreach ($remotes as $remote => $_dummy) {
-			$this->sendOcmInvite($created, $remote);
+		$created->setToken($this->tokenHandler->generateToken());
+		try {
+			foreach ($remotes as $remote => $_dummy) {
+				$this->sendOcmInvite($created, $remote);
+			}
+			$qb = $this->dbConn->getQueryBuilder();
+			$qb->update('share')
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($created->getId())))
+				->set('token', $qb->createNamedParameter($created->getToken()))
+				->execute();
+
+		}
+		catch (Exception $x){
+			throw $ex;
 		}
 		return $created;
 	}
