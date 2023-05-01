@@ -342,38 +342,81 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	public function create(\OCP\Share\IShare $share) {
 		// Create group share locally
 		$created = parent::create($share);
-		$remotes = [];
-		// Send OCM invites to remote group members
-		$group = $this->groupManager->get($share->getSharedWith());
-		$backend = $group->getBackend();
-		$recipients = $backend->usersInGroup($share->getSharedWith());
+		if($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP){
+			$remotes = [];
+			// Send OCM invites to remote group members
+			$group = $this->groupManager->get($share->getSharedWith());
+			$backend = $group->getBackend();
+			$recipients = $backend->usersInGroup($share->getSharedWith());
 
-		foreach ($recipients as $k => $v) {
-			$parts = explode(self::SEPARATOR, $v);
-			if (count($parts) > 1) {
-				$remotes[$parts[1]] = true;
-			} else {
-				error_log("Local user: $v");
+			foreach ($recipients as $k => $v) {
+				$parts = explode(self::SEPARATOR, $v);
+				if (count($parts) > 1) {
+					$remotes[$parts[1]] = true;
+				} else {
+					error_log("Local user: $v");
+				}
 			}
-		}
 
-		$created->setToken($this->tokenHandler->generateToken());
-		try {
-			foreach ($remotes as $remote => $_dummy) {
-				$this->sendOcmInvite($created, $remote);
+			$created->setToken($this->tokenHandler->generateToken());
+			try {
+				foreach ($remotes as $remote => $_dummy) {
+					$this->sendOcmInvite($created, $remote);
+				}
+				$qb = $this->dbConn->getQueryBuilder();
+				$qb->update('share')
+					->where($qb->expr()->eq('id', $qb->createNamedParameter($created->getId())))
+					->set('token', $qb->createNamedParameter($created->getToken()))
+					->execute();
+
 			}
-			$qb = $this->dbConn->getQueryBuilder();
-			$qb->update('share')
-				->where($qb->expr()->eq('id', $qb->createNamedParameter($created->getId())))
-				->set('token', $qb->createNamedParameter($created->getToken()))
-				->execute();
-
+			catch (Exception $x){
+				throw $ex;
+			}
+			return $created;
 		}
-		catch (Exception $x){
-			throw $ex;
-		}
-		return $created;
 	}
+
+
+	/**
+	 * Get a share by token
+	 *
+	 * @param string $token
+	 * @return \OCP\Share\IShare
+	 * @throws ShareNotFound
+	 */
+	public function getShareByToken($token) {
+		$qb = $this->dbConn->getQueryBuilder();
+
+		$cursor = $qb->select('*')
+			->from('share')
+			->where(
+				$qb->expr()->orX()
+					->add($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_LINK)))
+					->add($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_GROUP))) 
+					)
+			->andWhere($qb->expr()->eq('token', $qb->createNamedParameter($token)))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
+				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
+			))
+			->execute();
+
+		$data = $cursor->fetch();
+
+		if ($data === false) {
+			throw new ShareNotFound();
+		}
+
+		try {
+			$share = $this->createShare($data);
+		} catch (InvalidShare $e) {
+			throw new ShareNotFound();
+		}
+
+		return $share;
+	}
+
 	public function getAllSharedWith($userId, $node){
 		return parent::getAllSharedWith($userId, $node);
 	}
@@ -382,5 +425,54 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
 	}
 
+
+	/**
+	 * Create a share object from an database row
+	 *
+	 * @param mixed[] $data
+	 * @return \OCP\Share\IShare
+	 * @throws InvalidShare
+	 */
+	private function createShare($data) {
+		$share = new Share($this->rootFolder, $this->userManager);
+		$share->setId($data['id'])
+			->setShareType((int)$data['share_type'])
+			->setPermissions((int)$data['permissions'])
+			->setTarget($data['file_target'])
+			->setMailSend((bool)$data['mail_send']);
+
+		$shareTime = new \DateTime();
+		$shareTime->setTimestamp((int)$data['stime']);
+		$share->setShareTime($shareTime);
+
+		if ($share->getShareType() === \OCP\Share::SHARE_TYPE_USER) {
+			$share->setSharedWith($data['share_with']);
+		} elseif ($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP) {
+			$share->setSharedWith($data['share_with']);
+			$share->setToken($data['token']);
+		} elseif ($share->getShareType() === \OCP\Share::SHARE_TYPE_LINK) {
+			$share->setPassword($data['share_with']);
+			$share->setToken($data['token']);
+		}
+
+		$share = $this->updateShareAttributes($share, $data['attributes']);
+
+		$share->setSharedBy($data['uid_initiator']);
+		$share->setShareOwner($data['uid_owner']);
+
+		$share->setNodeId((int)$data['file_source']);
+		$share->setNodeType($data['item_type']);
+		$share->setName($data['share_name']);
+		$share->setState((int)$data['accepted']);
+
+		if ($data['expiration'] !== null) {
+			$expiration = \DateTime::createFromFormat('Y-m-d H:i:s', $data['expiration']);
+			$share->setExpirationDate($expiration);
+		}
+
+		$share->setProviderId($this->identifier());
+
+		return $share;
+	}
 	
 }
