@@ -125,7 +125,7 @@ class ScimController extends Controller {
 		error_log(var_export($currentMembers, true));
 		$newMembers = [];
 		foreach ($obj["members"] as $member) {
-			$userIdParts = explode("@", $member["value"]);
+			$userIdParts = explode("@", $member["value"]); // "test_u@pondersource.net"  => ["test_u", "pondersource.net"] 
 			error_log("A: " . var_export($userIdParts, true));
 			if (count($userIdParts) == 3) {
 				$userIdParts = [$userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
@@ -149,6 +149,8 @@ class ScimController extends Controller {
 			error_log("E: " . var_export($newMember, true));
 			$newMembers[] = $newMember;
 		}
+
+
 		error_log("Got new group members");
 		error_log(var_export($newMembers, true));
 
@@ -202,7 +204,7 @@ class ScimController extends Controller {
 		$obj = json_decode(file_get_contents("php://input"), true);
 
 		error_log("=========================bodyJson=============================");
-		error_log(var_export($obj, true));
+		error_log(json_encode($obj));
 		error_log("=========================bodyJson=============================");
 		$this->doUpdateGroup($groupId, $obj);
 		return new JSONResponse(
@@ -230,12 +232,14 @@ class ScimController extends Controller {
 		$usersInGroup = $backend->usersInGroup($groupId);
 
 
-		$_members = array_reduce($usersInGroup, function ($result, $item) {
-			$result["value"] = $item;
-			$result["ref"] = "route to resource";
-			$result["displayName"] = $item;
-			return $result;
-		}, []);
+
+		$members = array_map(function ($item) {
+			return [
+				"value" => $item,
+				"ref" => $item,
+				"displayName" => $item,
+			];
+		}, $usersInGroup);
 
 		return new JSONResponse([
 			"totalResults" => 0,
@@ -243,29 +247,21 @@ class ScimController extends Controller {
 				"id" => $id,
 				"displayName" => $displayName,
 				'usersInGroup' => $usersInGroup,
-				'_members' => $_members,
 				'members' => $members,
-				// "members" => [
-				// 	[
-				// 		"value" => "22",
-				// 		"ref" => "https://aax5785.my.idaptive.qa/Scim/v2/Users/22",
-				// 		"display" => "lcm223p_admin"
-				// 	]
-				// ],
-				// "schemas" => [
-				// 	"urn:ietf:params:scim:schemas:core:2.0:Group",
-				// 	"urn:ietf:params:scim:schemas:cyberark:1.0:Group"
-				// ],
-				// "meta" => [
-				// 	"resourceType" => "Group",
-				// 	"created" => "2022-04-12T09:21:40.2319276Z",
-				// 	"lastModified" => "2022-04-12T09:21:40.2319276Z",
-				// 	"location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
+				"schemas" => [
+					// "urn:ietf:params:scim:schemas:core:2.0:Group",
+					// "urn:ietf:params:scim:schemas:cyberark:1.0:Group"
+				],
+				"meta" => [
+					"resourceType" => "Group",
+					// "created" => "2022-04-12T09:21:40.2319276Z",
+					// "lastModified" => "2022-04-12T09:21:40.2319276Z",
+					// "location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
 
-				// ],
-				// "urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
-				// 	"directoryType" => "Vault"
-				// ]
+				],
+				"urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
+					// "directoryType" => "Vault"
+				]
 			],
 		], Http::STATUS_OK);
 	}
@@ -276,7 +272,7 @@ class ScimController extends Controller {
 	public function deleteGroup($groupId) {
 		// error_log("scim get group");
 		$group = $this->groupManager->get(\urldecode($groupId));
-		
+
 		if ($group) {
 			$deleted = $group->delete();
 			if ($deleted) {

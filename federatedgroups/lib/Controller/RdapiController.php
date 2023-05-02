@@ -31,9 +31,9 @@ use OCP\IRequest;
 const DEMO_DOMAIN = "pondersource.net";
 
 const SCIM_ENDPOINTS = [
-	     "almere.pondersource.net" =>      "https://almere.pondersource.net/index.php/apps/federatedgroups/scim",
- 	"bergambacht.pondersource.net" => "https://bergambacht.pondersource.net/index.php/apps/federatedgroups/scim",
-  	"castricum.pondersource.net" =>   "https://castricum.pondersource.net/index.php/apps/federatedgroups/scim"
+	"almere.pondersource.net" =>      "https://almere.pondersource.net/index.php/apps/federatedgroups/scim",
+	"bergambacht.pondersource.net" => "https://bergambacht.pondersource.net/index.php/apps/federatedgroups/scim",
+	"castricum.pondersource.net" =>   "https://castricum.pondersource.net/index.php/apps/federatedgroups/scim"
 ];
 
 /**
@@ -67,7 +67,7 @@ class RdapiController extends Controller {
 		error_log("Saving users.json");
 		file_put_contents('./users.json', json_encode($this->users, JSON_PRETTY_PRINT));
 	}
-	
+
 	private function saveGroups() {
 		error_log("Saving groups.json");
 		file_put_contents('./groups.json', json_encode($this->groups, JSON_PRETTY_PRINT));
@@ -75,8 +75,8 @@ class RdapiController extends Controller {
 
 	private function getServersInvolved($groupObj) {
 		$ret = [];
-		foreach($groupObj["members"] as $member) {
-      $parts = explode("@", $member["value"]);
+		foreach ($groupObj["members"] as $member) {
+			$parts = explode("@", $member["value"]);
 			$ret[$parts[1]] = true;
 			error_log("Server involved: " . $parts[1]);
 		}
@@ -88,20 +88,20 @@ class RdapiController extends Controller {
 	private function forwardToServers($method, $path, $data, $servers) {
 		error_log("forwardToServers($method, $path, ...)");
 
-    foreach($servers as $host) {
+		foreach ($servers as $host) {
 			if (isset(SCIM_ENDPOINTS[$host])) {
 				$context  = stream_context_create(array(
 					'http' => array(
 						'header'  => "Content-type: application/json\r\n",
 						'method'  => $method,
-					'content' => json_encode($data, JSON_PRETTY_PRINT)
+						'content' => json_encode($data, JSON_PRETTY_PRINT)
 					)
 				));
 				$url = SCIM_ENDPOINTS[$host] . $path;
 				$result = file_get_contents($url, false, $context);
-				if ($result === FALSE) { 
+				if ($result === FALSE) {
 					error_log("Could not $method to " . $url);
-				}	else {
+				} else {
 					error_log("Succesfully forwarded SCIM $method to " . $url);
 				}
 			} else {
@@ -150,8 +150,7 @@ class RdapiController extends Controller {
 			error_log("User $value exists not!");
 			return new JSONResponse([
 				"totalResults" => 0,
-				"Resources" => [
-				],
+				"Resources" => [],
 			], Http::STATUS_OK);
 		}
 	}
@@ -170,7 +169,7 @@ class RdapiController extends Controller {
 		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
 		$obj["id"] = $this->lookupUser($obj);
-    $this->users[$obj["externalId"]] = $obj;
+		$this->users[$obj["externalId"]] = $obj;
 		error_log("User added, saving!");
 		$this->saveUsers();
 		return new JSONResponse(
@@ -192,7 +191,7 @@ class RdapiController extends Controller {
 		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
 		$obj["id"] = $this->lookupUser($obj);
-    $this->users[$obj["externalId"]] = $obj;
+		$this->users[$obj["externalId"]] = $obj;
 		error_log("User updated, saving!");
 		$this->saveUsers();
 		return new JSONResponse(
@@ -210,8 +209,7 @@ class RdapiController extends Controller {
 		// work around #129
 		return new JSONResponse([
 			"totalResults" => 0,
-			"Resources" => [
-			],
+			"Resources" => [],
 		], Http::STATUS_OK);
 
 		$filter = $this->request->getParam('filter', null); // externalId eq "1dad78c9-c74b-4f7d-9f98-eab912cbfd07@sram.surf.nl"
@@ -230,8 +228,7 @@ class RdapiController extends Controller {
 			error_log("Group $value exists not!");
 			return new JSONResponse([
 				"totalResults" => 0,
-				"Resources" => [
-				],
+				"Resources" => [],
 			], Http::STATUS_OK);
 		}
 	}
@@ -252,7 +249,7 @@ class RdapiController extends Controller {
 		$obj["meta"] = [
 			"location" => "/Groups/$groupId"
 		];
-    $this->groups[$obj["externalId"]] = $obj;
+		$this->groups[$obj["externalId"]] = $obj;
 		$this->saveGroups();
 		error_log("Forwarding this SCIM message");
 		$this->forwardToServers("POST", "/Groups", $obj, $this->getServersInvolved($obj));
@@ -274,7 +271,7 @@ class RdapiController extends Controller {
 		error_log(var_export($obj, true));
 		error_log("=========================bodyJson=============================");
 		$obj["id"] = $this->lookupGroup($obj);
-    $this->groups[$obj["externalId"]] = $obj;
+		$this->groups[$obj["externalId"]] = $obj;
 		$this->saveGroups();
 		error_log("Forwarding this SCIM message");
 		$this->forwardToServers("PUT", "/Groups/" . $groupId, $obj, $this->getServersInvolved($obj));
@@ -283,5 +280,4 @@ class RdapiController extends Controller {
 			Http::STATUS_CREATED
 		);
 	}
-
 }
