@@ -100,10 +100,10 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		ILogger $logger
 	) {
 		parent::__construct(
-			$dbConn,
-			$userManager,
-			$groupManager,
-			$rootFolder
+			 $dbConn,
+			 $userManager,
+			 $groupManager,
+			 $rootFolder
 		);
 		$this->groupNotifications = $groupNotifications;
 		$this->addressHandler = $addressHandler;
@@ -294,7 +294,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	private function getSharesToCustomGroup($customGroupId) {
     	$qb = $this->dbConn->getQueryBuilder();
 		$qb->select('uri')
-			->from('custom_group');
+		  ->from('custom_group');
 
 		$qb->andWhere($qb->expr()->eq('group_id', $qb->createNamedParameter($customGroupId, IQueryBuilder::PARAM_INT)));
 		$cursor = $qb->execute();
@@ -306,7 +306,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		$groupUri = $data['uri'];
     	return $this->getSharesToRegularGroup('customgroup_' . $groupUri);
 	}
-
+	
 	public function notifyNewCustomGroupMember($userId, $customGroupId) {
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
@@ -342,77 +342,137 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	public function create(\OCP\Share\IShare $share) {
 		// Create group share locally
 		$created = parent::create($share);
-		error_log("MixedGroupShareProvider create called parent");
-		$remotes = [];
-		// Send OCM invites to remote group members
-		error_log("Sending OCM invites");
-		error_log($share->getSharedWith());
-		$group = $this->groupManager->get($share->getSharedWith());
-		error_log("Got group");
-		$backend = $group->getBackend();
-		error_log("Got backend");
-		$recipients = $backend->usersInGroup($share->getSharedWith());
-		error_log("Got recipients");
-		error_log(var_export($recipients, true));
-		foreach ($recipients as $k => $v) {
-			$parts = explode(self::SEPARATOR, $v);
-			if (count($parts) == 2) {
-				error_log("Considering remote " . $parts[1] . " because of " . $parts[0] . " there");
-				$remotes[$parts[1]] = true;
-			} else {
-				error_log("Local user: $v");
+		if($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP){
+			$remotes = [];
+			// Send OCM invites to remote group members
+			$group = $this->groupManager->get($share->getSharedWith());
+			$backend = $group->getBackend();
+			$recipients = $backend->usersInGroup($share->getSharedWith());
+
+			foreach ($recipients as $k => $v) {
+				$parts = explode(self::SEPARATOR, $v);
+				if (count($parts) > 1) {
+					$remotes[$parts[1]] = true;
+				} else {
+					error_log("Local user: $v");
+				}
 			}
+
+			$created->setToken($this->tokenHandler->generateToken());
+			try {
+				foreach ($remotes as $remote => $_dummy) {
+					$this->sendOcmInvite($created, $remote);
+				}
+				$qb = $this->dbConn->getQueryBuilder();
+				$qb->update('share')
+					->where($qb->expr()->eq('id', $qb->createNamedParameter($created->getId())))
+					->set('token', $qb->createNamedParameter($created->getToken()))
+					->execute();
+
+			}
+			catch (Exception $x){
+				throw $ex;
+			}
+			return $created;
 		}
-		foreach ($remotes as $remote => $_dummy) {
-			$this->sendOcmInvite($share, $remote);
-		}
-	}
-	public function getAllSharedWith($userId, $node) {
-		error_log("you `getAllSharedWith` me on MixedGroupShareProvider...");
-		return parent::getAllSharedWith($userId, $node);
 	}
 
-	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0) {
-		error_log("you `getSharedWith` on MixedGroupShareProvider...");
-		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
-	}
 
-	/*
-	 * Get shared with group shares for the given groups and node
+	/**
+	 * Get a share by token
 	 *
-	 * @param IGroup[] $groups
-	 * @param Node|null $node
-	 * @return DB\QueryBuilder\IQueryBuilder $qb
+	 * @param string $token
+	 * @return \OCP\Share\IShare
+	 * @throws ShareNotFound
 	 */
-	public function getSharedWithGroupQuery($groupId, $node) {
+	public function getShareByToken($token) {
 		$qb = $this->dbConn->getQueryBuilder();
-		$qb->select('s.*', 'f.fileid', 'f.path')
-			->selectAlias('st.id', 'storage_string_id')
-			->from('share', 's')
-			->leftJoin('s', 'filecache', 'f', $qb->expr()->eq('s.file_source', 'f.fileid'))
-			->leftJoin('f', 'storages', 'st', $qb->expr()->eq('f.storage', 'st.numeric_id'))
-			->orderBy('s.id');
 
-		// Filter by node if provided
-		if ($node !== null) {
-			$qb->andWhere($qb->expr()->eq('file_source', $qb->createNamedParameter($node->getId())));
-		}
-
-		// $groups = \array_map(function ($group) {
-		// 	return $group->getGID();
-		// }, $groups);
-
-		$qb->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_GROUP)))
-			->andWhere($qb->expr()->eq('share_with', $qb->createNamedParameter(
-				$groupId,
-				// IQueryBuilder::PARAM_STR_ARRAY
-			)))
+		$cursor = $qb->select('*')
+			->from('share')
+			->where(
+				$qb->expr()->orX()
+					->add($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_LINK)))
+					->add($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_GROUP))) 
+					)
+			->andWhere($qb->expr()->eq('token', $qb->createNamedParameter($token)))
 			->andWhere($qb->expr()->orX(
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
-			));
+			))
+			->execute();
 
-		$rows = $qb->execute();
-		return $rows;
+		$data = $cursor->fetch();
+
+		if ($data === false) {
+			throw new ShareNotFound();
+		}
+
+		try {
+			$share = $this->createShare($data);
+		} catch (InvalidShare $e) {
+			throw new ShareNotFound();
+		}
+
+		return $share;
 	}
+
+	public function getAllSharedWith($userId, $node){
+		return parent::getAllSharedWith($userId, $node);
+	}
+
+	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
+		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
+	}
+
+
+	/**
+	 * Create a share object from an database row
+	 *
+	 * @param mixed[] $data
+	 * @return \OCP\Share\IShare
+	 * @throws InvalidShare
+	 */
+	private function createShare($data) {
+		$share = new Share($this->rootFolder, $this->userManager);
+		$share->setId($data['id'])
+			->setShareType((int)$data['share_type'])
+			->setPermissions((int)$data['permissions'])
+			->setTarget($data['file_target'])
+			->setMailSend((bool)$data['mail_send']);
+
+		$shareTime = new \DateTime();
+		$shareTime->setTimestamp((int)$data['stime']);
+		$share->setShareTime($shareTime);
+
+		if ($share->getShareType() === \OCP\Share::SHARE_TYPE_USER) {
+			$share->setSharedWith($data['share_with']);
+		} elseif ($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP) {
+			$share->setSharedWith($data['share_with']);
+			$share->setToken($data['token']);
+		} elseif ($share->getShareType() === \OCP\Share::SHARE_TYPE_LINK) {
+			$share->setPassword($data['share_with']);
+			$share->setToken($data['token']);
+		}
+
+		$share = $this->updateShareAttributes($share, $data['attributes']);
+
+		$share->setSharedBy($data['uid_initiator']);
+		$share->setShareOwner($data['uid_owner']);
+
+		$share->setNodeId((int)$data['file_source']);
+		$share->setNodeType($data['item_type']);
+		$share->setName($data['share_name']);
+		$share->setState((int)$data['accepted']);
+
+		if ($data['expiration'] !== null) {
+			$expiration = \DateTime::createFromFormat('Y-m-d H:i:s', $data['expiration']);
+			$share->setExpirationDate($expiration);
+		}
+
+		$share->setProviderId($this->identifier());
+
+		return $share;
+	}
+	
 }
