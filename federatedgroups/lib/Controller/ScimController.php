@@ -115,6 +115,66 @@ class ScimController extends Controller {
 		return false;
 	}
 
+	private function handleUpdateGroup($groupId, $obj) {
+		// getSharedWithGroipId
+
+
+
+		$targetGroupObject 	= \OC::$server->getGroupManager()->get($groupId);
+		$newMembers = $obj["members"];
+		$group = $this->groupManager->get($groupId);
+
+
+		$cursor = $this->mixedGroupShareProvider->getSharedWithGroupQuery($groupId, null);
+		error_log("cursor");
+
+		while ($data = $cursor->fetch()) {
+			// if ($offset > 0) {
+			// 	$offset--;
+			// 	continue;
+			// }
+
+			error_log("ooooooooooooooooooooo");
+			error_log(json_encode($data));
+			error_log("ooooooooooooooooooooo");
+			// if ($this->isAccessibleResult($data)) {
+			// 	$shares2[] = $this->createShare($data);
+			// }
+		}
+		$cursor->closeCursor();
+
+
+		// error_log("Got group");
+		$backend = $group->getBackend();
+		// error_log("Got backend");
+		$currentMembers = $backend->usersInGroup($groupId);
+		// error_log("Got current group members");
+		// error_log(json_encode($currentMembers));
+
+		foreach ($currentMembers as $currentMember) {
+			if (!in_array($currentMember, $newMembers)) $backend->removeFromGroup($currentMember, $groupId);
+		}
+
+
+		foreach ($newMembers as $member) {
+			$targetUserObject 	= \OC::$server->getUserManager()->get($member["value"]);
+			$targetGroupObject->addUser($targetUserObject);
+		}
+
+		// get shaared with group
+
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, "https://oc1.docker/remote.php/webdav/");
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		// curl_setopt($ch, CURLOPT_USERPWD, "username:password");
+		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		$output = curl_exec($ch);
+		$info = curl_getinfo($ch);
+		curl_close($ch);
+	}
+
+
 	private function doUpdateGroup($groupId, $obj) {
 		$group = $this->groupManager->get($groupId);
 		error_log("Got group");
@@ -200,13 +260,25 @@ class ScimController extends Controller {
 	 * @PublicPage
 	 */
 	public function updateGroup($groupId) {
+		$group = $this->groupManager->get($groupId);
+		if (!$group) {
+			return new JSONResponse(
+				[
+					'status' => 'error',
+					'data' => [
+						'message' => "could not find Group with given identifier: {$groupId}"
+					],
+				],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 		error_log("scim update group $groupId");
 		$obj = json_decode(file_get_contents("php://input"), true);
 
 		error_log("=========================bodyJson=============================");
 		error_log(json_encode($obj));
 		error_log("=========================bodyJson=============================");
-		$this->doUpdateGroup($groupId, $obj);
+		$this->handleUpdateGroup($groupId, $obj);
 		return new JSONResponse(
 			$obj,
 			RESPONSE_TO_GROUP_CREATE

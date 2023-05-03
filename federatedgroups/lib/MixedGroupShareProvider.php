@@ -95,10 +95,10 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		ILogger $logger
 	) {
 		parent::__construct(
-			 $dbConn,
-			 $userManager,
-			 $groupManager,
-			 $rootFolder
+			$dbConn,
+			$userManager,
+			$groupManager,
+			$rootFolder
 		);
 		error_log("Constructing the MixedGroupShareProvider");
 		$this->notifications = $notifications;
@@ -144,13 +144,15 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$shareWithAddress = new Address($sharedWith);
 			$token = "a good question"; // FIXME this will be null because the DefaultShareProvider doesn't set this?
 			error_log("Calling sendRemoteShare!");
-			error_log(var_export([				$shareWithAddress,
-			$ownerAddress,
-			$sharedByAddress,
-			$token,
-			$share->getNode()->getName(),
-			$share->getId(),
-			\OCP\Share::SHARE_TYPE_REMOTE_GROUP], true));
+			error_log(var_export([
+				$shareWithAddress,
+				$ownerAddress,
+				$sharedByAddress,
+				$token,
+				$share->getNode()->getName(),
+				$share->getId(),
+				\OCP\Share::SHARE_TYPE_REMOTE_GROUP
+			], true));
 			// protected function sendOcmRemoteShare(
 			// 	Address $shareWithAddress,
 			// 	Address $ownerAddress,
@@ -266,7 +268,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 
 	private function regularGroupHasForeignersFrom($remote, $regularGroupId) {
 		error_log("MixedGroupShareProvider regularGroupHasForeignersFrom");
-	
+
 		$queryBuilder = $this->dbConn->getQueryBuilder();
 		$cursor = $queryBuilder->select('uid')->from('group_user')
 			->where($queryBuilder->expr()->eq('gid', $queryBuilder->createNamedParameter($regularGroupId, IQueryBuilder::PARAM_STR)))
@@ -312,16 +314,16 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$shares[] = $this->createShareObject($data);
 		}
 		$cursor->closeCursor();
-    	error_log("returning " . count($shares) . " shares");
+		error_log("returning " . count($shares) . " shares");
 		return $shares;
 	}
 
 	private function getSharesToCustomGroup($customGroupId) {
 		error_log("MixedGroupShareProvider getSharesToCustomGroup");
 
-    	$qb = $this->dbConn->getQueryBuilder();
+		$qb = $this->dbConn->getQueryBuilder();
 		$qb->select('uri')
-		  ->from('custom_group');
+			->from('custom_group');
 
 		$qb->andWhere($qb->expr()->eq('group_id', $qb->createNamedParameter($customGroupId, IQueryBuilder::PARAM_INT)));
 		$cursor = $qb->execute();
@@ -332,9 +334,9 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 		$groupUri = $data['uri'];
 		error_log("Found uri '$groupUri' for custom group $customGroupId");
-    	return $this->getSharesToRegularGroup('customgroup_' . $groupUri);
+		return $this->getSharesToRegularGroup('customgroup_' . $groupUri);
 	}
-	
+
 	public function notifyNewCustomGroupMember($userId, $customGroupId) {
 		error_log("MixedGroupShareProvider notifyNewCustomGroupMember");
 		if (str_contains($userId, '#')) {
@@ -388,7 +390,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		$recipients = $backend->usersInGroup($share->getSharedWith());
 		error_log("Got recipients");
 		error_log(var_export($recipients, true));
-		foreach($recipients as $k => $v) {
+		foreach ($recipients as $k => $v) {
 			$parts = explode(self::SEPARATOR, $v);
 			if (count($parts) == 2) {
 				error_log("Considering remote " . $parts[1] . " because of " . $parts[0] . " there");
@@ -397,19 +399,56 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 				error_log("Local user: $v");
 			}
 		}
-		foreach($remotes as $remote => $_dummy) {
+		foreach ($remotes as $remote => $_dummy) {
 			$this->sendOcmInvite($share, $remote);
 		}
 	}
-	public function getAllSharedWith($userId, $node){
+	public function getAllSharedWith($userId, $node) {
 		error_log("you `getAllSharedWith` me on MixedGroupShareProvider...");
 		return parent::getAllSharedWith($userId, $node);
 	}
 
-	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
+	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0) {
 		error_log("you `getSharedWith` on MixedGroupShareProvider...");
 		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
 	}
 
-	
+	/*
+	 * Get shared with group shares for the given groups and node
+	 *
+	 * @param IGroup[] $groups
+	 * @param Node|null $node
+	 * @return DB\QueryBuilder\IQueryBuilder $qb
+	 */
+	public function getSharedWithGroupQuery($groupId, $node) {
+		$qb = $this->dbConn->getQueryBuilder();
+		$qb->select('s.*', 'f.fileid', 'f.path')
+			->selectAlias('st.id', 'storage_string_id')
+			->from('share', 's')
+			->leftJoin('s', 'filecache', 'f', $qb->expr()->eq('s.file_source', 'f.fileid'))
+			->leftJoin('f', 'storages', 'st', $qb->expr()->eq('f.storage', 'st.numeric_id'))
+			->orderBy('s.id');
+
+		// Filter by node if provided
+		if ($node !== null) {
+			$qb->andWhere($qb->expr()->eq('file_source', $qb->createNamedParameter($node->getId())));
+		}
+
+		// $groups = \array_map(function ($group) {
+		// 	return $group->getGID();
+		// }, $groups);
+
+		$qb->andWhere($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_GROUP)))
+			->andWhere($qb->expr()->eq('share_with', $qb->createNamedParameter(
+				$groupId,
+				// IQueryBuilder::PARAM_STR_ARRAY
+			)))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
+				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
+			));
+
+		$rows = $qb->execute();
+		return $rows;
+	}
 }
