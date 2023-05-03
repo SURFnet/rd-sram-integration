@@ -474,5 +474,30 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 
 		return $share;
 	}
+
+	/**
+	 * Load from database format (JSON string) to IAttributes
+	 *
+	 * @param IShare $share
+	 * @param string|null $data
+	 * @return IShare modified share
+	 */
+	private function updateShareAttributes(IShare $share, $data) {
+		if ($data !== null) {
+			$attributes = new ShareAttributes();
+			$compressedAttributes = \json_decode($data, true);
+			foreach ($compressedAttributes as $compressedAttribute) {
+				$attributes->setAttribute(
+					$compressedAttribute[0],
+					$compressedAttribute[1],
+					$compressedAttribute[2]
+				);
+			}
+			$share->setAttributes($attributes);
+		}
+
+		return $share;
+	}
+
 	
 }
