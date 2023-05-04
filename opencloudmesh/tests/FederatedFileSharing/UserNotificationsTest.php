@@ -21,14 +21,14 @@
  *
  */
 
-namespace OCA\FederatedFileSharing\Tests;
+ namespace OCA\OpenCloudMesh\Tests\FederatedFileSharing;
 
 use GuzzleHttp\Exception\ClientException;
 use Psr\Http\Message\ResponseInterface;
 use OC\AppFramework\Http;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\DiscoveryManager;
-use OCA\FederatedFileSharing\Notifications;
+use OCA\OpenCloudMesh\FederatedFileSharing\UserNotifications;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCP\BackgroundJob\IJobList;
@@ -39,7 +39,7 @@ use OCP\IConfig;
 use OCA\FederatedFileSharing\BackgroundJob\RetryJob;
 use OCP\Share\Events\DeclineShare;
 
-class NotificationsTest extends \Test\TestCase {
+class UserNotificationsTest extends \Test\TestCase {
 	/** @var  AddressHandler | \PHPUnit\Framework\MockObject\MockObject */
 	private $addressHandler;
 
@@ -77,11 +77,11 @@ class NotificationsTest extends \Test\TestCase {
 	 * get instance of Notifications class
 	 *
 	 * @param array $mockedMethods methods which should be mocked
-	 * @return Notifications | \PHPUnit\Framework\MockObject\MockObject
+	 * @return UserNotifications | \PHPUnit\Framework\MockObject\MockObject
 	 */
 	private function getInstance(array $mockedMethods = []) {
 		if (empty($mockedMethods)) {
-			$instance = new Notifications(
+			$instance = new UserNotifications(
 				$this->addressHandler,
 				$this->httpClientService,
 				$this->discoveryManager,
@@ -90,7 +90,7 @@ class NotificationsTest extends \Test\TestCase {
 				$this->config
 			);
 		} else {
-			$instance = $this->getMockBuilder(Notifications::class)
+			$instance = $this->getMockBuilder(UserNotifications::class)
 				->setConstructorArgs(
 					[
 						$this->addressHandler,

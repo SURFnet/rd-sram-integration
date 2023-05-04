@@ -24,9 +24,9 @@ namespace OCA\OpenCloudMesh\Tests\FederatedFileSharing;
 use OC\Files\Filesystem;
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
-use OCA\OpenCloudMesh\FederatedGroupShareProvider;
-use OCA\OpenCloudMesh\FederatedFileSharing\FedGroupShareManager;
-use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
+use OCA\OpenCloudMesh\FederatedUserShareProvider;
+use OCA\OpenCloudMesh\FederatedFileSharing\FedUserShareManager;
+use OCA\OpenCloudMesh\FederatedFileSharing\UserNotifications;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCP\Activity\IEvent;
 use OCP\Activity\IManager as ActivityManager;
@@ -39,16 +39,16 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Test\Traits\UserTrait;
 
 /**
- * Class FedGroupShareManagerTest
+ * Class FedUserShareManagerTest
  *
  * @package OCA\OpenCloudMesh\FederatedFileSharing\Tests
  * @group DB
  */
-class FedGroupShareManagerTest extends TestCase {
-	/** @var FederatedGroupShareProvider | \PHPUnit\Framework\MockObject\MockObject */
+class FedUserShareManagerTest extends TestCase {
+	/** @var FederatedUserShareProvider | \PHPUnit\Framework\MockObject\MockObject */
 	private $federatedShareProvider;
 
-	/** @var GroupNotifications | \PHPUnit\Framework\MockObject\MockObject */
+	/** @var UserNotifications | \PHPUnit\Framework\MockObject\MockObject */
 	private $notifications;
 
 	/** @var IUserManager | \PHPUnit\Framework\MockObject\MockObject */
@@ -60,7 +60,7 @@ class FedGroupShareManagerTest extends TestCase {
 	/** @var NotificationManager | \PHPUnit\Framework\MockObject\MockObject */
 	private $notificationManager;
 
-	/** @var FedGroupShareManager | \PHPUnit\Framework\MockObject\MockObject */
+	/** @var FedUserShareManager | \PHPUnit\Framework\MockObject\MockObject */
 	private $fedShareManager;
 
 	/** @var AddressHandler | \PHPUnit\Framework\MockObject\MockObject */
@@ -76,9 +76,9 @@ class FedGroupShareManagerTest extends TestCase {
 		parent::setUp();
 
 		$this->federatedShareProvider = $this->getMockBuilder(
-			FederatedGroupShareProvider::class
+			FederatedUserShareProvider::class
 		)->disableOriginalConstructor()->getMock();
-		$this->notifications = $this->getMockBuilder(GroupNotifications::class)
+		$this->notifications = $this->getMockBuilder(UserNotifications::class)
 			->disableOriginalConstructor()->getMock();
 		$this->userManager = $this->getMockBuilder(IUserManager::class)
 			->getMock();
@@ -94,7 +94,7 @@ class FedGroupShareManagerTest extends TestCase {
 		$this->eventDispatcher = $this->getMockBuilder(EventDispatcherInterface::class)
 			->getMock();
 
-		$this->fedShareManager = $this->getMockBuilder(FedGroupShareManager::class)
+		$this->fedShareManager = $this->getMockBuilder(FedUserShareManager::class)
 			->setConstructorArgs(
 				[
 					$this->federatedShareProvider,

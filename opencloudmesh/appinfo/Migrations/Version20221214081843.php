@@ -35,11 +35,6 @@ class Version20221214081843 implements ISchemaMigration {
                 'default' => null
             ]);
 
-            $table->addColumn('share_type', 'smallint', [
-                'unsigned' => true,
-                'notnull' => true,
-            ]);
-
             $table->addColumn('remote', 'string', [
                 'length' => 512,
                 'notnull' => true,
@@ -97,12 +92,12 @@ class Version20221214081843 implements ISchemaMigration {
             ]);
 
             $table->addColumn('lastscan', 'bigint', [
+                'length' => 11,
                 'unsigned' => true,
-                'notnull' => true,
-                'default' => null
+                'notnull' => false,
             ]);
             $table->setPrimaryKey(['id']);
-            $table->addUniqueIndex(['user', 'mountpoint_hash'], 'sh_external_mp');
+            $table->addUniqueIndex(['user', 'mountpoint_hash'], 'sh_external_group_mp');
         }
     }
 }

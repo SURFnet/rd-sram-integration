@@ -64,7 +64,6 @@ class Manager extends AbstractManager {
 
 	protected function prepareData(array &$data) {
 		$data['parent'] = null;
-		$data['share_type'] = 7;
 		$data['lastscan'] = time();
 	}
 
@@ -72,18 +71,16 @@ class Manager extends AbstractManager {
 		$groupRowId = $this->connection->lastInsertId("*PREFIX*{$this->tableName}");
 		$users = \OC::$server->getGroupManager()->findUsersInGroup($data['user']);
 		$data['parent'] = $groupRowId;
-		$data['share_type'] = 6;
 		foreach($users as $item){
 			$data['user'] = $item->getUID();
 			$query = $this->connection->prepare("
 				INSERT INTO `*PREFIX*{$this->tableName}`
 					(`remote`, `share_token`, `password`, `name`, `owner`, `user`,
-					`mountpoint`, `mountpoint_hash`, `accepted`, `remote_id`, `parent`, `share_type`, `lastscan`)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+					`mountpoint`, `mountpoint_hash`, `accepted`, `remote_id`, `parent`, `lastscan`)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			");
 			$query->execute([$data['remote'], $data['share_token'], $data['password'], $data['name'], $data['owner'], $data['user'], 
-				$data['mountpoint'], $data['mountpoint_hash'], $data['accepted'], $data['remote_id'], $data['parent'], 
-				$data['share_type'], $data['lastscan']]
+				$data['mountpoint'], $data['mountpoint_hash'], $data['accepted'], $data['remote_id'], $data['parent'], $data['lastscan']]
 			);
 		}
 	}
@@ -95,11 +92,6 @@ class Manager extends AbstractManager {
 	}
 
 	protected function fetchShares($shares) {
-		$groupShared = $shares->fetchAll();
-		$sharedFiles = array_map(function ($item) {
-			$item["share_type"] = "group";
-			return $item;
-		}, $groupShared);
-		return $sharedFiles;
+		return $shares->fetchAll();
 	}
 }

@@ -25,6 +25,7 @@ use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Middleware\OcmMiddleware;
 use OCA\FederatedFileSharing\Ocm\Exception\BadRequestException;
+use OCA\FederatedFileSharing\Ocm\Exception\ForbiddenException;
 use OCA\FederatedFileSharing\Ocm\Exception\NotImplementedException;
 use OCA\FederatedFileSharing\Ocm\Notification\FileNotification;
 use OCP\AppFramework\Http\JSONResponse;

@@ -22,13 +22,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  */
-namespace OCA\FederatedFileSharing\Tests;
+namespace OCA\OpenCloudMesh\Tests;
 
 use Doctrine\DBAL\Driver\Statement;
 use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
-use OCA\FederatedFileSharing\FederatedShareProvider;
-use OCA\FederatedFileSharing\Notifications;
+use OCA\OpenCloudMesh\FederatedGroupShareProvider;
+use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
+use OCA\OpenCloudMesh\Files_Sharing\External\Manager as ExternalManager;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\DB\QueryBuilder\IQueryBuilder;
@@ -41,6 +42,7 @@ use OCP\ILogger;
 use OCP\IUserManager;
 use OCP\Share;
 use OCP\Share\IManager;
+use OCP\Share\IProviderFactory;
 use OCP\Share\IShare;
 use OCP\Files\Folder;
 use OCP\IUser;
@@ -49,12 +51,12 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
 /**
- * Class FederatedShareProviderTest
+ * Class FederatedGroupShareProviderTest
  *
- * @package OCA\FederatedFileSharing\Tests
+ * @package OCA\OpenCloudMesh\Tests
  * @group DB
  */
-class FederatedShareProviderTest extends \Test\TestCase {
+class FederatedGroupShareProviderTest extends \Test\TestCase {
 	protected const OCS_GENERIC_SUCCESS = ['ocs' => ['meta' => [ 'status' => 'success']]];
 
 	/** @var IDBConnection */
@@ -63,7 +65,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 	protected $eventDispatcher;
 	/** @var AddressHandler | MockObject */
 	protected $addressHandler;
-	/** @var Notifications | MockObject */
+	/** @var GroupNotifications | MockObject */
 	protected $notifications;
 	/** @var TokenHandler */
 	protected $tokenHandler;
@@ -77,10 +79,14 @@ class FederatedShareProviderTest extends \Test\TestCase {
 	protected $config;
 	/** @var  IUserManager | MockObject */
 	protected $userManager;
+	/** @var IProviderFactory | MockObject */
+	protected $providerFactory;
+	/** @var ExternalManager | MockObject */
+	protected $externalManager;
 
 	/** @var IManager */
 	protected $shareManager;
-	/** @var FederatedShareProvider */
+	/** @var FederatedGroupShareProvider */
 	protected $provider;
 
 	/** @var File|MockObject */
@@ -94,7 +100,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 		$this->eventDispatcher = $this->getMockBuilder(EventDispatcherInterface::class)
 			->disableOriginalConstructor()
 			->getMock();
-		$this->notifications = $this->createMock(Notifications::class);
+		$this->notifications = $this->createMock(GroupNotifications::class);
 		$this->tokenHandler = $this->createMock(TokenHandler::class);
 		$this->l = $this->createMock(IL10N::class);
 		$this->l->method('t')
@@ -105,9 +111,14 @@ class FederatedShareProviderTest extends \Test\TestCase {
 		$this->rootFolder = $this->createMock(IRootFolder::class);
 		$this->config = $this->createMock(IConfig::class);
 		$this->userManager = $this->createMock(IUserManager::class);
+		$this->externalManager = $this->createMock(ExternalManager::class);
 		$this->addressHandler = $this->createMock(AddressHandler::class);
 
-		$this->provider = new FederatedShareProvider(
+		$this->providerFactory = $this->createMock(IProviderFactory::class);
+		$this->providerFactory->method('getProviders')
+			->willReturn([]);
+
+		$this->provider = new FederatedGroupShareProvider(
 			$this->connection,
 			$this->eventDispatcher,
 			$this->addressHandler,
@@ -117,7 +128,11 @@ class FederatedShareProviderTest extends \Test\TestCase {
 			$this->logger,
 			$this->rootFolder,
 			$this->config,
-			$this->userManager
+			$this->userManager,
+			$this->providerFactory,
+			function() {
+				return $this->externalManager;
+			}
 		);
 
 		$this->shareManager = \OC::$server->getShareManager();
@@ -195,7 +210,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 		$stmt->closeCursor();
 
 		$expectedSubset = [
-			'share_type' => Share::SHARE_TYPE_REMOTE,
+			'share_type' => Share::SHARE_TYPE_REMOTE_GROUP,
 			'share_with' => 'user@server.com',
 			'uid_owner' => 'shareOwner',
 			'uid_initiator' => 'sharedBy',
@@ -212,7 +227,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 		}
 
 		$this->assertEquals($fetchedData['id'], $share->getId());
-		$this->assertEquals(Share::SHARE_TYPE_REMOTE, $share->getShareType());
+		$this->assertEquals(Share::SHARE_TYPE_REMOTE_GROUP, $share->getShareType());
 		$this->assertEquals('user@server.com', $share->getSharedWith());
 		$this->assertEquals('sharedBy', $share->getSharedBy());
 		$this->assertEquals('shareOwner', $share->getShareOwner());
@@ -271,7 +286,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 		$stmt->closeCursor();
 
 		$this->assertEquals($fetchedData['id'], $share->getId());
-		$this->assertEquals(\OCP\Share::SHARE_TYPE_REMOTE, $share->getShareType());
+		$this->assertEquals(\OCP\Share::SHARE_TYPE_REMOTE_GROUP, $share->getShareType());
 		$this->assertEquals('user@server.com', $share->getSharedWith());
 		$this->assertEquals('sharedBy', $share->getSharedBy());
 		$this->assertEquals('shareOwner', $share->getShareOwner());
@@ -337,7 +352,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 		$stmt->closeCursor();
 
 		$expectedSubset = [
-			'share_type' => Share::SHARE_TYPE_REMOTE,
+			'share_type' => Share::SHARE_TYPE_REMOTE_GROUP,
 			'share_with' => 'user@server.com',
 			'uid_owner' => 'shareOwner',
 			'uid_initiator' => null,
@@ -354,7 +369,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 		}
 
 		$this->assertEquals($fetchedData['id'], $share->getId());
-		$this->assertEquals(Share::SHARE_TYPE_REMOTE, $share->getShareType());
+		$this->assertEquals(Share::SHARE_TYPE_REMOTE_GROUP, $share->getShareType());
 		$this->assertEquals('user@server.com', $share->getSharedWith());
 		$this->assertEquals('shareOwner', $share->getSharedBy());
 		$this->assertEquals('folderOwner', $share->getShareOwner());
@@ -538,7 +553,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 	 * @param bool $shouldUpdate
 	 */
 	public function testUpdate($owner, $sharedBy, $isOwnerLocal, $isSharerLocal, $shouldUpdate) {
-		$this->provider = $this->getMockBuilder(FederatedShareProvider::class)
+		$this->provider = $this->getMockBuilder(FederatedGroupShareProvider::class)
 			->setConstructorArgs(
 				[
 					$this->connection,
@@ -550,7 +565,11 @@ class FederatedShareProviderTest extends \Test\TestCase {
 					$this->logger,
 					$this->rootFolder,
 					$this->config,
-					$this->userManager
+					$this->userManager,
+					$this->providerFactory,
+					function() {
+						return $this->externalManager;
+					}
 				]
 			)->setMethods(['sendPermissionUpdate'])->getMock();
 
@@ -662,7 +681,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 			->setNode($node2);
 		$this->provider->create($share2);
 
-		$shares = $this->provider->getAllSharesBy('sharedBy', [Share::SHARE_TYPE_REMOTE], [$node2->getId()], false);
+		$shares = $this->provider->getAllSharesBy('sharedBy', [Share::SHARE_TYPE_REMOTE_GROUP], [$node2->getId()], false);
 
 		$this->assertCount(1, $shares);
 		$this->assertEquals(43, $shares[0]->getNodeId());
@@ -705,7 +724,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 			$this->provider->create($share2);
 		}
 
-		$shares = $this->provider->getAllSharesBy('shareOwner', [Share::SHARE_TYPE_REMOTE], [$this->defaultNode->getId()], true);
+		$shares = $this->provider->getAllSharesBy('shareOwner', [Share::SHARE_TYPE_REMOTE_GROUP], [$this->defaultNode->getId()], true);
 
 		$this->assertCount(202, $shares);
 	}
@@ -736,7 +755,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 			->setNode($this->defaultNode);
 		$this->provider->create($share2);
 
-		$shares = $this->provider->getSharesBy('sharedBy', Share::SHARE_TYPE_REMOTE, null, false, -1, 0);
+		$shares = $this->provider->getSharesBy('sharedBy', Share::SHARE_TYPE_REMOTE_GROUP, null, false, -1, 0);
 
 		$this->assertCount(1, $shares);
 		$this->assertEquals('user@server.com', $shares[0]->getSharedWith());
@@ -770,7 +789,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 			->setNode($node2);
 		$this->provider->create($share2);
 
-		$shares = $this->provider->getSharesBy('sharedBy', Share::SHARE_TYPE_REMOTE, $node2, false, -1, 0);
+		$shares = $this->provider->getSharesBy('sharedBy', Share::SHARE_TYPE_REMOTE_GROUP, $node2, false, -1, 0);
 
 		$this->assertCount(1, $shares);
 		$this->assertEquals(43, $shares[0]->getNodeId());
@@ -802,7 +821,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 			->setNode($this->defaultNode);
 		$this->provider->create($share2);
 
-		$shares = $this->provider->getSharesBy('shareOwner', Share::SHARE_TYPE_REMOTE, null, true, -1, 0);
+		$shares = $this->provider->getSharesBy('shareOwner', Share::SHARE_TYPE_REMOTE_GROUP, null, true, -1, 0);
 
 		$this->assertCount(2, $shares);
 	}
@@ -841,7 +860,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 			->setNode($this->defaultNode);
 		$this->provider->create($share2);
 
-		$shares = $this->provider->getSharesBy('shareOwner', Share::SHARE_TYPE_REMOTE, null, true, 1, 1);
+		$shares = $this->provider->getSharesBy('shareOwner', Share::SHARE_TYPE_REMOTE_GROUP, null, true, 1, 1);
 
 		$this->assertCount(1, $shares);
 		$this->assertEquals('user2@server.com', $shares[0]->getSharedWith());
@@ -869,7 +888,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 	public function testDeleteUser($owner, $initiator, $recipient, $deletedUser, $rowDeleted) {
 		$qb = $this->connection->getQueryBuilder();
 		$qb->insert('share')
-			->setValue('share_type', $qb->createNamedParameter(Share::SHARE_TYPE_REMOTE))
+			->setValue('share_type', $qb->createNamedParameter(Share::SHARE_TYPE_REMOTE_GROUP))
 			->setValue('uid_owner', $qb->createNamedParameter($owner))
 			->setValue('uid_initiator', $qb->createNamedParameter($initiator))
 			->setValue('share_with', $qb->createNamedParameter($recipient))
@@ -880,7 +899,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 
 		$id = $qb->getLastInsertId();
 
-		$this->provider->userDeleted($deletedUser, Share::SHARE_TYPE_REMOTE);
+		$this->provider->userDeleted($deletedUser, Share::SHARE_TYPE_REMOTE_GROUP);
 
 		$qb = $this->connection->getQueryBuilder();
 		$qb->select('*')
@@ -1024,7 +1043,7 @@ class FederatedShareProviderTest extends \Test\TestCase {
 		$connectionMock->method('getQueryBuilder')->willReturn($qbMock);
 
 		$shareMock = $this->createMock(IShare::class);
-		$this->provider = new FederatedShareProvider(
+		$this->provider = new FederatedGroupShareProvider(
 			$connectionMock,
 			$this->eventDispatcher,
 			$this->addressHandler,
@@ -1034,7 +1053,11 @@ class FederatedShareProviderTest extends \Test\TestCase {
 			$this->logger,
 			$this->rootFolder,
 			$this->config,
-			$this->userManager
+			$this->userManager,
+			$this->providerFactory,
+			function() {
+				return $this->externalManager;
+			}
 		);
 
 		$this->assertEquals(

@@ -57,7 +57,7 @@ abstract class AbstractManager {
 	/**
 	 * @var string
 	 */
-	private $uid;
+	protected $uid;
 
 	/**
 	 * @var \OCP\IDBConnection
@@ -453,7 +453,7 @@ abstract class AbstractManager {
 
 		if ($result) {
 			$share = $getShare->fetch();
-			if ($share !== false) {
+			if (isset($share)) {
 				$this->eventDispatcher->dispatch(
 					new DeclineShare($share),
 					DeclineShare::class
