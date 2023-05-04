@@ -99,14 +99,20 @@ class Application extends App {
 		$container->registerService(
 			'OCA\\OpenCloudMesh\\FederatedFileSharing\\FedGroupShareManager',
 			function ($c) use ($server) {
+				$config = \OC::$server->getConfig();
+
 				$addressHandler = new AddressHandler(
 					\OC::$server->getURLGenerator(),
 					\OC::$server->getL10N('federatedfilesharing')
 				);
 				$permissions = new Permissions();
 
+				$factoryClass = $config->getSystemValue('sharing.managerFactory', '\ OCA\OpenCloudMesh\ShareProviderFactory');
+				$factory = new $factoryClass($server);
+				$groupShareProvider = $factory->getProviderForType(\OCP\Share::SHARE_TYPE_REMOTE_GROUP);
+
 				return new FedGroupShareManager(
-					$this->getFederatedGroupShareProvider(),
+					$groupShareProvider,
 					$c->query('GroupNotifications'),
 					$server->getUserManager(),
 					$server->getActivityManager(),
@@ -121,6 +127,8 @@ class Application extends App {
 		$container->registerService(
 			'OCA\\OpenCloudMesh\\FederatedFileSharing\\FedUserShareManager',
 			function ($c) use ($server) {
+				$config = \OC::$server->getConfig();
+
 				$addressHandler = new AddressHandler(
 					\OC::$server->getURLGenerator(),
 					\OC::$server->getL10N('federatedfilesharing')
@@ -139,11 +147,15 @@ class Application extends App {
 					$discoveryManager,
 					$notificationManager,
 					\OC::$server->getJobList(),
-					\OC::$server->getConfig()
+					$config
 				);
 
+				$factoryClass = $config->getSystemValue('sharing.managerFactory', '\ OCA\OpenCloudMesh\ShareProviderFactory');
+				$factory = new $factoryClass($server);
+				$userShareProvider = $factory->getProviderForType(\OCP\Share::SHARE_TYPE_REMOTE);
+
 				return new FedUserShareManager(
-					$this->getFederatedUserShareProvider(),
+					$userShareProvider,
 					$notifications,
 					$server->getUserManager(),
 					$server->getActivityManager(),

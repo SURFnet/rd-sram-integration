@@ -313,20 +313,18 @@ class OcmController extends Controller {
 			switch ($notificationType) {
 				case FileNotification::NOTIFICATION_TYPE_SHARE_ACCEPTED:
 					$this->ocmMiddleware->assertOutgoingSharingEnabled();
-					$share = $this->getValidShare(
+					list($share, $fedShareManager) = $this->getValidShare(
 						$providerId,
 						$notification['sharedSecret']
 					);
-					$fedShareManager = $this->getFedShareManagerForShareType($share->getShareType());
 					$fedShareManager->acceptShare($share);
 					break;
 				case FileNotification::NOTIFICATION_TYPE_SHARE_DECLINED:
 					$this->ocmMiddleware->assertOutgoingSharingEnabled();
-					$share = $this->getValidShare(
+					list($share, $fedShareManager) = $this->getValidShare(
 						$providerId,
 						$notification['sharedSecret']
 					);
-					$fedShareManager = $this->getFedShareManagerForShareType($share->getShareType());
 					$fedShareManager->declineShare($share);
 					break;
 				case FileNotification::NOTIFICATION_TYPE_REQUEST_RESHARE:
@@ -337,7 +335,7 @@ class OcmController extends Controller {
 							'senderId' => $notification['senderId'],
 						]
 					);
-					$share = $this->getValidShare(
+					list($share, $fedShareManager) = $this->getValidShare(
 						$providerId,
 						$notification['sharedSecret']
 					);
@@ -349,7 +347,6 @@ class OcmController extends Controller {
 					$this->ocmMiddleware->assertNotSameUser($ownerAddress, $shareWithAddress);
 					$this->ocmMiddleware->assertSharingPermissionSet($share);
 
-					$fedShareManager = $this->getFedShareManagerForShareType($share->getShareType());
 					$reShare = $fedShareManager->reShare(
 						$share,
 						$notification['senderId'],
@@ -369,11 +366,10 @@ class OcmController extends Controller {
 							'permission' => $notification['permission']
 						]
 					);
-					$share = $this->getValidShare(
+					list($share, $fedShareManager) = $this->getValidShare(
 						$providerId,
 						$notification['sharedSecret']
 					);
-					$fedShareManager = $this->getFedShareManagerForShareType($share->getShareType());
 					$fedShareManager->updateOcmPermissions(
 						$share,
 						$notification['permission']
@@ -437,22 +433,9 @@ class OcmController extends Controller {
 		);
 	}
 
-	private function getFedShareManagerForShareType($shareType) {
-		if ($shareType === 'group' || $shareType === 7) {
-			return $this->fedGroupShareManager;
-		}
-		else if ($shareType === 'user' || $shareType === 6) {
-			return $this->fedUserShareManager;
-		}
-
-		throw new NotImplementedException(
-			"ShareType {$shareType} is not supported"
-		);
-	}
-
 	private function getValidShare($id, $sharedSecret) {
 		try {
-			$share = $this->getShareById($id);
+			list($share, $fedShareManager) = $this->getShareById($id);
 		} catch (Share\Exceptions\ShareNotFound $e) {
 			throw new BadRequestException("Share with id {$id} does not exist");
 		}
@@ -460,7 +443,7 @@ class OcmController extends Controller {
 		if ($share->getToken() !== $sharedSecret) {
 			throw new ForbiddenException("The secret does not match");
 		}
-		return $share;
+		return [$share, $fedShareManager];
 	}
 
 	/**
@@ -468,7 +451,7 @@ class OcmController extends Controller {
 	 * not support this we need to check all backends.
 	 *
 	 * @param string $id
-	 * @return IShare
+	 * @return list(IShare, AbstractFedShareManager)
 	 * @throws ShareNotFound
 	 */
 	private function getShareById($id) {
@@ -477,9 +460,9 @@ class OcmController extends Controller {
 		}
 
 		try {
-			return $this->fedGroupShareManager->getShareById($id);
+			return [$this->fedGroupShareManager->getShareById($id), $this->fedGroupShareManager];
 		} catch (ShareNotFound $e) {
-			return $this->fedUserShareManager->getShareById($id);
+			return [$this->fedUserShareManager->getShareById($id), $this->fedUserShareManager];
 		}
 	}
 
