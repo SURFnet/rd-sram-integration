@@ -21,6 +21,9 @@ use OCP\IL10N;
 use OCP\ILogger;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCA\FederatedFileSharing\TokenHandler;
+use OC\Share20\Exception\InvalidShare;
+use OCP\Share\Exceptions\ShareNotFound;
+use OCP\Share\IShare;
 
 /**
  * Class MixedGroupShareProvider
@@ -133,7 +136,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 * @param string $remote
 	 * @return void
 	 */
-	private function sendOcmInvite($share, $remote) {
+	public function sendOcmInvite($share, $remote) {
 		try {
 			$sharedBy = $share->getSharedBy();
 			if ($this->userManager->userExists($sharedBy)) {
@@ -189,6 +192,32 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 	}
 
+
+	/**
+	 * Get the node with file $id for $user
+	 *
+	 * @param string $userId
+	 * @param int $id
+	 * @return \OCP\Files\File|\OCP\Files\Folder
+	 * @throws InvalidShare
+	 */
+	private function getNode($userId, $id) {
+		try {
+			$userFolder = $this->rootFolder->getUserFolder($userId);
+		} catch (\OCP\Files\NotFoundException $e) {
+			throw new InvalidShare();
+		}
+
+		$nodes = $userFolder->getById($id, true);
+
+		if (empty($nodes)) {
+			throw new InvalidShare();
+		}
+
+		return $nodes[0];
+	}
+
+	
 	/**
 	 * Copied from OCA\FederatedFilesSharing\FederatedShareProvider:
 	 * Create a share object from an database row
@@ -273,7 +302,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			error_log("Local user, no need to check for OCM invites to send");
 		}
 	}
-	private function getSharesToRegularGroup($regularGroupId) {
+	
+	public function getSharesToRegularGroup($regularGroupId) {
 		$qb = $this->dbConn->getQueryBuilder();
 		$qb->select('*')
 			->from('share');
@@ -370,8 +400,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 					->execute();
 
 			}
-			catch (Exception $x){
-				throw $ex;
+			catch (\Exception $x){
+				throw $x;
 			}
 			return $created;
 		}
@@ -405,12 +435,12 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		$data = $cursor->fetch();
 
 		if ($data === false) {
-			throw new ShareNotFound();
+			throw new \OCP\Share\Exceptions\ShareNotFound();
 		}
 
 		try {
 			$share = $this->createShare($data);
-		} catch (InvalidShare $e) {
+		} catch (\OC\Share20\Exception\InvalidShare $e) {
 			throw new ShareNotFound();
 		}
 
@@ -482,9 +512,9 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 * @param string|null $data
 	 * @return IShare modified share
 	 */
-	private function updateShareAttributes(IShare $share, $data) {
+	private function updateShareAttributes(\OCP\Share\IShare $share, $data) {
 		if ($data !== null) {
-			$attributes = new ShareAttributes();
+			$attributes = new \OC\Share20\ShareAttributes();
 			$compressedAttributes = \json_decode($data, true);
 			foreach ($compressedAttributes as $compressedAttribute) {
 				$attributes->setAttribute(
