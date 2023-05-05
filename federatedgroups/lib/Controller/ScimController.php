@@ -117,31 +117,31 @@ class ScimController extends Controller {
 
 	private function handleUpdateGroup($groupId, $obj) {
 		// getSharedWithGroipId
+		$newMembers = $obj["members"];
 
 
 
 		$targetGroupObject 	= \OC::$server->getGroupManager()->get($groupId);
-		$newMembers = $obj["members"];
 		$group = $this->groupManager->get($groupId);
 
 
-		$cursor = $this->mixedGroupShareProvider->getSharedWithGroupQuery($groupId, null);
-		error_log("cursor");
+		// $cursor = $this->mixedGroupShareProvider->notifyNewRegularGroupMember($groupId, null);
+		// error_log("cursor");
 
-		while ($data = $cursor->fetch()) {
-			// if ($offset > 0) {
-			// 	$offset--;
-			// 	continue;
-			// }
+		// while ($data = $cursor->fetch()) {
+		// 	// if ($offset > 0) {
+		// 	// 	$offset--;
+		// 	// 	continue;
+		// 	// }
 
-			error_log("ooooooooooooooooooooo");
-			error_log(json_encode($data));
-			error_log("ooooooooooooooooooooo");
-			// if ($this->isAccessibleResult($data)) {
-			// 	$shares2[] = $this->createShare($data);
-			// }
-		}
-		$cursor->closeCursor();
+		// 	error_log("ooooooooooooooooooooo");
+		// 	error_log(json_encode($data));
+		// 	error_log("ooooooooooooooooooooo");
+		// 	// if ($this->isAccessibleResult($data)) {
+		// 	// 	$shares2[] = $this->createShare($data);
+		// 	// }
+		// }
+		// $cursor->closeCursor();
 
 
 		// error_log("Got group");
@@ -160,18 +160,25 @@ class ScimController extends Controller {
 			$targetUserObject 	= \OC::$server->getUserManager()->get($member["value"]);
 			$targetGroupObject->addUser($targetUserObject);
 		}
+		// if ($anyUserRemoved) {
+		// 	notifyUnshare();
+		// }
+
+		// if ($anuUserAdded) {
+		// 	notifyShare($groupId);
+		// }
 
 		// get shaared with group
 
 
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "https://oc1.docker/remote.php/webdav/");
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		// curl_setopt($ch, CURLOPT_USERPWD, "username:password");
-		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		$output = curl_exec($ch);
-		$info = curl_getinfo($ch);
-		curl_close($ch);
+		// $ch = curl_init();
+		// curl_setopt($ch, CURLOPT_URL, "https://oc1.docker/remote.php/webdav/");
+		// curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		// // curl_setopt($ch, CURLOPT_USERPWD, "username:password");
+		// curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		// $output = curl_exec($ch);
+		// $info = curl_getinfo($ch);
+		// curl_close($ch);
 	}
 
 
@@ -222,6 +229,19 @@ class ScimController extends Controller {
 		}
 		for ($i = 0; $i < count($newMembers); $i++) {
 			if (!in_array($newMembers[$i], $currentMembers)) {
+				// if new users added
+				// User is foreign to our domain
+				if (str_contains($newMembers[$i], '#') and !str_contains($newMembers[$i], 'oc1.docker')) { // getOurDomain()
+					$parts = explode('#', $newMembers[$i]);
+					$remote = $parts[1];
+					$shares = $this->mixedGroupShareProvider->getSharesToRegularGroup($groupId);
+					if (!empty($shares)) {
+						foreach ($shares as $share) {
+							$this->mixedGroupShareProvider->sendOcmInvite($share, $remote);
+						}
+					}
+				}
+
 				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
 				if ($newDomain !== false) {
 					error_log("New domain $newDomain in group $groupId");
@@ -272,13 +292,15 @@ class ScimController extends Controller {
 				Http::STATUS_BAD_REQUEST
 			);
 		}
+
 		error_log("scim update group $groupId");
 		$obj = json_decode(file_get_contents("php://input"), true);
 
 		error_log("=========================bodyJson=============================");
 		error_log(json_encode($obj));
 		error_log("=========================bodyJson=============================");
-		$this->handleUpdateGroup($groupId, $obj);
+		$this->doUpdateGroup($groupId, $obj);
+		// $this->handleUpdateGroup($groupId, $obj);
 		return new JSONResponse(
 			$obj,
 			RESPONSE_TO_GROUP_CREATE
