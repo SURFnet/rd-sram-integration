@@ -184,6 +184,8 @@ class ScimController extends Controller {
 
 	private function doUpdateGroup($groupId, $obj) {
 		$group = $this->groupManager->get($groupId);
+		$sharedWithGroup = $this->mixedGroupShareProvider->getSharesToRegularGroup($groupId);
+
 		error_log("Got group");
 		$backend = $group->getBackend();
 		error_log("Got backend");
@@ -224,19 +226,22 @@ class ScimController extends Controller {
 		for ($i = 0; $i < count($currentMembers); $i++) {
 			if (!in_array($currentMembers[$i], $newMembers)) {
 				error_log("Removing from $groupId: " . $currentMembers[$i]);
+				
 				$backend->removeFromGroup($currentMembers[$i], $groupId);
 			}
 		}
+		 
 		for ($i = 0; $i < count($newMembers); $i++) {
 			if (!in_array($newMembers[$i], $currentMembers)) {
+
+
 				// if new users added
 				// User is foreign to our domain
 				if (str_contains($newMembers[$i], '#') and !str_contains($newMembers[$i], 'oc1.docker')) { // getOurDomain()
 					$parts = explode('#', $newMembers[$i]);
 					$remote = $parts[1];
-					$shares = $this->mixedGroupShareProvider->getSharesToRegularGroup($groupId);
-					if (!empty($shares)) {
-						foreach ($shares as $share) {
+					if (!empty($sharedWithGroup)) {
+						foreach ($sharedWithGroup as $share) {
 							$this->mixedGroupShareProvider->sendOcmInvite($share, $remote);
 						}
 					}
