@@ -977,7 +977,7 @@ abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 	 * @throws InvalidShare
 	 * @throws ShareNotFound
 	 */
-	private function createShareObject($data) {
+	protected function createShareObject($data) {
 		$share = new Share($this->rootFolder, $this->userManager);
 		$share->setId($data['id'])
 			->setShareType((int)$data['share_type'])
