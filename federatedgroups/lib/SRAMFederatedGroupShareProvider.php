@@ -7,37 +7,19 @@
 
 namespace OCA\FederatedGroups;
 
-use OC\Share20\Exception\BackendError;
 use OC\Share20\Exception\InvalidShare;
-use OC\Share20\Exception\ProviderException;
-use OC\Share20\Share;
-use OC\Share20\DefaultShareProvider;
-use OCA\FederatedFileSharing\Address;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\OpenCloudMesh\FederatedGroupShareProvider;
-use OCA\FederatedFileSharing\DiscoveryManager;
-use OCA\FederatedFileSharing\Ocm\NotificationManager;
-use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
-use OCA\OpenCloudMesh\Files_Sharing\External\Manager;
-use OCP\Files\File;
-use OCP\Share\IAttributes;
 use OCP\Share\IProviderFactory;
-use OCP\Share\IShare;
-use OCP\Share\IShareProvider;
 use OCP\Share\Exceptions\ShareNotFound;
-use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\Files\IRootFolder;
-use OCP\Files\Node;
 use OCP\IConfig;
-use OCP\IGroup;
 use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IUserManager;
-use OCP\Share\Constants;
 use OCP\IDBConnection;
-use OCA\FederatedFileSharing;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -122,7 +104,7 @@ class SRAMFederatedGroupShareProvider extends FederatedGroupShareProvider {
 		$qb = $this->dbConnection->getQueryBuilder();
 
 		$qb->select('*')
-			->from($this->shareTable)
+			->from("share")
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
 			->andWhere(
 				$qb->expr()->orX(
