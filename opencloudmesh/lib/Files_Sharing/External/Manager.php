@@ -92,6 +92,11 @@ class Manager extends AbstractManager {
 	}
 
 	protected function fetchShares($shares) {
-		return $shares->fetchAll();
+		$groupShared = $shares->fetchAll();
+		$sharedFiles = array_map(function ($item) {
+			$item["share_type"] = "group";
+			return $item;
+		}, $groupShared);
+		return $sharedFiles
 	}
 }
