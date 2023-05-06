@@ -97,6 +97,6 @@ class Manager extends AbstractManager {
 			$item["share_type"] = "group";
 			return $item;
 		}, $groupShared);
-		return $sharedFiles
+		return $sharedFiles;
 	}
 }
