@@ -16,6 +16,7 @@ use OCP\IUserManager;
 use OCP\Share;
 use OCP\Share\IAttributes as IShareAttributes;
 use phpDocumentor\Reflection\Types\This;
+use function PHPUnit\Framework\any;
 use function PHPUnit\Framework\once;
 
 class MixedGroupShareProviderTest extends \Test\TestCase {
@@ -189,7 +190,8 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		$this->groupManager->expects($this->once())->method("get")
 			->willReturn($group);
 
-		$this->groupManager->expects(self::exactly(2))
+		$this->groupNotifications->expects(self::exactly(2))
+			->method("sendRemoteShare")
 			->with(self::GROUP_NAME."@host1.co")
 			->with(self::GROUP_NAME."@host2.co");
 		
