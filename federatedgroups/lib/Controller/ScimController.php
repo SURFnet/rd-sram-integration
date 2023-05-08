@@ -248,14 +248,14 @@ class ScimController extends Controller {
 		for ($i = 0; $i < count($newMembers); $i++) {
 			if (!in_array($newMembers[$i], $currentMembers)) { // meaning new member is not in current update, so let add it to group and 
 
-				// if (str_contains($newMembers[$i], '#') and !str_contains($newMembers[$i], 'oc1.docker')) { // getOurDomain() meaning User is foreign to our domain
-				// 	[$userName, $remote] = explode('#', $newMembers[$i]);
-				// 	if (!empty($sharedWithGroup)) {
-				// 		foreach ($sharedWithGroup as $share) {
-				// 			$this->mixedGroupShareProvider->sendOcmInvite($share, $remote);
-				// 		}
-				// 	}
-				// }
+				if (str_contains($newMembers[$i], '#') and !str_contains($newMembers[$i], 'oc1.docker')) { // getOurDomain() meaning User is foreign to our domain
+					[$userName, $remote] = explode('#', $newMembers[$i]);
+					if (!empty($sharedWithGroup)) {
+						foreach ($sharedWithGroup as $share) {
+							$this->mixedGroupShareProvider->sendOcmInvite($share, $remote);
+						}
+					}
+				}
 
 				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
 				if ($newDomain !== false) {
@@ -296,7 +296,7 @@ class ScimController extends Controller {
 	 */
 	public function updateGroup($groupId) {
 		error_log("scim update group $groupId");
-		$this->validateGroupId($groupId);
+		// $this->validateGroupId($groupId);
 		$obj = json_decode(file_get_contents("php://input"), true);
 
 		error_log("=========================bodyJson=============================");
