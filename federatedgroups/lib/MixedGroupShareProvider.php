@@ -150,15 +150,13 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$sharedWith = $share->getSharedWith() . "@" . $remote;
 			$shareWithAddress = new Address($sharedWith);
 			
-			///// TODO =>>> set sharedSecret
 			$result = $this->groupNotifications->sendRemoteShare(
 				$shareWithAddress,
 				$ownerAddress,
 				$sharedByAddress,
 				$share->getToken(),
 				$share->getNode()->getName(),
-				$share->getId(),
-				\OCP\Share::SHARE_TYPE_REMOTE_GROUP
+				$share->getId()
 			);
 
 			/* Check for failure or null return from sending and pick up an error message
@@ -198,7 +196,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 *
 	 * @param string $userId
 	 * @param int $id
-	 * @return \OCP\Files\File|\OCP\Files\Folder
+	 * @return \OCP\Files\File|\OCP\Files\Node
 	 * @throws InvalidShare
 	 */
 	private function getNode($userId, $id) {
@@ -446,15 +444,6 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 
 		return $share;
 	}
-
-	public function getAllSharedWith($userId, $node){
-		return parent::getAllSharedWith($userId, $node);
-	}
-
-	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
-		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
-	}
-
 
 	/**
 	 * Create a share object from an database row
