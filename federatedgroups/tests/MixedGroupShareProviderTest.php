@@ -6,6 +6,7 @@ use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\FederatedGroups\MixedGroupShareProvider;
 use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
+use OCP\Files\File;
 use OCP\Files\IRootFolder;
 use OCP\IDBConnection;
 use OCP\IGroup;
@@ -198,6 +199,40 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		$result = $this->mixGroupProvider->create($share);
 		$this->assertNotEmpty($result->getToken(), "token should not be empty or null in the result object");
 
+	}
+
+	public function testGetShareByToken() {
+		$qb = $this->dbConnection->getQueryBuilder();
+
+		$qb->insert('share')
+			->values([
+				'share_type'    => $qb->expr()->literal(Share::SHARE_TYPE_GROUP),
+				'share_with'    => $qb->expr()->literal('password'),
+				'uid_owner'     => $qb->expr()->literal('shareOwner'),
+				'uid_initiator' => $qb->expr()->literal('sharedBy'),
+				'item_type'     => $qb->expr()->literal('file'),
+				'file_source'   => $qb->expr()->literal(42),
+				'file_target'   => $qb->expr()->literal('myTarget'),
+				'permissions'   => $qb->expr()->literal(13),
+				'token'         => $qb->expr()->literal('secrettoken'),
+				'share_name'          => $qb->expr()->literal('some_name'),
+			]);
+		$qb->execute();
+		$id = $qb->getLastInsertId();
+
+		$file = $this->createMock(File::class);
+
+		$this->rootFolder->method('getUserFolder')->with('shareOwner')->will($this->returnSelf());
+		$this->rootFolder->method('getById')->with(42)->willReturn([$file]);
+
+		$share = $this->mixGroupProvider->getShareByToken('secrettoken');
+		$this->assertEquals($id, $share->getId());
+		$this->assertSame('shareOwner', $share->getShareOwner());
+		$this->assertSame('sharedBy', $share->getSharedBy());
+		$this->assertSame('secrettoken', $share->getToken());
+		$this->assertSame('password', $share->getPassword());
+		$this->assertNull($share->getSharedWith());
+		$this->assertSame('some_name', $share->getName());
 	}
 
 }
