@@ -94,6 +94,9 @@ class ScimController extends Controller {
 		if (count($newUserParts) == 1) return false; // local user
 
 		if (count($newUserParts) == 2) { // remote user
+			if (str_contains($newUserParts[1], '#') && !str_contains($newUserParts[1], getOurDomain())) {
+				return false;
+			}
 			$newDomain = $newUserParts[1];
 			foreach ($existingUsers as $existingUser) {
 				error_log("Considering $existingUser");
@@ -248,14 +251,14 @@ class ScimController extends Controller {
 		for ($i = 0; $i < count($newMembers); $i++) {
 			if (!in_array($newMembers[$i], $currentMembers)) { // meaning new member is not in current update, so let add it to group and 
 
-				if (str_contains($newMembers[$i], '#') and !str_contains($newMembers[$i], 'oc1.docker')) { // getOurDomain() meaning User is foreign to our domain
-					[$userName, $remote] = explode('#', $newMembers[$i]);
-					if (!empty($sharedWithGroup)) {
-						foreach ($sharedWithGroup as $share) {
-							$this->mixedGroupShareProvider->sendOcmInvite($share, $remote);
-						}
-					}
-				}
+				// if (str_contains($newMembers[$i], '#') and !str_contains($newMembers[$i], 'oc1.docker')) { // getOurDomain() meaning User is foreign to our domain
+				// 	[$userName, $remote] = explode('#', $newMembers[$i]);
+				// 	if (!empty($sharedWithGroup)) {
+				// 		foreach ($sharedWithGroup as $share) {
+				// 			$this->mixedGroupShareProvider->sendOcmInvite($share, $remote);
+				// 		}
+				// 	}
+				// }
 
 				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
 				if ($newDomain !== false) {
