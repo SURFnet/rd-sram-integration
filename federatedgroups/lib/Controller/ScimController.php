@@ -23,7 +23,6 @@
 namespace OCA\FederatedGroups\Controller;
 
 use Exception;
-use OC\Group\MetaData;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -33,7 +32,6 @@ use OCP\IGroupManager;
 
 // use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCA\FederatedGroups\MixedGroupShareProvider;
-use OCA\FederatedFileSharing\Notifications;
 
 const RESPONSE_TO_USER_CREATE = Http::STATUS_CREATED;
 const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
@@ -76,13 +74,8 @@ class ScimController extends Controller {
 	 * @param IGroupManager $groupManager
 
 	 */
-	public function __construct(
-		$appName,
-		IRequest $request,
-		IGroupManager $groupManager
-	) {
+	public function __construct($appName, IRequest $request, IGroupManager $groupManager) {
 		parent::__construct($appName, $request);
-		// error_log("Federated Groups ScimController constructed");
 		$federatedGroupsApp = new \OCA\FederatedGroups\AppInfo\Application();
 		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		$this->groupManager = $groupManager;
@@ -116,91 +109,7 @@ class ScimController extends Controller {
 		return false;
 	}
 
-
-	private function validateGroupId(string $groupId) {
-		$group = $this->groupManager->get(\urldecode($groupId));
-		if (!$group) {
-			return new JSONResponse(
-				[
-					'status' => 'error',
-					'data' => [
-						'message' => "ژould not find Group with the given identifier: {$groupId}"
-					],
-				],
-				Http::STATUS_NOT_FOUND
-			);
-		} else {
-			return $group;
-		}
-	}
-
-	// private function handleUpdateGroup($groupId, $obj) {
-	// 	// getSharedWithGroipId
-	// 	$newMembers = $obj["members"];
-
-
-
-	// 	$targetGroupObject 	= \OC::$server->getGroupManager()->get($groupId);
-	// 	$group = $this->groupManager->get($groupId);
-
-
-	// 	// $cursor = $this->mixedGroupShareProvider->notifyNewRegularGroupMember($groupId, null);
-	// 	// error_log("cursor");
-
-	// 	// while ($data = $cursor->fetch()) {
-	// 	// 	// if ($offset > 0) {
-	// 	// 	// 	$offset--;
-	// 	// 	// 	continue;
-	// 	// 	// }
-
-	// 	// 	error_log("ooooooooooooooooooooo");
-	// 	// 	error_log(json_encode($data));
-	// 	// 	error_log("ooooooooooooooooooooo");
-	// 	// 	// if ($this->isAccessibleResult($data)) {
-	// 	// 	// 	$shares2[] = $this->createShare($data);
-	// 	// 	// }
-	// 	// }
-	// 	// $cursor->closeCursor();
-
-
-	// 	// error_log("Got group");
-	// 	$backend = $group->getBackend();
-	// 	// error_log("Got backend");
-	// 	$currentMembers = $backend->usersInGroup($groupId);
-	// 	// error_log("Got current group members");
-	// 	// error_log(json_encode($currentMembers));
-
-	// 	foreach ($currentMembers as $currentMember) {
-	// 		if (!in_array($currentMember, $newMembers)) $backend->removeFromGroup($currentMember, $groupId);
-	// 	}
-
-
-	// 	foreach ($newMembers as $member) {
-	// 		$targetUserObject 	= \OC::$server->getUserManager()->get($member["value"]);
-	// 		$targetGroupObject->addUser($targetUserObject);
-	// 	}
-	// 	// if ($anyUserRemoved) {
-	// 	// 	notifyUnshare();
-	// 	// }
-
-	// 	// if ($anuUserAdded) {
-	// 	// 	notifyShare($groupId);
-	// 	// }
-
-	// 	// get shaared with group
-
-
-	// 	// $ch = curl_init();
-	// 	// curl_setopt($ch, CURLOPT_URL, "https://oc1.docker/remote.php/webdav/");
-	// 	// curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-	// 	// // curl_setopt($ch, CURLOPT_USERPWD, "username:password");
-	// 	// curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	// 	// $output = curl_exec($ch);
-	// 	// $info = curl_getinfo($ch);
-	// 	// curl_close($ch);
-	// }
-
-	private function createUpdateGroup(string $groupId, $obj) {
+	private function handleUpdateGroup(string $groupId, $obj) {
 		// $group = $this->validateGroupId($groupId);
 		$group = $this->groupManager->get($groupId);
 
@@ -261,10 +170,16 @@ class ScimController extends Controller {
 				// }
 
 				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
+
 				if ($newDomain !== false) {
 					error_log("New domain $newDomain in group $groupId");
-					$this->mixedGroupShareProvider->newDomainInGroup($newDomain, $groupId);
+					try {
+						$this->mixedGroupShareProvider->newDomainInGroup($newDomain, $groupId);
+					} catch (\Throwable $th) {
+						throw $th;
+					}
 				}
+
 				error_log("Adding to $groupId: " . $newMembers[$i]);
 				$backend->addToGroup($newMembers[$i], $groupId);
 			}
@@ -277,18 +192,20 @@ class ScimController extends Controller {
 	 */
 	public function createGroup() {
 		error_log("scim create group");
-		$obj = json_decode(file_get_contents("php://input"), true);
+		$body = json_decode(file_get_contents("php://input"), true);
+		$groupId = $body["id"];
+
+		$this->groupManager->createGroup($groupId);
 
 		error_log("=========================bodyJson=============================");
-		error_log(var_export($obj, true));
+		error_log(var_export($body, true));
 		error_log("=========================bodyJson=============================");
-		$groupId = $obj["id"];
 		// expect group to already exist
 		// we are probably receiving this create due to 
 		// https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
-		$this->createUpdateGroup($groupId, $obj);
+		$this->handleUpdateGroup($groupId, $body);
 		return new JSONResponse(
-			$obj,
+			$body,
 			RESPONSE_TO_GROUP_CREATE
 		);
 	}
@@ -300,96 +217,57 @@ class ScimController extends Controller {
 	public function updateGroup($groupId) {
 		error_log("scim update group $groupId");
 		// $this->validateGroupId($groupId);
-		$obj = json_decode(file_get_contents("php://input"), true);
+		$body = json_decode(file_get_contents("php://input"), true);
 
 		error_log("=========================bodyJson=============================");
-		error_log(json_encode($obj));
+		error_log(json_encode($body));
 		error_log("=========================bodyJson=============================");
 
-		// $this->handleUpdateGroup($groupId, $obj);
-		$this->createUpdateGroup($groupId, $obj);
+		try {
+			$this->handleUpdateGroup($groupId, $body);
+		} catch (\Throwable $th) {
+			return new JSONResponse([
+				'status' => 'error',
+				'data' => [
+					'message' => "Falure in sending ocm invites"
+				]
+			], Http::STATUS_BAD_REQUEST);
+		}
 		return new JSONResponse(
-			$obj,
+			$body,
 			RESPONSE_TO_GROUP_CREATE
 		);
 	}
 
-
-	/**
-	 * @NoCSRFRequired
-	 * @PublicPage
-	 */
-	public function getGroup($groupId) {
-		error_log("scim get group");
-		// work around #129
-		$group = $this->validateGroupId($groupId);
-
-		$id = $group->getGID();
-		$displayName = $group->getDisplayName();
-		$members = $group->getUsers();
-
-		$groupBackend = $group->getBackend();
-		$usersInGroup = $groupBackend->usersInGroup($groupId);
-
-		$members = array_map(function ($item) {
-			return [
-				"value" => $item,
-				"ref" => $item,
-				"displayName" => $item,
-			];
-		}, $usersInGroup);
-
-		return new JSONResponse([
-			"totalResults" => 0,
-			"Resources" => [
-				"id" => $id,
-				"displayName" => $displayName,
-				'usersInGroup' => $usersInGroup,
-				'members' => $members,
-				"schemas" => [
-					// "urn:ietf:params:scim:schemas:core:2.0:Group",
-					// "urn:ietf:params:scim:schemas:cyberark:1.0:Group"
-				],
-				"meta" => [
-					"resourceType" => "Group",
-					// "created" => "2022-04-12T09:21:40.2319276Z",
-					// "lastModified" => "2022-04-12T09:21:40.2319276Z",
-					// "location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
-
-				],
-				"urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
-					// "directoryType" => "Vault"
-				]
-			],
-		], Http::STATUS_OK);
-	}
 	/**
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
 	public function deleteGroup($groupId) {
 		error_log("scim delete group");
-		$group = $this->validateGroupId($groupId);
-		$deleted = $group->delete();
-		if ($deleted) {
-			return new JSONResponse(
-				[
-					'status' => 'success',
-					'data' => [
-						'message' => "Succesfully deleted group: {$groupId}"
-					]
-				],
-				Http::STATUS_OK
-			);
+		$group = $this->groupManager->get(\urldecode($groupId));
+		if ($group) {
+			$deleted = $group->delete();
+			if ($deleted) {
+				return new JSONResponse(
+					[
+						'status' => 'success',
+						'data' => [
+							'message' => "Succesfully deleted group: {$groupId}"
+						]
+					],
+					Http::STATUS_OK
+				);
+			}
 		} else {
 			return new JSONResponse(
 				[
 					'status' => 'error',
 					'data' => [
-						'message' => "Error in Deleting Group: {$groupId}"
+						'message' => "Could not find Group with the given identifier: {$groupId}"
 					],
 				],
-				Http::STATUS_BAD_REQUEST
+				Http::STATUS_NOT_FOUND
 			);
 		}
 	}
@@ -425,5 +303,64 @@ class ScimController extends Controller {
 				'removableGroups' => $removableGroups,
 			],
 		], Http::STATUS_OK);
+	}
+	/**
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 */
+	public function getGroup($groupId) {
+		error_log("scim get group");
+		// work around #129
+		$group = $this->groupManager->get(\urldecode($groupId));
+		if ($group) {
+			$id = $group->getGID();
+			$displayName = $group->getDisplayName();
+			$members = $group->getUsers();
+
+			$groupBackend = $group->getBackend();
+			$usersInGroup = $groupBackend->usersInGroup($groupId);
+
+			$members = array_map(function ($item) {
+				return [
+					"value" => $item,
+					"ref" => $item,
+					"displayName" => $item,
+				];
+			}, $usersInGroup);
+
+			return new JSONResponse([
+				"totalResults" => 0,
+				"Resources" => [
+					"id" => $id,
+					"displayName" => $displayName,
+					'usersInGroup' => $usersInGroup,
+					'members' => $members,
+					"schemas" => [
+						// "urn:ietf:params:scim:schemas:core:2.0:Group",
+						// "urn:ietf:params:scim:schemas:cyberark:1.0:Group"
+					],
+					"meta" => [
+						"resourceType" => "Group",
+						// "created" => "2022-04-12T09:21:40.2319276Z",
+						// "lastModified" => "2022-04-12T09:21:40.2319276Z",
+						// "location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
+
+					],
+					"urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
+						// "directoryType" => "Vault"
+					]
+				],
+			], Http::STATUS_OK);
+		} else {
+			return new JSONResponse(
+				[
+					'status' => 'error',
+					'data' => [
+						'message' => "Could not find Group with the given identifier: {$groupId}"
+					],
+				],
+				Http::STATUS_NOT_FOUND
+			);
+		}
 	}
 }
