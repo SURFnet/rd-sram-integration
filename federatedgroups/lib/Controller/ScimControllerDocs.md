@@ -4,7 +4,7 @@
 curl --location '/index.php/apps/federatedgroups/scim/Groups'
 ```
 
-RESPONSE:
+RESPONSE STATUS 200
 ```json
 {
     "totalResults": 0,
@@ -15,16 +15,6 @@ RESPONSE:
             "test_g",
             "customgroup_Custard with Mustard"
         ],
-        "assignableGroups": [
-            "admin",
-            "federalists",
-            "test_g"
-        ],
-        "removableGroups": [
-            "admin",
-            "federalists",
-            "test_g"
-        ]
     }
 }
 ```
@@ -35,7 +25,7 @@ RESPONSE:
 curl --location '/index.php/apps/federatedgroups/scim/Groups/federalists'
 ```
 
-RESPONSE
+RESPONSE STATUS 200
 ```json
 {
     "totalResults": 0,
@@ -75,6 +65,7 @@ RESPONSE
     }
 }
 ```
+
 # updateGroup($groupId)
 
 ```bash
@@ -92,13 +83,16 @@ BODY
     ]
 }
 ```
-RESPONSE
+RESPONSE STATUS: 200
 ```json
 {
-    "status": "success",
-    "data": {
-        "message": "Succesfully deleted group: test_g"
-    }
+    "members": [
+        {
+            "value": "fed_user_2@oc2.docker",
+            "ref": "route to resource",
+            "displayName": "fed_user_2"
+        }
+    ]
 }
 ```
 
@@ -120,7 +114,7 @@ BODY
     ]
 }
 ```
-RESPONSE
+RESPONSE STATUS: 201
 ```json
 {
     "id": "federalists",

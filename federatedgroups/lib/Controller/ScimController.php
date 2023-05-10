@@ -189,7 +189,7 @@ class ScimController extends Controller {
 		}
 		return new JSONResponse(
 			$body,
-			RESPONSE_TO_GROUP_CREATE
+			RESPONSE_TO_GROUP_UPDATE
 		);
 	}
 
@@ -247,11 +247,12 @@ class ScimController extends Controller {
 
 		return new JSONResponse([
 			"totalResults" => count($_groups),
-			"Resources" => [
-				'groups' => $_groups,
-				'assignableGroups' => $assignableGroups,
-				'removableGroups' => $removableGroups,
-			],
+			"Resources" => $_groups,
+			// "Resources" => [
+			// 	'groups' => $_groups,
+			// 	// 'assignableGroups' => $assignableGroups,
+			// 	// 'removableGroups' => $removableGroups,
+			// ],
 		], Http::STATUS_OK);
 	}
 	/**
@@ -278,7 +279,7 @@ class ScimController extends Controller {
 			}, $usersInGroup);
 
 			return new JSONResponse([
-				"totalResults" => 0,
+				"totalResults" => count($members),
 				"Resources" => [
 					"id" => $id,
 					"displayName" => $displayName,
