@@ -4,8 +4,7 @@ This repository contains the [issue tracking](https://github.com/SURFnet/rd-sram
 All intellectual property in this project, including source code, ideas and documentation, is attributed to SURF.
 
 # Summary
-The FederatedGroup application is the integration deriver app which enable the own cloud to connect to the SRAM and find out about fedrated group membership info. (SCIM Controller)
-Also this application enables the user to share a file with a federated group across the network of multiple Owncloud nodes.
+The FederatedGroup application is the integration deriver app which enable the own cloud to connect to the SRAM and find out about fedrated group membership info using [SCIM Controller](https://github.com/SURFnet/rd-sram-integration/blob/mix-provider/ScimControllerDocs.md). Also, this application enables the user to share a file with a federated group across the network of multiple Owncloud nodes.
 
 ## For example:
 Einstein on `OC1.Docker` can share a file with the `federalists` group and the resulting shared file will be accessible by all users they stored in OC1.Docker, OC2.Docker, OC3.Docker,... and are registered as members of the `federalists` group on SRAM.
