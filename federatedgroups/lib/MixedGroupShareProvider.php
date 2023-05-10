@@ -286,7 +286,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		return ($row !== false);
 	}
 
-	public function notifyNewRegularGroupMember($userId, $regularGroupId) {
+	private function notifyNewRegularGroupMember($userId, $regularGroupId) {
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
@@ -301,7 +301,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 	}
 	
-	public function getSharesToRegularGroup($regularGroupId) {
+	private function getSharesToRegularGroup($regularGroupId) {
 		$qb = $this->dbConn->getQueryBuilder();
 		$qb->select('*')
 			->from('share');
@@ -335,7 +335,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
     	return $this->getSharesToRegularGroup('customgroup_' . $groupUri);
 	}
 	
-	public function notifyNewCustomGroupMember($userId, $customGroupId) {
+	private function notifyNewCustomGroupMember($userId, $customGroupId) {
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
