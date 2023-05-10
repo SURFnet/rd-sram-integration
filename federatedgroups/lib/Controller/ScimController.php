@@ -279,26 +279,23 @@ class ScimController extends Controller {
 			}, $usersInGroup);
 
 			return new JSONResponse([
-				"totalResults" => count($members),
-				"Resources" => [
-					"id" => $id,
-					"displayName" => $displayName,
-					// 'usersInGroup' => $usersInGroup,
-					'members' => $members,
-					"schemas" => [
-						// "urn:ietf:params:scim:schemas:core:2.0:Group",
-						// "urn:ietf:params:scim:schemas:cyberark:1.0:Group"
-					],
-					"meta" => [
-						"resourceType" => "Group",
-						// "created" => "2022-04-12T09:21:40.2319276Z",
-						// "lastModified" => "2022-04-12T09:21:40.2319276Z",
-						// "location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
+				"id" => $id,
+				"displayName" => $displayName,
+				// 'usersInGroup' => $usersInGroup,
+				'members' => $members,
+				"schemas" => [
+					// "urn:ietf:params:scim:schemas:core:2.0:Group",
+					// "urn:ietf:params:scim:schemas:cyberark:1.0:Group"
+				],
+				"meta" => [
+					"resourceType" => "Group",
+					// "created" => "2022-04-12T09:21:40.2319276Z",
+					// "lastModified" => "2022-04-12T09:21:40.2319276Z",
+					// "location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
 
-					],
-					"urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
-						// "directoryType" => "Vault"
-					]
+				],
+				"urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
+					// "directoryType" => "Vault"
 				],
 			], Http::STATUS_OK);
 		} else {

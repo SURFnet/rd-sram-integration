@@ -26,23 +26,20 @@ curl --location '/index.php/apps/federatedgroups/scim/Groups/federalists'
 RESPONSE STATUS 200
 ```json
 {
-    "totalResults": 0,
-    "Resources": {
-        "id": "federalists",
-        "displayName": "federalists",
-        "members": [
-            {
-                "value": "fed_user_2#oc2.docker",
-                "ref": "",
-                "displayName": ""
-            }
-        ],
-        "schemas": [],
-        "meta": {
-            "resourceType": "Group"
-        },
-        "urn:ietf:params:scim:schemas:cyberark:1.0:Group": []
-    }
+    "id": "federalists",
+    "displayName": "federalists",
+    "members": [
+        {
+            "value": "fed_user_2#oc2.docker",
+            "ref": "",
+            "displayName": ""
+        }
+    ],
+    "schemas": [],
+    "meta": {
+        "resourceType": "Group"
+    },
+    "urn:ietf:params:scim:schemas:cyberark:1.0:Group": []
 }
 ```
 
