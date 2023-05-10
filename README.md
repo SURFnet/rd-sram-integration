@@ -12,10 +12,13 @@ Einstein on `OC1.Docker` can share a file with the `federalists` group and the r
 
 # Installation
 
-**Note:**
-At the first step you should install and enable the OpenCloudMesh App on your OwnCloud instance to enable the remote sharing on it. please chack this repository to find more details:
+**Notes:**
 
-> https://github.com/pondersource/oc-opencloudmesh 
+1- At the first step you should install and enable the OpenCloudMesh App on your OwnCloud instance to enable the remote sharing on it. please chack this repository to find more details:
+> https://github.com/pondersource/oc-opencloudmesh  
+
+2- You can find more detail about the Owncloud administration [here](https://doc.owncloud.com/server/next/admin_manual/configuration/server/occ_command.html);
+
 
 Copy `federatedgroups` folder into apps folder of your owncloud. 
 Change **sharing.managerFactory** config entry to **OCA\\FederatedGroups\\ShareProviderFactory** inside *config.php* file.
@@ -24,8 +27,13 @@ AND HERE WE GO!!!!! 🚀
 
 
 ## Testing environment:
+
 you can test this application using using this repository: 
 https://github.com/pondersource/dev-stock
+
+
+### Note:
+You should install Docker on you system as requirement **OR** just using the **Github Codespaces**
 
 ### Instruction:
 
