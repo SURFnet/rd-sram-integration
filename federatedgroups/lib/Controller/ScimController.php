@@ -230,29 +230,38 @@ class ScimController extends Controller {
 	 * @PublicPage
 	 */
 	public function getGroups() {
-		$_groups = [];
-		$assignableGroups = [];
-		$removableGroups = [];
+		$groups = [];
+		$res = [];
 
 		foreach ($this->groupManager->getBackends() as $backend) {
-			$groups = $backend->getGroups();
-			\array_push($_groups, ...$groups);
-			if ($backend->implementsActions($backend::ADD_TO_GROUP)) {
-				\array_push($assignableGroups, ...$groups);
-			}
-			if ($backend->implementsActions($backend::REMOVE_FROM_GROUP)) {
-				\array_push($removableGroups, ...$groups);
-			}
+			$_groups = $backend->getGroups();
+			\array_push($groups, ...$_groups);
+		}
+
+		foreach ($groups as $groupId) {
+			$group = $this->groupManager->get(\urldecode($groupId));
+			$groupObj = [];
+
+			$groupObj["id"] = $group->getGID();
+			$groupObj["displayName"] = $group->getDisplayName();
+
+			$groupBackend = $group->getBackend();
+			$usersInGroup = $groupBackend->usersInGroup($groupId);
+
+			$groupObj["members"] = array_map(function ($item) {
+				return [
+					"value" => $item,
+					"ref" => "",
+					"displayName" => "",
+				];
+			}, $usersInGroup);
+
+			$res[] = $groupObj;
 		}
 
 		return new JSONResponse([
-			"totalResults" => count($_groups),
-			"Resources" => $_groups,
-			// "Resources" => [
-			// 	'groups' => $_groups,
-			// 	// 'assignableGroups' => $assignableGroups,
-			// 	// 'removableGroups' => $removableGroups,
-			// ],
+			"totalResults" => count($groups),
+			"Resources" => $res,
 		], Http::STATUS_OK);
 	}
 	/**
@@ -265,7 +274,7 @@ class ScimController extends Controller {
 		if ($group) {
 			$id = $group->getGID();
 			$displayName = $group->getDisplayName();
-			$members = $group->getUsers();
+			// $members = $group->getUsers();
 
 			$groupBackend = $group->getBackend();
 			$usersInGroup = $groupBackend->usersInGroup($groupId);
