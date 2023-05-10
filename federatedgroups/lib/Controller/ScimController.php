@@ -220,7 +220,7 @@ class ScimController extends Controller {
 						'message' => "Could not find Group with the given identifier: {$groupId}"
 					],
 				],
-				Http::STATUS_NOT_FOUND
+				Http::STATUS_NO_CONTENT
 			);
 		}
 	}

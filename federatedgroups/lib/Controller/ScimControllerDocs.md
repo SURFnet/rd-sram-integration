@@ -76,7 +76,7 @@ RESPONSE STATUS 200
 ```bash
 curl --location --request DELETE '/index.php/apps/federatedgroups/scim/Groups/federalists'
 ```
-RESPONSE
+RESPONSE STATUS 204
 ```json
 {
     "status": "success",
