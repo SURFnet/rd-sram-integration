@@ -157,8 +157,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 				$sharedByAddress,
 				$share->getToken(),
 				$share->getNode()->getName(),
-				$share->getId(),
-				\OCP\Share::SHARE_TYPE_REMOTE_GROUP
+				$share->getId()
 			);
 
 			/* Check for failure or null return from sending and pick up an error message
@@ -288,7 +287,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		return ($row !== false);
 	}
 
-	public function notifyNewRegularGroupMember($userId, $regularGroupId) {
+	private function notifyNewRegularGroupMember($userId, $regularGroupId) {
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
@@ -303,7 +302,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 	}
 	
-	public function getSharesToRegularGroup($regularGroupId) {
+	private function getSharesToRegularGroup($regularGroupId) {
 		$qb = $this->dbConn->getQueryBuilder();
 		$qb->select('*')
 			->from('share');
@@ -337,7 +336,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
     	return $this->getSharesToRegularGroup('customgroup_' . $groupUri);
 	}
 	
-	public function notifyNewCustomGroupMember($userId, $customGroupId) {
+	private function notifyNewCustomGroupMember($userId, $customGroupId) {
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
@@ -352,7 +351,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 	}
 
-	public function newDomainInGroup($remote, $groupId) {
+	private function newDomainInGroup($remote, $groupId) {
 		// Note that we assume all federated groups are regular groups.
 		$shares = $this->getSharesToRegularGroup($groupId);
 		foreach ($shares as $share) {
@@ -445,14 +444,6 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 
 		return $share;
-	}
-
-	public function getAllSharedWith($userId, $node){
-		return parent::getAllSharedWith($userId, $node);
-	}
-
-	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
-		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
 	}
 
 
