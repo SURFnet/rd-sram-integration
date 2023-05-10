@@ -7,7 +7,7 @@
 
 namespace OCA\FederatedGroups;
 
-use OCA\FederatedGroups\FederatedFileSharing\Notifications;
+use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\Address;
 use OC\Share20\DefaultShareProvider;
@@ -20,7 +20,10 @@ use OCP\Files\IRootFolder;
 use OCP\IL10N;
 use OCP\ILogger;
 use OCP\DB\QueryBuilder\IQueryBuilder;
-
+use OCA\FederatedFileSharing\TokenHandler;
+use OC\Share20\Exception\InvalidShare;
+use OCP\Share\Exceptions\ShareNotFound;
+use OCP\Share\IShare;
 
 /**
  * Class MixedGroupShareProvider
@@ -32,8 +35,11 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	// e.g. 'marie#oc2.docker'
 	public const SEPARATOR = '#';
 
-	/** @var Notifications */
-	private $notifications;
+	/** @var GroupNotifications */
+	private $groupNotifications;
+		
+	/** @var TokenHandler */
+	private $tokenHandler;
 
 	/** @var AddressHandler */
 	private $addressHandler;
@@ -79,7 +85,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 * @param IUserManager $userManager
 	 * @param IGroupManager $groupManager
 	 * @param IRootFolder $rootFolder
-	 * @param Notifications $notifications
+	 * @param GroupNotifications $groupNotifications
+	 * @param TokenHandler $tokenHandler
 	 * @param AddressHandler $addressHandler
 	 * @param IL10N $l
 	 * @param ILogger $logger
@@ -89,7 +96,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		IUserManager $userManager,
 		IGroupManager $groupManager,
 		IRootFolder $rootFolder,
-		Notifications $notifications,
+		GroupNotifications $groupNotifications,
+		TokenHandler $tokenHandler,
 		AddressHandler $addressHandler,
 		IL10N $l,
 		ILogger $logger
@@ -100,8 +108,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			 $groupManager,
 			 $rootFolder
 		);
-		error_log("Constructing the MixedGroupShareProvider");
-		$this->notifications = $notifications;
+		$this->groupNotifications = $groupNotifications;
 		$this->addressHandler = $addressHandler;
 		$this->l = $l;
 		$this->logger = $logger;
@@ -109,6 +116,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		$this->userManager = $userManager;
 		$this->groupManager = $groupManager;
 		$this->rootFolder = $rootFolder;
+		$this->tokenHandler = $tokenHandler; 
 	}
 
 	/**
@@ -128,8 +136,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 * @param string $remote
 	 * @return void
 	 */
-	private function sendOcmInvite($share, $remote) {
-		error_log("Send OCM invite (share, $remote)");
+	public function sendOcmInvite($share, $remote) {
 		try {
 			$sharedBy = $share->getSharedBy();
 			if ($this->userManager->userExists($sharedBy)) {
@@ -142,32 +149,15 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$ownerAddress = $this->addressHandler->getLocalUserFederatedAddress($owner);
 			$sharedWith = $share->getSharedWith() . "@" . $remote;
 			$shareWithAddress = new Address($sharedWith);
-			$token = "a good question"; // FIXME this will be null because the DefaultShareProvider doesn't set this?
-			error_log("Calling sendRemoteShare!");
-			error_log(var_export([				$shareWithAddress,
-			$ownerAddress,
-			$sharedByAddress,
-			$token,
-			$share->getNode()->getName(),
-			$share->getId(),
-			\OCP\Share::SHARE_TYPE_REMOTE_GROUP], true));
-			// protected function sendOcmRemoteShare(
-			// 	Address $shareWithAddress,
-			// 	Address $ownerAddress,
-			// 	Address $sharedByAddress,
-			// 	$token,
-			// 	$name,
-			// 	$remote_id,
-			// 	$remoteShareType = 6) {
-
-			$result = $this->notifications->sendRemoteShare(
+			
+			///// TODO =>>> set sharedSecret
+			$result = $this->groupNotifications->sendRemoteShare(
 				$shareWithAddress,
 				$ownerAddress,
 				$sharedByAddress,
-				$token,
+				$share->getToken(),
 				$share->getNode()->getName(),
-				$share->getId(),
-				\OCP\Share::SHARE_TYPE_REMOTE_GROUP
+				$share->getId()
 			);
 
 			/* Check for failure or null return from sending and pick up an error message
@@ -201,6 +191,32 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 	}
 
+
+	/**
+	 * Get the node with file $id for $user
+	 *
+	 * @param string $userId
+	 * @param int $id
+	 * @return \OCP\Files\File|\OCP\Files\Folder
+	 * @throws InvalidShare
+	 */
+	private function getNode($userId, $id) {
+		try {
+			$userFolder = $this->rootFolder->getUserFolder($userId);
+		} catch (\OCP\Files\NotFoundException $e) {
+			throw new InvalidShare();
+		}
+
+		$nodes = $userFolder->getById($id, true);
+
+		if (empty($nodes)) {
+			throw new InvalidShare();
+		}
+
+		return $nodes[0];
+	}
+
+	
 	/**
 	 * Copied from OCA\FederatedFilesSharing\FederatedShareProvider:
 	 * Create a share object from an database row
@@ -246,12 +262,10 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		$share->setNodeType($data['item_type']);
 
 		$share->setProviderId($this->identifier());
-
 		return $share;
 	}
 
 	private function customGroupHasForeignersFrom($remote, $customGroupId) {
-		error_log("MixedGroupShareProvider customGroupHasForeignersFrom");
 		$queryBuilder = $this->dbConn->getQueryBuilder();
 		$cursor = $queryBuilder->select('user_id')->from('custom_group_member')
 			->where($queryBuilder->expr()->eq('group_id', $queryBuilder->createNamedParameter($customGroupId, IQueryBuilder::PARAM_INT)))
@@ -259,14 +273,10 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			->execute();
 		$row = $cursor->fetch();
 		$cursor->closeCursor();
-		error_log("Got row like '%#$remote':");
-		error_log(var_export($row, true));
 		return ($row !== false);
 	}
 
 	private function regularGroupHasForeignersFrom($remote, $regularGroupId) {
-		error_log("MixedGroupShareProvider regularGroupHasForeignersFrom");
-	
 		$queryBuilder = $this->dbConn->getQueryBuilder();
 		$cursor = $queryBuilder->select('uid')->from('group_user')
 			->where($queryBuilder->expr()->eq('gid', $queryBuilder->createNamedParameter($regularGroupId, IQueryBuilder::PARAM_STR)))
@@ -274,17 +284,13 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			->execute();
 		$row = $cursor->fetch();
 		$cursor->closeCursor();
-		error_log("Got row:");
-		error_log(var_export($row, true));
 		return ($row !== false);
 	}
 
-	public function notifyNewRegularGroupMember($userId, $regularGroupId) {
-		error_log("MixedGroupShareProvider notifyNewRegularGroupMember");
+	private function notifyNewRegularGroupMember($userId, $regularGroupId) {
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
-			error_log("Checking if we need to send any OCM invites to $remote");
 			if (!$this->regularGroupHasForeignersFrom($remote, $regularGroupId)) {
 				$sharesToThisGroup = $this->getSharesToRegularGroup($regularGroupId);
 				for ($i = 0; $i < count($sharesToThisGroup); $i++) {
@@ -295,8 +301,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			error_log("Local user, no need to check for OCM invites to send");
 		}
 	}
+	
 	private function getSharesToRegularGroup($regularGroupId) {
-		error_log("MixedGroupShareProvider getSharesToRegularGroup");
 		$qb = $this->dbConn->getQueryBuilder();
 		$qb->select('*')
 			->from('share');
@@ -308,17 +314,13 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		$cursor = $qb->execute();
 		$shares = [];
 		while ($data = $cursor->fetch()) {
-			error_log("Found another shares with share_with $regularGroupId and share_type " . \OCP\Share::SHARE_TYPE_GROUP);
 			$shares[] = $this->createShareObject($data);
 		}
 		$cursor->closeCursor();
-    	error_log("returning " . count($shares) . " shares");
 		return $shares;
 	}
 
 	private function getSharesToCustomGroup($customGroupId) {
-		error_log("MixedGroupShareProvider getSharesToCustomGroup");
-
     	$qb = $this->dbConn->getQueryBuilder();
 		$qb->select('uri')
 		  ->from('custom_group');
@@ -331,21 +333,16 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			return [];
 		}
 		$groupUri = $data['uri'];
-		error_log("Found uri '$groupUri' for custom group $customGroupId");
     	return $this->getSharesToRegularGroup('customgroup_' . $groupUri);
 	}
 	
-	public function notifyNewCustomGroupMember($userId, $customGroupId) {
-		error_log("MixedGroupShareProvider notifyNewCustomGroupMember");
+	private function notifyNewCustomGroupMember($userId, $customGroupId) {
 		if (str_contains($userId, '#')) {
 			$parts = explode('#', $userId);
 			$remote = $parts[1];
-			error_log("Checking if we need to send any OCM invites to $remote");
 			if (!$this->customGroupHasForeignersFrom($remote, $customGroupId)) {
 				$sharesToThisGroup = $this->getSharesToCustomGroup($customGroupId);
-				error_log("looping over " . count($sharesToThisGroup) . " shares");
 				for ($i = 0; $i < count($sharesToThisGroup); $i++) {
-					error_log("sending OCM invite for $remote about share id " . $sharesToThisGroup[$i]->getId());
 					$this->sendOcmInvite($sharesToThisGroup[$i], $remote);
 				}
 			}
@@ -354,8 +351,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		}
 	}
 
-	public function newDomainInGroup($remote, $groupId) {
-		error_log("MixedGroupShareProvider newDomainInGroup");
+	public function sendOcmInviteForExistingShares($remote, $groupId) {
 		// Note that we assume all federated groups are regular groups.
 		$shares = $this->getSharesToRegularGroup($groupId);
 		foreach ($shares as $share) {
@@ -373,42 +369,155 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 * @throws \Exception
 	 */
 	public function create(\OCP\Share\IShare $share) {
-		error_log("MixedGroupShareProvider create calling parent");
 		// Create group share locally
 		$created = parent::create($share);
-		error_log("MixedGroupShareProvider create called parent");
-		$remotes = [];
-		// Send OCM invites to remote group members
-		error_log("Sending OCM invites");
-		error_log($share->getSharedWith());
-		$group = $this->groupManager->get($share->getSharedWith());
-		error_log("Got group");
-		$backend = $group->getBackend();
-		error_log("Got backend");
-		$recipients = $backend->usersInGroup($share->getSharedWith());
-		error_log("Got recipients");
-		error_log(var_export($recipients, true));
-		foreach($recipients as $k => $v) {
-			$parts = explode(self::SEPARATOR, $v);
-			if (count($parts) == 2) {
-				error_log("Considering remote " . $parts[1] . " because of " . $parts[0] . " there");
-				$remotes[$parts[1]] = true;
-			} else {
-				error_log("Local user: $v");
+		if($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP){
+			$remotes = [];
+			// Send OCM invites to remote group members
+			$group = $this->groupManager->get($share->getSharedWith());
+			$backend = $group->getBackend();
+			$recipients = $backend->usersInGroup($share->getSharedWith());
+
+			foreach ($recipients as $k => $v) {
+				$parts = explode(self::SEPARATOR, $v);
+				if (count($parts) > 1) {
+					$remotes[$parts[1]] = true;
+				} else {
+					error_log("Local user: $v");
+				}
 			}
+
+			$created->setToken($this->tokenHandler->generateToken());
+			try {
+				foreach ($remotes as $remote => $_dummy) {
+					$this->sendOcmInvite($created, $remote);
+				}
+				$qb = $this->dbConn->getQueryBuilder();
+				$qb->update('share')
+					->where($qb->expr()->eq('id', $qb->createNamedParameter($created->getId())))
+					->set('token', $qb->createNamedParameter($created->getToken()))
+					->execute();
+
+			}
+			catch (\Exception $x){
+				throw $x;
+			}
+			return $created;
 		}
-		foreach($remotes as $remote => $_dummy) {
-			$this->sendOcmInvite($share, $remote);
-		}
-	}
-	public function getAllSharedWith($userId, $node){
-		error_log("you `getAllSharedWith` me on MixedGroupShareProvider...");
-		return parent::getAllSharedWith($userId, $node);
 	}
 
-	public function getSharedWith($userId, $shareType, $node = null, $limit = 50, $offset = 0){
-		error_log("you `getSharedWith` on MixedGroupShareProvider...");
-		return parent::getSharedWith($userId, $shareType, $node, $limit, $offset);
+
+	/**
+	 * Get a share by token
+	 *
+	 * @param string $token
+	 * @return \OCP\Share\IShare
+	 * @throws ShareNotFound
+	 */
+	public function getShareByToken($token) {
+		$qb = $this->dbConn->getQueryBuilder();
+
+		$cursor = $qb->select('*')
+			->from('share')
+			->where(
+				$qb->expr()->orX()
+					->add($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_LINK)))
+					->add($qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_GROUP))) 
+					)
+			->andWhere($qb->expr()->eq('token', $qb->createNamedParameter($token)))
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
+				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
+			))
+			->execute();
+
+		$data = $cursor->fetch();
+
+		if ($data === false) {
+			throw new \OCP\Share\Exceptions\ShareNotFound();
+		}
+
+		try {
+			$share = $this->createShare($data);
+		} catch (\OC\Share20\Exception\InvalidShare $e) {
+			throw new ShareNotFound();
+		}
+
+		return $share;
+	}
+
+
+	/**
+	 * Create a share object from an database row
+	 *
+	 * @param mixed[] $data
+	 * @return \OCP\Share\IShare
+	 * @throws InvalidShare
+	 */
+	private function createShare($data) {
+		$share = new Share($this->rootFolder, $this->userManager);
+		$share->setId($data['id'])
+			->setShareType((int)$data['share_type'])
+			->setPermissions((int)$data['permissions'])
+			->setTarget($data['file_target'])
+			->setMailSend((bool)$data['mail_send']);
+
+		$shareTime = new \DateTime();
+		$shareTime->setTimestamp((int)$data['stime']);
+		$share->setShareTime($shareTime);
+
+		if ($share->getShareType() === \OCP\Share::SHARE_TYPE_USER) {
+			$share->setSharedWith($data['share_with']);
+		} elseif ($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP) {
+			$share->setSharedWith($data['share_with']);
+			$share->setToken($data['token']);
+		} elseif ($share->getShareType() === \OCP\Share::SHARE_TYPE_LINK) {
+			$share->setPassword($data['share_with']);
+			$share->setToken($data['token']);
+		}
+
+		$share = $this->updateShareAttributes($share, $data['attributes']);
+
+		$share->setSharedBy($data['uid_initiator']);
+		$share->setShareOwner($data['uid_owner']);
+
+		$share->setNodeId((int)$data['file_source']);
+		$share->setNodeType($data['item_type']);
+		$share->setName($data['share_name']);
+		$share->setState((int)$data['accepted']);
+
+		if ($data['expiration'] !== null) {
+			$expiration = \DateTime::createFromFormat('Y-m-d H:i:s', $data['expiration']);
+			$share->setExpirationDate($expiration);
+		}
+
+		$share->setProviderId($this->identifier());
+
+		return $share;
+	}
+
+	/**
+	 * Load from database format (JSON string) to IAttributes
+	 *
+	 * @param IShare $share
+	 * @param string|null $data
+	 * @return IShare modified share
+	 */
+	private function updateShareAttributes(\OCP\Share\IShare $share, $data) {
+		if ($data !== null) {
+			$attributes = new \OC\Share20\ShareAttributes();
+			$compressedAttributes = \json_decode($data, true);
+			foreach ($compressedAttributes as $compressedAttribute) {
+				$attributes->setAttribute(
+					$compressedAttribute[0],
+					$compressedAttribute[1],
+					$compressedAttribute[2]
+				);
+			}
+			$share->setAttributes($attributes);
+		}
+
+		return $share;
 	}
 
 	

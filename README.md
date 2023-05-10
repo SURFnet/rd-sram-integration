@@ -3,39 +3,66 @@
 This repository contains the [issue tracking](https://github.com/SURFnet/rd-sram-integration/milestones) and artifacts of the rd-sram-integration project.
 All intellectual property in this project, including source code, ideas and documentation, is attributed to SURF.
 
+# Summary
+The FederatedGroup application is the integration deriver app which enable the own cloud to connect to the SRAM and find out about fedrated group membership info using [SCIM Controller](https://github.com/SURFnet/rd-sram-integration/blob/mix-provider/ScimControllerDocs.md). Also, this application enables the user to share a file with a federated group across the network of multiple Owncloud nodes.
 
-### NB: The following functionality is still under construction
+## For example:
+Einstein on `OC1.Docker` can share a file with the `federalists` group and the resulting shared file will be accessible by all users they stored in OC1.Docker, OC2.Docker, OC3.Docker,... and are registered as members of the `federalists` group on SRAM.
 
-To see the basic testnet for milestone 1, take a linux machine with Docker installed, and run the following:
-```
-git clone https://github.com/SURFnet/rd-sram-integration
-cd rd-sram-integration
-git clone --branch=surf-dev --depth=1 https://github.com/pondersource/core
-./scripts/gencerts.sh
-./scripts/rebuild.sh
-docker network create testnet
-./scripts/start-testnet.sh
-```
-Now point your browser to port 5800 on that server, and in the browser-in-browser view, 
-* open a tab, and log in to https://oc1.docker as einstein / relativity
-* share a file with the group called 'federalists'
-* open a tab, and log in to https://oc2.docker as marie / radioactivity
-* you will see the file in question under 'Shared with you'
 
-### Use case
+# Installation
 
-We discussed three possible use cases:
-* "addressbook" - allow the user to easily share with for instance the group of "people I invited for my birthday", but without making that list public. 
-* "OCM groups" - as defined in the OCM spec, share to a group that is local at a remote site. For instance helpdesk@ (you know to which site your share goes, but not which users there are in that group)
-* "SRAM groups" - the user sees both local custom groups and SRAM-hosted groups as possible sharees. When an SRAM group is selected, the share gets created locally, and one OCM invite gets sent to each remote site that hosts at least 1 group member. We use OCM share-to-group as the protocol, but it is understood that the remote site also looks up the member list for that group from SRAM.
+**Notes:**
 
-The current plan is to only implement the third one ("SRAM" groups) and not the other two.
+1- At the first step you should install and enable the OpenCloudMesh App on your OwnCloud instance to enable the remote sharing on it. please chack this repository to find more details:
+> https://github.com/pondersource/oc-opencloudmesh  
 
-### Slides from milestone presentations
+2- You can find more detail about the Owncloud administration [here](https://doc.owncloud.com/server/next/admin_manual/configuration/server/occ_command.html);
 
-* Milestone 1 presentation (23 Dec 2022):
-[.pdf](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress.pdf)
-[.key](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress.key)
-* Milestone 2 presentation (17 Feb 2023):
-[.pdf](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress-2.pdf)
-[.key](https://github.com/michielbdejong/presentations/blob/main/rd-sram-progress-2.key)
+
+Copy `federatedgroups` folder into apps folder of your owncloud. 
+Change **sharing.managerFactory** config entry to **OCA\\FederatedGroups\\ShareProviderFactory** inside *config.php* file.
+
+AND HERE WE GO!!!!! 🚀
+
+
+## Testing environment:
+
+you can test this application using using this repository: 
+https://github.com/pondersource/dev-stock
+
+
+### Note:
+You should install Docker on you system as requirement **OR** just using the **Github Codespaces**
+
+### Instruction:
+
+1- Clone the repository.
+
+2- Change the branch to `oc-opencloudmesh-testing`.
+
+3- Run `./scripts/clean.sh`.
+
+4- Run `./scripts/init-rd-sram.sh`.
+
+5- Run `./scripts/rd-sram-testing.sh`.
+
+After Running these commands you can browse localhost:5800 and it let you see a headless browser.
+inside headless browser you can enter these two addresses: https://oc1.docker and https://oc2.docker.
+
+login into these instances of OwnCloud by these credentials: 
+
+oc1.docker: 
+  > username: einstein 
+  > 
+  > password: relativity
+  
+oc2.docker:
+  > username: marie
+  > 
+  > password: radioactivity
+  
+and finally you can share a file with the `federalists` Group for example on oc1.docker.
+
+then you can browse the oc2.docker and see the incomming share dialog.
+

@@ -18,12 +18,10 @@ use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\Notifications;
 use OCA\FederatedFileSharing\TokenHandler;
-use OCA\FederatedGroups\AppInfo\Application;
-
-
+use OCA\OpenCloudMesh\AppInfo\Application;
 use OCP\IServerContainer;
 
-class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProviderFactory {
+class ShareProviderFactory extends \OCA\OpenCloudMesh\ShareProviderFactory {
 
 	// These two variables exist in the parent class,
 	// but need to be redeclared here at the child class
@@ -38,7 +36,7 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	/** @var FederatedUserShareProvider */
 	private $federatedUserShareProvider = null;
 
-	/** @var FederatedGroupShareProvider */
+	/** @var SRAMFederatedGroupShareProvider */
 	private $federatedGroupShareProvider = null;
 
 	/** @var MixedGroupShareProvider */
@@ -46,32 +44,18 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 
 	public function __construct(IServerContainer $serverContainer) {
 		parent::__construct($serverContainer);
-		error_log("FederatedGroups ProviderFactory constructor");
 		$this->serverContainer = $serverContainer;
-	}
-	protected function defaultShareProvider() {
-		error_log("our defaultShareProvider!");
-		if ($this->defaultShareProvider === null) {
-			$this->defaultShareProvider = new DefaultShareProvider(
-				$this->serverContainer->getDatabaseConnection(),
-				$this->serverContainer->getUserManager(),
-				$this->serverContainer->getGroupManager(),
-				$this->serverContainer->getLazyRootFolder()
-			);
-		}
-		return $this->defaultShareProvider;
 	}
 
 	/**
 	 * Create the federated share provider for OCM to groups
 	 *
-	 * @return FederatedGroupShareProvider
+	 * @return SRAMFederatedGroupShareProvider
 	 */
 	protected function federatedGroupShareProvider() {
-		error_log("our factory getting our FederatedShareProvider for OCM to group");
 		if ($this->federatedGroupShareProvider === null) {
-			$federatedGroupsApp = new Application();
-			$this->federatedGroupShareProvider = $federatedGroupsApp->getFederatedGroupShareProvider();
+			$app = new \OCA\FederatedGroups\AppInfo\Application();
+			$this->federatedGroupShareProvider = $app->getSRAMFederatedGroupShareProvider();
 		}
 		return $this->federatedGroupShareProvider;
 	}
@@ -81,35 +65,16 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	 * @return MixedGroupShareProvider
 	 */
 	protected function mixedGroupShareProvider() {
-		error_log("our factory getting our FederatedShareProvider for OCM to group");
 		if ($this->mixedGroupShareProvider === null) {
-			$federatedGroupsApp = new Application();
-			$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
+			$this->mixedGroupShareProvider = \OCA\FederatedGroups\AppInfo\Application::getMixedGroupShareProvider();
 		}
-    error_log("returning the MixedGroupShareProvider from the ShareProviderFactory");
 		return $this->mixedGroupShareProvider;
-	}
-
-	/**
-	 * Create the federated share provider for OCM to users
-	 *
-	 * @return FederatedShareProvider
-	 */
-	protected function federatedUserShareProvider() {
-		error_log("our factory getting our FederatedShareProvider for OCM to user");
-		if ($this->federatedUserShareProvider === null) {
-			$federatedFileSharingApp = new \OCA\FederatedFileSharing\AppInfo\Application();
-			$this->federatedUserShareProvider = $federatedFileSharingApp->getFederatedShareProvider();
-		}
-
-		return $this->federatedUserShareProvider;
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	public function getProviderForType($shareType) {
-		error_log("getProviderForType $shareType");
 		$provider = null;
 
 		// SHARE_TYPE_USER = 0;
@@ -124,22 +89,17 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 		if ($shareType === \OCP\Share::SHARE_TYPE_USER  ||
 				$shareType === \OCP\Share::SHARE_TYPE_LINK  ||
 				$shareType === \OCP\Share::SHARE_TYPE_GUEST  ||
-				$shareType === \OCP\Share::SHARE_TYPE_CONTACT) {
-			error_log("First case - $shareType");
-			$provider = $this->defaultShareProvider();
-		} elseif ($shareType === \OCP\Share::SHARE_TYPE_GROUP) {
-			error_log("Second case - $shareType");
+				$shareType === \OCP\Share::SHARE_TYPE_CONTACT ||
+				$shareType === \OCP\Share::SHARE_TYPE_GROUP) {
 			$provider = $this->mixedGroupShareProvider();
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE) {
-			error_log("Third case - $shareType");
 			$provider = $this->federatedUserShareProvider();
 		} elseif ($shareType === \OCP\Share::SHARE_TYPE_REMOTE_GROUP) {
-			error_log("Fourth case - $shareType");
 			$provider = $this->federatedGroupShareProvider();
 		}
 
 		if ($provider === null) {
-						throw new ProviderException('No share provider for share type ' . $shareType);
+			throw new ProviderException('No share provider for share type ' . $shareType);
 		}
 
 		return $provider;
@@ -167,5 +127,14 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 		}
 
 		return $provider;
+	}
+
+	public function getProviders(){
+		return [
+			$this->defaultShareProvider(),
+			$this->federatedShareProvider(),
+			$this->mixedGroupShareProvider(),
+			$this->federatedGroupShareProvider()
+		]; 
 	}
 }
