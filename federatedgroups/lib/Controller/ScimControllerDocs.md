@@ -1,4 +1,5 @@
-# getGroups will return all groups in OwnCloud
+# getGroups 
+## Will return all groups in OwnCloud
 
 ```bash
 curl --location '/index.php/apps/federatedgroups/scim/Groups'
