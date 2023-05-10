@@ -9,7 +9,7 @@ RESPONSE:
 {
     "totalResults": 0,
     "Resources": {
-        "_groups": [
+        "groups": [
             "admin",
             "federalists",
             "test_g",
@@ -101,3 +101,30 @@ RESPONSE
     }
 }
 ```
+
+# createGroup
+
+```bash
+curl --location --request PUT '/index.php/apps/federatedgroups/scim/Groups'
+```
+BODY
+```bash
+{
+    "id": "federalists",
+    "members": [
+        {
+            "value": "fed_user_2@oc2.docker",
+            "ref": "route to resource",
+            "displayName": "fed_user_2"
+        }
+    ]
+}
+```
+RESPONSE
+```json
+{
+    "status": "success",
+    "data": {
+        "message": "Succesfully deleted group: test_g"
+    }
+}

@@ -246,7 +246,7 @@ class ScimController extends Controller {
 		}
 
 		return new JSONResponse([
-			"totalResults" => 0,
+			"totalResults" => count($_groups),
 			"Resources" => [
 				'groups' => $_groups,
 				'assignableGroups' => $assignableGroups,
