@@ -188,7 +188,7 @@ class ScimController extends Controller {
 		}
 		return new JSONResponse(
 			$body,
-			RESPONSE_TO_GROUP_CREATE
+			RESPONSE_TO_GROUP_UPDATE
 		);
 	}
 
@@ -219,7 +219,7 @@ class ScimController extends Controller {
 						'message' => "Could not find Group with the given identifier: {$groupId}"
 					],
 				],
-				Http::STATUS_NOT_FOUND
+				Http::STATUS_NO_CONTENT
 			);
 		}
 	}
@@ -229,28 +229,38 @@ class ScimController extends Controller {
 	 * @PublicPage
 	 */
 	public function getGroups() {
-		$_groups = [];
-		$assignableGroups = [];
-		$removableGroups = [];
+		$groups = [];
+		$res = [];
 
 		foreach ($this->groupManager->getBackends() as $backend) {
-			$groups = $backend->getGroups();
-			\array_push($_groups, ...$groups);
-			if ($backend->implementsActions($backend::ADD_TO_GROUP)) {
-				\array_push($assignableGroups, ...$groups);
-			}
-			if ($backend->implementsActions($backend::REMOVE_FROM_GROUP)) {
-				\array_push($removableGroups, ...$groups);
-			}
+			$_groups = $backend->getGroups();
+			\array_push($groups, ...$_groups);
+		}
+
+		foreach ($groups as $groupId) {
+			$group = $this->groupManager->get(\urldecode($groupId));
+			$groupObj = [];
+
+			$groupObj["id"] = $group->getGID();
+			$groupObj["displayName"] = $group->getDisplayName();
+
+			$groupBackend = $group->getBackend();
+			$usersInGroup = $groupBackend->usersInGroup($groupId);
+
+			$groupObj["members"] = array_map(function ($item) {
+				return [
+					"value" => $item,
+					"ref" => "",
+					"displayName" => "",
+				];
+			}, $usersInGroup);
+
+			$res[] = $groupObj;
 		}
 
 		return new JSONResponse([
-			"totalResults" => 0,
-			"Resources" => [
-				'groups' => $_groups,
-				'assignableGroups' => $assignableGroups,
-				'removableGroups' => $removableGroups,
-			],
+			"totalResults" => count($groups),
+			"Resources" => $res,
 		], Http::STATUS_OK);
 	}
 	/**
@@ -263,7 +273,7 @@ class ScimController extends Controller {
 		if ($group) {
 			$id = $group->getGID();
 			$displayName = $group->getDisplayName();
-			$members = $group->getUsers();
+			// $members = $group->getUsers();
 
 			$groupBackend = $group->getBackend();
 			$usersInGroup = $groupBackend->usersInGroup($groupId);
@@ -271,32 +281,29 @@ class ScimController extends Controller {
 			$members = array_map(function ($item) {
 				return [
 					"value" => $item,
-					"ref" => $item,
-					"displayName" => $item,
+					"ref" => "",
+					"displayName" => "",
 				];
 			}, $usersInGroup);
 
 			return new JSONResponse([
-				"totalResults" => 0,
-				"Resources" => [
-					"id" => $id,
-					"displayName" => $displayName,
-					'usersInGroup' => $usersInGroup,
-					'members' => $members,
-					"schemas" => [
-						// "urn:ietf:params:scim:schemas:core:2.0:Group",
-						// "urn:ietf:params:scim:schemas:cyberark:1.0:Group"
-					],
-					"meta" => [
-						"resourceType" => "Group",
-						// "created" => "2022-04-12T09:21:40.2319276Z",
-						// "lastModified" => "2022-04-12T09:21:40.2319276Z",
-						// "location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
+				"id" => $id,
+				"displayName" => $displayName,
+				// 'usersInGroup' => $usersInGroup,
+				'members' => $members,
+				"schemas" => [
+					// "urn:ietf:params:scim:schemas:core:2.0:Group",
+					// "urn:ietf:params:scim:schemas:cyberark:1.0:Group"
+				],
+				"meta" => [
+					"resourceType" => "Group",
+					// "created" => "2022-04-12T09:21:40.2319276Z",
+					// "lastModified" => "2022-04-12T09:21:40.2319276Z",
+					// "location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
 
-					],
-					"urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
-						// "directoryType" => "Vault"
-					]
+				],
+				"urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
+					// "directoryType" => "Vault"
 				],
 			], Http::STATUS_OK);
 		} else {
