@@ -21,7 +21,7 @@ use OCA\FederatedFileSharing\TokenHandler;
 use OCA\OpenCloudMesh\AppInfo\Application;
 use OCP\IServerContainer;
 
-class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProviderFactory {
+class ShareProviderFactory extends \OCA\OpenCloudMesh\ShareProviderFactory {
 
 	// These two variables exist in the parent class,
 	// but need to be redeclared here at the child class
@@ -36,7 +36,7 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 	/** @var FederatedUserShareProvider */
 	private $federatedUserShareProvider = null;
 
-	/** @var FederatedGroupShareProvider */
+	/** @var SRAMFederatedGroupShareProvider */
 	private $federatedGroupShareProvider = null;
 
 	/** @var MixedGroupShareProvider */
@@ -46,27 +46,16 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 		parent::__construct($serverContainer);
 		$this->serverContainer = $serverContainer;
 	}
-	protected function defaultShareProvider() {
-		if ($this->defaultShareProvider === null) {
-			$this->defaultShareProvider = new DefaultShareProvider(
-				$this->serverContainer->getDatabaseConnection(),
-				$this->serverContainer->getUserManager(),
-				$this->serverContainer->getGroupManager(),
-				$this->serverContainer->getLazyRootFolder()
-			);
-		}
-		return $this->defaultShareProvider;
-	}
 
 	/**
 	 * Create the federated share provider for OCM to groups
 	 *
-	 * @return FederatedGroupShareProvider
+	 * @return SRAMFederatedGroupShareProvider
 	 */
 	protected function federatedGroupShareProvider() {
 		if ($this->federatedGroupShareProvider === null) {
-			$federatedGroupsApp = new Application();
-			$this->federatedGroupShareProvider = $federatedGroupsApp->getFederatedGroupShareProvider();
+			$app = new \OCA\FederatedGroups\AppInfo\Application();
+			$this->federatedGroupShareProvider = $app->getSRAMFederatedGroupShareProvider();
 		}
 		return $this->federatedGroupShareProvider;
 	}
@@ -80,20 +69,6 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 			$this->mixedGroupShareProvider = \OCA\FederatedGroups\AppInfo\Application::getMixedGroupShareProvider();
 		}
 		return $this->mixedGroupShareProvider;
-	}
-
-	/**
-	 * Create the federated share provider for OCM to users
-	 *
-	 * @return FederatedShareProvider
-	 */
-	protected function federatedUserShareProvider() {
-		if ($this->federatedUserShareProvider === null) {
-			$federatedFileSharingApp = new \OCA\FederatedFileSharing\AppInfo\Application();
-			$this->federatedUserShareProvider = $federatedFileSharingApp->getFederatedShareProvider();
-		}
-
-		return $this->federatedUserShareProvider;
 	}
 
 	/**
@@ -152,5 +127,14 @@ class ShareProviderFactory extends \OC\Share20\ProviderFactory implements IProvi
 		}
 
 		return $provider;
+	}
+
+	public function getProviders(){
+		return [
+			$this->defaultShareProvider(),
+			$this->federatedShareProvider(),
+			$this->mixedGroupShareProvider(),
+			$this->federatedGroupShareProvider()
+		]; 
 	}
 }
