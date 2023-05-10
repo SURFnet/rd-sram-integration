@@ -26,10 +26,10 @@ use Exception;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IDBConnection;
 use OCP\IRequest;
 use OCP\IGroupManager;
-
-
+use OCA\FederatedGroups\AppInfo\Application;
 use OCA\FederatedGroups\MixedGroupShareProvider;
 
 const RESPONSE_TO_USER_CREATE = Http::STATUS_CREATED;
@@ -75,7 +75,7 @@ class ScimController extends Controller {
 	 */
 	public function __construct($appName, IRequest $request, IGroupManager $groupManager) {
 		parent::__construct($appName, $request);
-		$federatedGroupsApp = new \OCA\FederatedGroups\AppInfo\Application();
+		$federatedGroupsApp = new Application();
 		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		$this->groupManager = $groupManager;
 	}
@@ -116,8 +116,7 @@ class ScimController extends Controller {
 				throw new Exception("cannot parse OCM user " . $member["value"]);
 			}
 			$newMember = $userIdParts[0];
-			if ($userIdParts[1] === getOurDomain()) {
-			} else {
+			if ($userIdParts[1] !== getOurDomain()) {
 				$newMember .= "#" . $userIdParts[1];
 			}
 			if ($userIdParts[1] === IGNORE_DOMAIN) {
@@ -139,7 +138,7 @@ class ScimController extends Controller {
 
 				if ($newDomain !== false) {
 					try {
-						$this->mixedGroupShareProvider->newDomainInGroup($newDomain, $groupId);
+						$this->mixedGroupShareProvider->sendOcmInviteForExistingShares($newDomain, $groupId);
 					} catch (\Throwable $th) {
 						throw $th;
 					}
