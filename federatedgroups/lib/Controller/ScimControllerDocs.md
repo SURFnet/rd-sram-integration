@@ -8,14 +8,12 @@ RESPONSE STATUS 200
 ```json
 {
     "totalResults": 0,
-    "Resources": {
-        "groups": [
+    "Resources": [
             "admin",
             "federalists",
             "test_g",
             "customgroup_Custard with Mustard"
-        ],
-    }
+        ]
 }
 ```
 
@@ -32,14 +30,11 @@ RESPONSE STATUS 200
     "Resources": {
         "id": "federalists",
         "displayName": "federalists",
-        "usersInGroup": [
-            "fed_user_2#oc2.docker"
-        ],
         "members": [
             {
                 "value": "fed_user_2#oc2.docker",
-                "ref": "fed_user_2#oc2.docker",
-                "displayName": "fed_user_2#oc2.docker"
+                "ref": "",
+                "displayName": ""
             }
         ],
         "schemas": [],
@@ -77,8 +72,8 @@ BODY
     "members": [
         {
             "value": "fed_user_2@oc2.docker",
-            "ref": "route to resource",
-            "displayName": "fed_user_2"
+            "ref": "",
+            "displayName": ""
         }
     ]
 }
@@ -89,8 +84,8 @@ RESPONSE STATUS: 200
     "members": [
         {
             "value": "fed_user_2@oc2.docker",
-            "ref": "route to resource",
-            "displayName": "fed_user_2"
+            "ref": "",
+            "displayName": ""
         }
     ]
 }
@@ -108,8 +103,8 @@ BODY
     "members": [
         {
             "value": "fed_user_2@oc2.docker",
-            "ref": "route to resource",
-            "displayName": "fed_user_2"
+            "ref": "",
+            "displayName": ""
         }
     ]
 }
@@ -121,8 +116,8 @@ RESPONSE STATUS: 201
     "members": [
         {
             "value": "fed_user_2@oc2.docker",
-            "ref": "route to resource",
-            "displayName": "fed_user_2"
+            "ref": "",
+            "displayName": ""
         }
     ]
 }

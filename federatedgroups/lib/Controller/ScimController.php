@@ -273,8 +273,8 @@ class ScimController extends Controller {
 			$members = array_map(function ($item) {
 				return [
 					"value" => $item,
-					"ref" => $item,
-					"displayName" => $item,
+					"ref" => "",
+					"displayName" => "",
 				];
 			}, $usersInGroup);
 
@@ -283,7 +283,7 @@ class ScimController extends Controller {
 				"Resources" => [
 					"id" => $id,
 					"displayName" => $displayName,
-					'usersInGroup' => $usersInGroup,
+					// 'usersInGroup' => $usersInGroup,
 					'members' => $members,
 					"schemas" => [
 						// "urn:ietf:params:scim:schemas:core:2.0:Group",
