@@ -123,8 +123,13 @@ BODY
 RESPONSE
 ```json
 {
-    "status": "success",
-    "data": {
-        "message": "Succesfully deleted group: test_g"
-    }
+    "id": "federalists",
+    "members": [
+        {
+            "value": "fed_user_2@oc2.docker",
+            "ref": "route to resource",
+            "displayName": "fed_user_2"
+        }
+    ]
 }
+```
