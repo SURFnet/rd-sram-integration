@@ -82,7 +82,7 @@ class ScimController extends Controller {
 	}
 
 	private function checkNeedToSend($newUser, $existingUsers) {
-		error_log("checkNeedToSend($newUser, " . var_export($existingUsers, true) . ")");
+		// error_log("checkNeedToSend($newUser, " . var_export($existingUsers, true) . ")");
 		$newUserParts = explode("#", $newUser);
 		if (count($newUserParts) == 1) return false; // local user
 
@@ -92,20 +92,20 @@ class ScimController extends Controller {
 			}
 			$newDomain = $newUserParts[1];
 			foreach ($existingUsers as $existingUser) {
-				error_log("Considering $existingUser");
+				// error_log("Considering $existingUser");
 				$existingUserParts = explode("#", $existingUser);
 				if (count($existingUserParts) == 2) {
-					error_log("Comparing $newDomain to " . var_export($existingUserParts, true));
+					// error_log("Comparing $newDomain to " . var_export($existingUserParts, true));
 					if ($existingUserParts[1] == $newDomain) {
-						error_log("Already have a user there!");
+						// error_log("Already have a user there!");
 						return false;
 					}
 				}
 			}
-			error_log("This is the first user in this group from $newDomain");
+			// error_log("This is the first user in this group from $newDomain");
 			return $newDomain;
 		}
-		error_log("WARNING: could not parse $newUser");
+		// error_log("WARNING: could not parse $newUser");
 		return false;
 	}
 
@@ -113,46 +113,46 @@ class ScimController extends Controller {
 		// $group = $this->validateGroupId($groupId);
 		$group = $this->groupManager->get($groupId);
 
-		error_log("Got group");
+		// error_log("Got group");
 		$sharedWithGroup = $this->mixedGroupShareProvider->getSharesToRegularGroup($groupId);
 		$backend = $group->getBackend();
-		error_log("Got backend");
+		// error_log("Got backend");
 		$currentMembers = $backend->usersInGroup($groupId);
-		error_log("Got current group members");
-		error_log(var_export($currentMembers, true));
+		// error_log("Got current group members");
+		// error_log(var_export($currentMembers, true));
 		$newMembers = [];
 		foreach ($obj["members"] as $member) {
 			$userIdParts = explode("@", $member["value"]); // "test_u@pondersource.net"  => ["test_u", "pondersource.net"] 
-			error_log("A: " . var_export($userIdParts, true));
+			// error_log("A: " . var_export($userIdParts, true));
 			if (count($userIdParts) == 3) {
 				$userIdParts = [$userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
 			}
-			error_log("B: " . var_export($userIdParts, true));
+			// error_log("B: " . var_export($userIdParts, true));
 			if (count($userIdParts) != 2) {
 				throw new Exception("cannot parse OCM user " . $member["value"]);
 			}
-			error_log("C: " . var_export($userIdParts, true));
+			// error_log("C: " . var_export($userIdParts, true));
 			$newMember = $userIdParts[0];
-			error_log("D: " . var_export($newMember, true));
+			// error_log("D: " . var_export($newMember, true));
 			if ($userIdParts[1] === getOurDomain()) {
-				error_log("User is local to " . getOurDomain());
+				// error_log("User is local to " . getOurDomain());
 			} else {
-				error_log("User is foreign to " . getOurDomain());
+				// error_log("User is foreign to " . getOurDomain());
 				$newMember .= "#" . $userIdParts[1];
 			}
 			if ($userIdParts[1] === IGNORE_DOMAIN) {
 				continue;
 			}
-			error_log("E: " . var_export($newMember, true));
+			// error_log("E: " . var_export($newMember, true));
 			$newMembers[] = $newMember;
 		}
 
-		error_log("Got new group members");
-		error_log(var_export($newMembers, true));
+		// error_log("Got new group members");
+		// error_log(var_export($newMembers, true));
 
 		for ($i = 0; $i < count($currentMembers); $i++) {
 			if (!in_array($currentMembers[$i], $newMembers)) { // meaning current member is not in new update, so remove it
-				error_log("Removing from $groupId: " . $currentMembers[$i]);
+				// error_log("Removing from $groupId: " . $currentMembers[$i]);
 				$backend->removeFromGroup($currentMembers[$i], $groupId);
 			}
 		}
@@ -172,7 +172,7 @@ class ScimController extends Controller {
 				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
 
 				if ($newDomain !== false) {
-					error_log("New domain $newDomain in group $groupId");
+					// error_log("New domain $newDomain in group $groupId");
 					try {
 						$this->mixedGroupShareProvider->newDomainInGroup($newDomain, $groupId);
 					} catch (\Throwable $th) {
@@ -180,7 +180,7 @@ class ScimController extends Controller {
 					}
 				}
 
-				error_log("Adding to $groupId: " . $newMembers[$i]);
+				// error_log("Adding to $groupId: " . $newMembers[$i]);
 				$backend->addToGroup($newMembers[$i], $groupId);
 			}
 		}
@@ -191,15 +191,15 @@ class ScimController extends Controller {
 	 * @PublicPage
 	 */
 	public function createGroup() {
-		error_log("scim create group");
+		// error_log("scim create group");
 		$body = json_decode(file_get_contents("php://input"), true);
 		$groupId = $body["id"];
 
 		$this->groupManager->createGroup($groupId);
 
-		error_log("=========================bodyJson=============================");
-		error_log(var_export($body, true));
-		error_log("=========================bodyJson=============================");
+		// error_log("=========================bodyJson=============================");
+		// error_log(var_export($body, true));
+		// error_log("=========================bodyJson=============================");
 		// expect group to already exist
 		// we are probably receiving this create due to 
 		// https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
@@ -215,13 +215,13 @@ class ScimController extends Controller {
 	 * @PublicPage
 	 */
 	public function updateGroup($groupId) {
-		error_log("scim update group $groupId");
+		// error_log("scim update group $groupId");
 		// $this->validateGroupId($groupId);
 		$body = json_decode(file_get_contents("php://input"), true);
 
-		error_log("=========================bodyJson=============================");
-		error_log(json_encode($body));
-		error_log("=========================bodyJson=============================");
+		// error_log("=========================bodyJson=============================");
+		// error_log(json_encode($body));
+		// error_log("=========================bodyJson=============================");
 
 		try {
 			$this->handleUpdateGroup($groupId, $body);
@@ -244,7 +244,7 @@ class ScimController extends Controller {
 	 * @PublicPage
 	 */
 	public function deleteGroup($groupId) {
-		error_log("scim delete group");
+		// error_log("scim delete group");
 		$group = $this->groupManager->get(\urldecode($groupId));
 		if ($group) {
 			$deleted = $group->delete();
@@ -277,7 +277,7 @@ class ScimController extends Controller {
 	 * @PublicPage
 	 */
 	public function getGroups() {
-		error_log("scim get groups");
+		// error_log("scim get groups");
 		// work around #129
 
 		$_groups = [];
@@ -309,7 +309,7 @@ class ScimController extends Controller {
 	 * @PublicPage
 	 */
 	public function getGroup($groupId) {
-		error_log("scim get group");
+		// error_log("scim get group");
 		// work around #129
 		$group = $this->groupManager->get(\urldecode($groupId));
 		if ($group) {
