@@ -12,10 +12,13 @@ Einstein on `OC1.Docker` can share a file with the `federalists` group and the r
 
 # Installation
 
-**Note:**
-At the first step you should install and enable the OpenCloudMesh App on your OwnCloud instance to enable the remote sharing on it. please chack this repository to find more details:
+**Notes:**
 
-> https://github.com/pondersource/oc-opencloudmesh 
+1- At the first step you should install and enable the OpenCloudMesh App on your OwnCloud instance to enable the remote sharing on it. please chack this repository to find more details:
+> https://github.com/pondersource/oc-opencloudmesh  
+
+2- You can find more detail about the Owncloud administration [here](https://doc.owncloud.com/server/next/admin_manual/configuration/server/occ_command.html);
+
 
 Copy `federatedgroups` folder into apps folder of your owncloud. 
 Change **sharing.managerFactory** config entry to **OCA\\FederatedGroups\\ShareProviderFactory** inside *config.php* file.
@@ -24,8 +27,13 @@ AND HERE WE GO!!!!! 🚀
 
 
 ## Testing environment:
+
 you can test this application using using this repository: 
 https://github.com/pondersource/dev-stock
+
+
+### Note:
+You should install Docker on you system as requirement **OR** just using the **Github Codespaces**
 
 ### Instruction:
 
@@ -35,9 +43,9 @@ https://github.com/pondersource/dev-stock
 
 3- Run `./scripts/clean.sh`.
 
-4- Run `init-rd-sram.sh`.
+4- Run `./scripts/init-rd-sram.sh`.
 
-5- Run `rd-sram-testing.sh`.
+5- Run `./scripts/rd-sram-testing.sh`.
 
 After Running these commands you can browse localhost:5800 and it let you see a headless browser.
 inside headless browser you can enter these two addresses: https://oc1.docker and https://oc2.docker.
