@@ -20,6 +20,9 @@ use OCP\Share\IProviderFactory;
 use Predis\Command\Argument\Server\To;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+/**
+ * @group DB
+ */
 class SRAMFederatedGroupShareProviderTest extends \Test\TestCase {
 
 	/**
