@@ -9,16 +9,7 @@
 namespace OCA\FederatedGroups;
 
 use OC\Share20\Exception\ProviderException;
-use OCP\Share\IProviderFactory;
-use OC\Share20\ProviderFactory;
 use OC\Share20\DefaultShareProvider;
-use OCA\FederatedFileSharing\AddressHandler;
-use OCA\FederatedFileSharing\DiscoveryManager;
-use OCA\FederatedFileSharing\Ocm\NotificationManager;
-use OCA\FederatedFileSharing\Ocm\Permissions;
-use OCA\FederatedFileSharing\Notifications;
-use OCA\FederatedFileSharing\TokenHandler;
-use OCA\OpenCloudMesh\AppInfo\Application;
 use OCP\IServerContainer;
 
 class ShareProviderFactory extends \OCA\OpenCloudMesh\ShareProviderFactory {
@@ -26,9 +17,6 @@ class ShareProviderFactory extends \OCA\OpenCloudMesh\ShareProviderFactory {
 	// These two variables exist in the parent class,
 	// but need to be redeclared here at the child class
 	// level because they're private:
-
-	/** @var IServerContainer */
-	private $serverContainer;
 
 	/** @var DefaultShareProvider */
 	private $defaultShareProvider = null;
