@@ -141,16 +141,7 @@ class ScimControllerTest extends TestCase {
 		return false;
 	}
 	public function test_createGroup() {
-		$body = [
-			"id" => "test_group",
-			"members" => [
-				[
-					"value" => "fed_user_2@oc2.docker",
-					"ref" => "",
-					"displayName" => ""
-				]
-			]
-		];
+		$body = $this->getCreateGroupData();
 
 		$groupId = $body["id"];
 		$currentMembers = ["currentMember"];
@@ -204,17 +195,22 @@ class ScimControllerTest extends TestCase {
 			}
 		}
 
-		$expected = [
+		$expected = $this->getCreateGroupData();
+
+		$this->assertEquals($body, $expected);
+	}
+
+
+	private function getCreateGroupData() {
+		return [
 			"id" => "test_group",
 			"members" => [
 				[
-					"value" => "fed_user_2@oc2.docker",
+					"value" => "test_user@oc2.docker",
 					"ref" => "",
 					"displayName" => ""
 				]
 			]
 		];
-
-		$this->assertEquals($body, $expected);
 	}
 }
