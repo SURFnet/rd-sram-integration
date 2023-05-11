@@ -142,19 +142,19 @@ class ScimControllerTest extends TestCase {
 	}
 	public function test_createGroup() {
 		$body = $this->getCreateGroupData();
-
 		$groupId = $body["id"];
 		$currentMembers = ["currentMember"];
 		$newMembers = [];
-		$groupMock = $this->createMock(\OCP\IGroup::class);
+		$group = $this->createMock(\OCP\IGroup::class);
 
 		$groupBackend = $this->createMock(\OC\Group\Backend::class);
 
 		$this->groupManager->expects($this->once())->method("createGroup")->with($groupId);
 
-		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($groupMock);
+		// $this->handleUpdateGroup($body, $groupId, $currentMembers, $newMembers, $group, $groupBackend);
+		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
 
-		$groupMock->expects($this->once())->method('getBackend')->willReturn($groupBackend);
+		$group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
 
 		$groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
 
@@ -199,8 +199,75 @@ class ScimControllerTest extends TestCase {
 
 		$this->assertEquals($body, $expected);
 	}
+	public function test_updateGroup() {
+		$body = $this->getUpdateGroupData();
+
+		$currentMembers = ["currentMember"];
+		$newMembers = [];
+		$group = $this->createMock(\OCP\IGroup::class);
+
+		$groupBackend = $this->createMock(\OC\Group\Backend::class);
+
+		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
+
+		$group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
+
+		$groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
+
+		foreach ($body["members"] as $member) {
+			$userIdParts = explode("@", $member["value"]); // "test_u@pondersource.net"  => ["test_u", "pondersource.net"] 
+			if (count($userIdParts) == 3) {
+				$userIdParts = [$userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
+			}
+			if (count($userIdParts) != 2) {
+				throw new \Exception("cannot parse OCM user " . $member["value"]);
+			}
+			$newMember = $userIdParts[0];
+			if ($userIdParts[1] !== getOurDomain()) {
+				$newMember .= "#" . $userIdParts[1];
+			}
+			if ($userIdParts[1] === IGNORE_DOMAIN) {
+				continue;
+			}
+			$newMembers[] = $newMember;
+		}
+
+		for ($i = 0; $i < count($currentMembers); $i++) {
+			if (!in_array($currentMembers[$i], $newMembers)) {
+				$groupBackend->expects($this->once())->method('removeFromGroup');
+			}
+		}
+		for ($i = 0; $i < count($newMembers); $i++) {
+			if (!in_array($newMembers[$i], $currentMembers)) {
+				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
+				if ($newDomain !== false) {
+					try {
+						$this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
+					} catch (\Throwable $th) {
+						throw $th;
+					}
+				}
+				$groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[$i], $groupId);
+			}
+		}
+
+		$expected = $this->getUpdateGroupData();
+
+		$this->assertEquals($body, $expected);
+	}
 
 
+	private function getUpdateGroupData() {
+		return [
+			"members" => [
+				[
+					"value" => "test_user@oc2.docker",
+					"ref" => "",
+					"displayName" => ""
+				]
+			]
+		];
+	}
 	private function getCreateGroupData() {
 		return [
 			"id" => "test_group",
@@ -212,5 +279,50 @@ class ScimControllerTest extends TestCase {
 				]
 			]
 		];
+	}
+
+	private function handleUpdateGroup($body, $groupId, $currentMembers, $newMembers, $group, $groupBackend) {
+		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
+
+		$group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
+
+		$groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
+
+		foreach ($body["members"] as $member) {
+			$userIdParts = explode("@", $member["value"]); // "test_u@pondersource.net"  => ["test_u", "pondersource.net"] 
+			if (count($userIdParts) == 3) {
+				$userIdParts = [$userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
+			}
+			if (count($userIdParts) != 2) {
+				throw new \Exception("cannot parse OCM user " . $member["value"]);
+			}
+			$newMember = $userIdParts[0];
+			if ($userIdParts[1] !== getOurDomain()) {
+				$newMember .= "#" . $userIdParts[1];
+			}
+			if ($userIdParts[1] === IGNORE_DOMAIN) {
+				continue;
+			}
+			$newMembers[] = $newMember;
+		}
+
+		for ($i = 0; $i < count($currentMembers); $i++) {
+			if (!in_array($currentMembers[$i], $newMembers)) {
+				$groupBackend->expects($this->once())->method('removeFromGroup');
+			}
+		}
+		for ($i = 0; $i < count($newMembers); $i++) {
+			if (!in_array($newMembers[$i], $currentMembers)) {
+				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
+				if ($newDomain !== false) {
+					try {
+						$this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
+					} catch (\Throwable $th) {
+						throw $th;
+					}
+				}
+				$groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[$i], $groupId);
+			}
+		}
 	}
 }
