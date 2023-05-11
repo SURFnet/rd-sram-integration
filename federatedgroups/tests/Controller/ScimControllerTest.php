@@ -76,6 +76,14 @@ class ScimControllerTest extends TestCase {
 	 * @var MixedGroupShareProviderTest
 	 */
 	private $mixGroupProvider;
+	/**
+	 * @var ScimController
+	 */
+	private $scimController;
+	/**
+	 * @var IRequest
+	 */
+	private $request;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -83,6 +91,8 @@ class ScimControllerTest extends TestCase {
 		// $this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 
 		$this->dbConnection = \OC::$server->getDatabaseConnection();
+
+		$this->request = $this->createMock(IRequest::class);
 		$this->userManager = $this->createMock(IUserManager::class);
 		$this->groupManager = $this->createMock(IGroupManager::class);
 		$this->rootFolder = $this->createMock(IRootFolder::class);
@@ -102,6 +112,12 @@ class ScimControllerTest extends TestCase {
 			$this->l,
 			$this->logger
 		);
+
+
+		$this->scimController = new ScimController( "federatedGroups",$this->request,$this->groupManager,
+);
+
+
 	}
 
 	public function tearDown(): void {
@@ -113,7 +129,74 @@ class ScimControllerTest extends TestCase {
 
 
 	public function it_will_return_groups() {
-		// $this->groupManager->expects($this->once())->method("get")
-		// 	->willReturn($group);
+		$expectedResult = [
+			'totalResults' => 2,
+			'Resources' => [
+			  [
+				'id' => 'admin',
+				'displayName' => 'admin',
+				'members' => [
+				  'value' => 'admin_user',
+				  'ref' => '',
+				  'displayName' => '',
+				]
+			  ],
+			  [
+				'id' => 'federalists',
+				'displayName' => 'federalists',
+				'members' => [
+				  'value' => 'federalist_user',
+				  'ref' => '',
+				  'displayName' => '',
+				]
+			  ]
+			]
+		  ];
+
+		  json_encode($expectedResult);
+
+		$groupBackendMock1 = $this->createMock(\OCP\GroupInterface::class)->expects(self::once())
+			->method("getGroups")->willReturn(["admin"])
+			->method("usersInGroup")->with("admin")->willReturn(["admin_user"]);
+			
+		$groupBackendMock2 = $this->createMock(\OCP\GroupInterface::class)->expects(self::once())
+			->method("getGroups")->willReturn(["federalists"])
+			->method("usersInGroup")->with("federalists")->willReturn(["federalist_user"]);
+
+
+		$groupMockAdmin = $this->createMock(\OCP\IGroup::class)
+			->method("getGID")->willReturn("admin")
+			->method("getDisplayName")->willReturn("admin")
+			->method("getBackend")->willReturn($groupBackendMock1);
+		
+		$groupMockFederalists = $this->createMock(\OCP\IGroup::class)
+			->method("getGID")->willReturn("federalists")
+			->method("getDisplayName")->willReturn("federalists")
+			->method("getBackend")->willReturn($groupBackendMock2);
+
+		
+		$this->scimController->getGroups();
+
+		// $groupBackend = $this->createMock(Backend::class)->expects(self::once())
+		// 	->method("usersInGroup")->willReturn(
+		// 		[
+		// 			"user1#".self::GROUP_NAME."@host1.co",
+		// 			"user2#".self::GROUP_NAME."@host2.co",
+		// 			"local_user"
+		// 		]
+		// 	);
+		
+
+		$this->groupManager->expects($this->once())->method("getBackends")->willReturn([
+			[$groupBackendMock1, $groupBackendMock2]
+		]);
+
+
+
+
+		$this->groupManager->expects($this->exactly(2))->method("get");
+
+
+
 	}
 }
