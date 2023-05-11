@@ -198,8 +198,7 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 
 		$this->groupNotifications->expects(self::exactly(2))
 			->method("sendRemoteShare")
-			->with(self::GROUP_NAME."@host1.co")
-			->with(self::GROUP_NAME."@host2.co");
+			->with(self::GROUP_NAME."@host1.co",self::GROUP_NAME."@host2.co");
 		
 		$result = $this->mixGroupProvider->create($share);
 		$this->assertNotEmpty($result->getToken(), "token should not be empty or null in the result object");
