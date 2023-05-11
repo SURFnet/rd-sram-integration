@@ -20,6 +20,9 @@ use phpDocumentor\Reflection\Types\This;
 use function PHPUnit\Framework\any;
 use function PHPUnit\Framework\once;
 
+/**
+ * @group DB
+ */
 class MixedGroupShareProviderTest extends \Test\TestCase {
 
 	/**
@@ -154,7 +157,7 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		return [$file, $folder];
 	}
 
-	private function getShareObject(){
+	public function getShareObject(){
 		list($file, $folder) = $this->getMockFileFolder();
 		list($shareAttributes, $shareAttributesReturnJson) = $this->mockShareAttributes();
 		$share = \OC::$server->getShareManager()->newShare();
@@ -168,13 +171,15 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 			->setShareTime(new \DateTime('2023-05-01T00:01:02'))
 			->setTarget('myTarget')
 			->setId(42);
-
+		return [
+			[$share]
+		];
 	}
 
 	/**
 	 * @dataProvider getShareObject
 	 */
-	public function createTest(Share\IShare $share){
+	public function testCreate(Share\IShare $share){
 
 		$groupBackend = $this->createMock(Backend::class)->expects(self::once())
 			->method("usersInGroup")->willReturn(

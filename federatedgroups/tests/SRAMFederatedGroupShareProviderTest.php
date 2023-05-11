@@ -120,7 +120,7 @@ class SRAMFederatedGroupShareProviderTest extends \Test\TestCase {
 		parent::tearDown();
 	}
 
-	public function getShareByIdTest(){
+	public function testGetShareById(){
 		$qb = $this->dbConnection->getQueryBuilder();
 		$insertedIds =[];
 		$qb->insert('share')
