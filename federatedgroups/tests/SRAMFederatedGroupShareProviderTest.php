@@ -16,8 +16,8 @@ use OCP\IL10N;
 use OCP\ILogger;
 use OCP\IUserManager;
 use OCP\Share;
+use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IProviderFactory;
-use Predis\Command\Argument\Server\To;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -155,5 +155,20 @@ class SRAMFederatedGroupShareProviderTest extends \Test\TestCase {
 		$share = $this->sramShareProvider->getShareById($insertedId);
 		$itemFound = !empty($share);
 		$this->assertEquals($expected, $itemFound);
+	}
+
+
+	public function testGetShareByIdOnInvalidId(){
+		$qb = $this->dbConnection->getQueryBuilder();
+		$this->expectException(ShareNotFound::class);
+		$this->sramShareProvider->getShareById("invalideId");
+		
+	}
+
+	public function testGetShareByIdOnWrongId(){
+		$qb = $this->dbConnection->getQueryBuilder();
+		$this->expectException(ShareNotFound::class);
+		$this->sramShareProvider->getShareById("100");
+		
 	}
 }
