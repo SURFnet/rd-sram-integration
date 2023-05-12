@@ -99,7 +99,7 @@ class SRAMFederatedGroupShareProviderTest extends \Test\TestCase {
 		$this->shareProviderFactory = $this->createMock(IProviderFactory::class);
 		parent::setUp();
 
-		$sramShareProvider = new SRAMFederatedGroupShareProvider(
+		$this->sramShareProvider = new SRAMFederatedGroupShareProvider(
 			$this->dbConnection,
 			$this->eventDispatcher,
 			$this->addressHandler,
@@ -123,12 +123,22 @@ class SRAMFederatedGroupShareProviderTest extends \Test\TestCase {
 		parent::tearDown();
 	}
 
-	public function testGetShareById(){
+	public function shareTypeIndicator(){
+		return[
+			[Share::SHARE_TYPE_GROUP, true],
+			[Share::SHARE_TYPE_REMOTE_GROUP, true],
+		];
+	}
+	
+	/**
+	 * @dataProvider shareTypeIndicator
+	 */
+	public function testGetShareById($shareType, $expected){
 		$qb = $this->dbConnection->getQueryBuilder();
 		$insertedIds =[];
 		$qb->insert('share')
 			->values([
-				'share_type'    => $qb->expr()->literal(Share::SHARE_TYPE_GROUP),
+				'share_type'    => $qb->expr()->literal($shareType),
 				'share_with'    => $qb->expr()->literal('password'),
 				'uid_owner'     => $qb->expr()->literal('shareOwner'),
 				'uid_initiator' => $qb->expr()->literal('sharedBy'),
@@ -140,27 +150,10 @@ class SRAMFederatedGroupShareProviderTest extends \Test\TestCase {
 				'share_name'          => $qb->expr()->literal('some_name'),
 			]);
 		$qb->execute();
-		$insertedIds[] = $qb->getLastInsertId();
-
-		$qb->insert('share')->values(
-			[
-				'share_type'    => $qb->expr()->literal(Share::SHARE_TYPE_REMOTE_GROUP),
-				'share_with'    => $qb->expr()->literal('another_password'),
-				'uid_owner'     => $qb->expr()->literal('another_shareOwner'),
-				'uid_initiator' => $qb->expr()->literal('another_sharedBy'),
-				'item_type'     => $qb->expr()->literal('file'),
-				'file_source'   => $qb->expr()->literal(43),
-				'file_target'   => $qb->expr()->literal('another_Target'),
-				'permissions'   => $qb->expr()->literal(13),
-				'token'         => $qb->expr()->literal('anothersecrettoken'),
-				'share_name'    => $qb->expr()->literal('another_name'),
-			]);
-		$qb->execute();
-		$insertedIds[] = $qb->getLastInsertId();
-
-		foreach ($insertedIds as $id){
-			$share = $this->sramShareProvider->getShareById($id);
-			$this->assertNotEmpty($share);
-		}
+		$insertedId = "{$qb->getLastInsertId()}";
+		
+		$share = $this->sramShareProvider->getShareById($insertedId);
+		$itemFound = !empty($share);
+		$this->assertEquals($expected, $itemFound);
 	}
 }
