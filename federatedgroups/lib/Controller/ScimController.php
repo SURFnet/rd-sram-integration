@@ -239,23 +239,25 @@ class ScimController extends Controller {
 
 		foreach ($groups as $groupId) {
 			$group = $this->groupManager->get(\urldecode($groupId));
-			$groupObj = [];
-
-			$groupObj["id"] = $group->getGID();
-			$groupObj["displayName"] = $group->getDisplayName();
-
-			$groupBackend = $group->getBackend();
-			$usersInGroup = $groupBackend->usersInGroup($groupId);
-
-			$groupObj["members"] = array_map(function ($item) {
-				return [
-					"value" => $item,
-					"ref" => "",
-					"displayName" => "",
-				];
-			}, $usersInGroup);
-
-			$res[] = $groupObj;
+			if ($group) {
+				$groupObj = [];
+	
+				$groupObj["id"] = $group->getGID();
+				$groupObj["displayName"] = $group->getDisplayName();
+	
+				$groupBackend = $group->getBackend();
+				$usersInGroup = $groupBackend->usersInGroup($groupId);
+	
+				$groupObj["members"] = array_map(function ($item) {
+					return [
+						"value" => $item,
+						"ref" => "",
+						"displayName" => "",
+					];
+				}, $usersInGroup);
+	
+				$res[] = $groupObj;
+			}
 		}
 
 		return new JSONResponse([
