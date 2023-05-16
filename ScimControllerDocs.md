@@ -120,7 +120,7 @@ RESPONSE STATUS: 200
 # createGroup
 
 ```bash
-curl --location --request PUT '/index.php/apps/federatedgroups/scim/Groups'
+curl --location --request POST '/index.php/apps/federatedgroups/scim/Groups'
 ```
 BODY
 ```bash
