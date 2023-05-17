@@ -373,23 +373,13 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		$created = parent::create($share);
 		if($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP){
 			$remotes = [];
-			// Send OCM invites to remote group members
-			$group = $this->groupManager->get($share->getSharedWith());
-			$backend = $group->getBackend();
-			$recipients = $backend->usersInGroup($share->getSharedWith());
-
-			foreach ($recipients as $k => $v) {
-				$parts = explode(self::SEPARATOR, $v);
-				if (count($parts) > 1) {
-					$remotes[$parts[1]] = true;
-				} else {
-					error_log("Local user: $v");
-				}
-			}
+			
+			$remote = getRemotePartieslist($share->getSharedWith());
 
 			$created->setToken($this->tokenHandler->generateToken());
+			// Send OCM invites to remote group members
 			try {
-				foreach ($remotes as $remote => $_dummy) {
+				foreach ($remotes as $remote) {
 					$this->sendOcmInvite($created, $remote);
 				}
 				$qb = $this->dbConn->getQueryBuilder();
@@ -399,10 +389,27 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 					->execute();
 
 			}
-			catch (\Exception $x){
-				throw $x;
+			catch (\Exception $e){
+				throw $e;
 			}
 			return $created;
+		}
+	}
+
+	/**
+	 * Delete all shares received by this group. As well as any custom group
+	 * shares for group members.
+	 *
+	 * @param string $gid
+	 */
+
+	public function deleteShare(\OCP\Share\IShare $share) {
+		parent::deleteShare($share);
+		if ($share->getShareType() == \OCP\Share::SHARE_TYPE_GROUP ){
+			$remotes = $this->getRemotePartieslist($share->getSharedWith());
+			foreach($remotes as $remote){
+				
+			}
 		}
 	}
 
@@ -446,6 +453,22 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		return $share;
 	}
 
+
+	private function getRemotePartieslist($groupName){
+		$remotes = [];
+		$group = $this->groupManager->get($groupName);
+		$backend = $group->getBackend();
+		$recipients = $backend->usersInGroup($share->getSharedWith());
+			foreach ($recipients as $k => $v) {
+			$parts = explode(self::SEPARATOR, $v);
+			if (count($parts) > 1) {
+				$remotes[] = $parts[1];
+			} else {
+				error_log("Local user: $v");
+			}
+		}
+		return $remotes; 
+	}
 
 	/**
 	 * Create a share object from an database row
