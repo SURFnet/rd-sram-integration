@@ -41,7 +41,7 @@ const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
 const IGNORE_DOMAIN = "sram.surf.nl";
 
 function getOurDomain() {
-	return getenv("SITE") . ".pondersource.net";
+	return $_SERVER["HTTP_HOST"];
 }
 
 /**
@@ -80,26 +80,21 @@ class ScimController extends Controller {
 		$this->groupManager = $groupManager;
 	}
 
-	private function checkNeedToSend($newUser, $existingUsers) {
+	private function getNewDomainIfNeeded($newUser, $existingUsers) {
 		$newUserParts = explode("#", $newUser);
-		if (count($newUserParts) == 1) return false; // local user
+		if (count($newUserParts) == 1) return;
 
-		if (count($newUserParts) == 2) { // remote user
-			if (str_contains($newUserParts[1], '#') && !str_contains($newUserParts[1], getOurDomain())) {
-				return false;
-			}
+		if (count($newUserParts) == 2) {
+			if ($newUserParts[1] == getOurDomain()) return;
+
 			$newDomain = $newUserParts[1];
+
 			foreach ($existingUsers as $existingUser) {
 				$existingUserParts = explode("#", $existingUser);
-				if (count($existingUserParts) == 2) {
-					if ($existingUserParts[1] == $newDomain) {
-						return false;
-					}
-				}
+				if (count($existingUserParts) === 2 && $existingUserParts[1] === $newDomain) return;
 			}
 			return $newDomain;
 		}
-		return false;
 	}
 
 	private function handleUpdateGroup(string $groupId, $obj) {
@@ -108,40 +103,39 @@ class ScimController extends Controller {
 		$currentMembers = $backend->usersInGroup($groupId);
 		$newMembers = [];
 		foreach ($obj["members"] as $member) {
-			$userIdParts = explode("@", $member["value"]); // "test_u@pondersource.net"  => ["test_u", "pondersource.net"] 
+			$userIdParts = explode("@", $member["value"]);
+
 			if (count($userIdParts) == 3) {
 				$userIdParts = [$userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
 			}
-			if (count($userIdParts) != 2) {
-				throw new Exception("cannot parse OCM user " . $member["value"]);
-			}
+
+			if (count($userIdParts) != 2) throw new Exception("cannot parse OCM user " . $member["value"]);
+
 			$newMember = $userIdParts[0];
-			if ($userIdParts[1] !== getOurDomain()) {
+
+			if ($userIdParts[1] !== getOurDomain()) { // remote user
 				$newMember .= "#" . $userIdParts[1];
 			}
 			if ($userIdParts[1] === IGNORE_DOMAIN) {
+				// TODO: whats the expected behavior, wrong position
 				continue;
 			}
 			$newMembers[] = $newMember;
 		}
 
 		for ($i = 0; $i < count($currentMembers); $i++) {
-			if (!in_array($currentMembers[$i], $newMembers)) { // meaning current member is not in new update, so remove it
+			if (!in_array($currentMembers[$i], $newMembers)) {
 				$backend->removeFromGroup($currentMembers[$i], $groupId);
 			}
 		}
 
 		for ($i = 0; $i < count($newMembers); $i++) {
-			if (!in_array($newMembers[$i], $currentMembers)) { // meaning new member is not in current update, so let add it to group and 
+			if (!in_array($newMembers[$i], $currentMembers)) {
 
-				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
+				$newDomain = $this->getNewDomainIfNeeded($newMembers[$i], $currentMembers);
 
-				if ($newDomain !== false) {
-					try {
-						$this->mixedGroupShareProvider->sendOcmInviteForExistingShares($newDomain, $groupId);
-					} catch (\Throwable $th) {
-						throw $th;
-					}
+				if ($newDomain) {
+					$this->mixedGroupShareProvider->sendOcmInviteForExistingShares($newDomain, $groupId);
 				}
 
 				$backend->addToGroup($newMembers[$i], $groupId);
@@ -239,23 +233,25 @@ class ScimController extends Controller {
 
 		foreach ($groups as $groupId) {
 			$group = $this->groupManager->get(\urldecode($groupId));
-			$groupObj = [];
+			if ($group) {
+				$groupObj = [];
 
-			$groupObj["id"] = $group->getGID();
-			$groupObj["displayName"] = $group->getDisplayName();
+				$groupObj["id"] = $group->getGID();
+				$groupObj["displayName"] = $group->getDisplayName();
 
-			$groupBackend = $group->getBackend();
-			$usersInGroup = $groupBackend->usersInGroup($groupId);
+				$groupBackend = $group->getBackend();
+				$usersInGroup = $groupBackend->usersInGroup($groupId);
 
-			$groupObj["members"] = array_map(function ($item) {
-				return [
-					"value" => $item,
-					"ref" => "",
-					"displayName" => "",
-				];
-			}, $usersInGroup);
+				$groupObj["members"] = array_map(function ($item) {
+					return [
+						"value" => $item,
+						"ref" => "",
+						"displayName" => "",
+					];
+				}, $usersInGroup);
 
-			$res[] = $groupObj;
+				$res[] = $groupObj;
+			}
 		}
 
 		return new JSONResponse([
