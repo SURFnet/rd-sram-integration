@@ -372,8 +372,6 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		// Create group share locally
 		$created = parent::create($share);
 		if($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP){
-			$remotes = [];
-			
 			$remotes = $this->getRemotePartieslist($share->getSharedWith());
 			$created->setToken($this->tokenHandler->generateToken());
 			// Send OCM invites to remote group members
@@ -450,11 +448,11 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			   $msg = $result['ocs']['meta']['message'] ?? false;
 			   if (!$msg) {
 				   $message_t = $this->l->t(
-					   'Sharing %s failed, could not find %s, maybe the server is currently unreachable.',
+					   'Unsharing %s failed, could not find %s, maybe the server is currently unreachable.',
 					   [$share->getNode()->getName(), $share->getSharedWith()]
 				   );
 			   } else {
-				   $message_t = $this->l->t("Federated Sharing failed: %s", [$msg]);
+				   $message_t = $this->l->t("remote Unsharing failed: %s", [$msg]);
 			   }
 			   throw new \Exception($message_t);
 		   }
@@ -514,8 +512,6 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$parts = explode(self::SEPARATOR, $v);
 			if (count($parts) > 1) {
 				$remotes[] = $parts[1];
-			} else {
-				error_log("Local user: $v");
 			}
 		}
 		return $remotes; 
@@ -594,7 +590,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		return $share;
 	}
 
-	public function getShareById($id, $recipient = null) {
+	public function getShareById($id, $recipientId = null) {
 		if (!ctype_digit($id)) {
 			// share id is defined as a field of type integer
 			// if someone calls the API asking for a share id like "abc"
