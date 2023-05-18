@@ -273,7 +273,6 @@ class ScimController extends Controller {
 		if ($group) {
 			$id = $group->getGID();
 			$displayName = $group->getDisplayName();
-			// $members = $group->getUsers();
 
 			$groupBackend = $group->getBackend();
 			$usersInGroup = $groupBackend->usersInGroup($groupId);

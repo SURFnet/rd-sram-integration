@@ -140,8 +140,10 @@ class ScimControllerTest extends TestCase {
 		}
 		return false;
 	}
+
+
 	public function test_createGroup() {
-		$body = $this->getCreateGroupData();
+		$body = $this->createGroupData();
 		$groupId = $body["id"];
 		$currentMembers = ["currentMember"];
 		$newMembers = [];
@@ -151,7 +153,6 @@ class ScimControllerTest extends TestCase {
 
 		$this->groupManager->expects($this->once())->method("createGroup")->with($groupId);
 
-		// $this->handleUpdateGroup($body, $groupId, $currentMembers, $newMembers, $group, $groupBackend);
 		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
 
 		$group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
@@ -195,12 +196,12 @@ class ScimControllerTest extends TestCase {
 			}
 		}
 
-		$expected = $this->getCreateGroupData();
+		$expected = $this->createGroupData();
 
 		$this->assertEquals($body, $expected);
 	}
 	public function test_updateGroup() {
-		$body = $this->getUpdateGroupData();
+		$body = $this->updateGroupData();
 
 		$currentMembers = ["currentMember"];
 		$newMembers = [];
@@ -251,13 +252,13 @@ class ScimControllerTest extends TestCase {
 			}
 		}
 
-		$expected = $this->getUpdateGroupData();
+		$expected = $this->updateGroupData();
 
 		$this->assertEquals($body, $expected);
 	}
 
 
-	private function getUpdateGroupData() {
+	private function updateGroupData() {
 		return [
 			"members" => [
 				[
@@ -268,7 +269,7 @@ class ScimControllerTest extends TestCase {
 			]
 		];
 	}
-	private function getCreateGroupData() {
+	private function createGroupData() {
 		return [
 			"id" => "test_group",
 			"members" => [
@@ -281,48 +282,45 @@ class ScimControllerTest extends TestCase {
 		];
 	}
 
-	private function handleUpdateGroup($body, $groupId, $currentMembers, $newMembers, $group, $groupBackend) {
+	public function testGetGroups() {
+		$response = $this->controller->getGroups();
+		$this->assertEquals(200, $response->getStatus());
+	}
+
+	public function test_GetGroup() {
+		$groupId = 'federalists';
+
+		$response = $this->controller->getGroup($groupId);
+		$this->assertEquals(200, $response->getStatus());
+	}
+
+	public function testGetGroup() {
+		$groupId = 'test-group';
+		$displayName = 'test-group';
+		$usersInGroup = ['user-in-group'];
+
+		$group = $this->createMock(\OCP\IGroup::class);
+		$groupBackend = $this->createMock(\OC\Group\Backend::class);
+
 		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
+		if ($group) {
+			$group->expects($this->once())->method("getGID")->willReturn($groupId);
+			$group->expects($this->once())->method("getDisplayName")->willReturn($displayName);
+			$group->expects($this->once())->method("getBackend")->willReturn($groupBackend);
 
-		$group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
+			$groupBackend->expects($this->once())->method("usersInGroup")->with($groupId)->willReturn($usersInGroup);
 
-		$groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
+			$members = array_map(function ($item) {
+				return [
+					"value" => $item,
+					"ref" => "",
+					"displayName" => "",
+				];
+			}, $usersInGroup);
 
-		foreach ($body["members"] as $member) {
-			$userIdParts = explode("@", $member["value"]); // "test_u@pondersource.net"  => ["test_u", "pondersource.net"] 
-			if (count($userIdParts) == 3) {
-				$userIdParts = [$userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
-			}
-			if (count($userIdParts) != 2) {
-				throw new \Exception("cannot parse OCM user " . $member["value"]);
-			}
-			$newMember = $userIdParts[0];
-			if ($userIdParts[1] !== getOurDomain()) {
-				$newMember .= "#" . $userIdParts[1];
-			}
-			if ($userIdParts[1] === IGNORE_DOMAIN) {
-				continue;
-			}
-			$newMembers[] = $newMember;
-		}
+			$expected = $this->createGroupData();
 
-		for ($i = 0; $i < count($currentMembers); $i++) {
-			if (!in_array($currentMembers[$i], $newMembers)) {
-				$groupBackend->expects($this->once())->method('removeFromGroup');
-			}
-		}
-		for ($i = 0; $i < count($newMembers); $i++) {
-			if (!in_array($newMembers[$i], $currentMembers)) {
-				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
-				if ($newDomain !== false) {
-					try {
-						$this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
-					} catch (\Throwable $th) {
-						throw $th;
-					}
-				}
-				$groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[$i], $groupId);
-			}
+			$this->assertEquals($body, $expected);
 		}
 	}
 }
