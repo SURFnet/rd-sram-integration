@@ -110,18 +110,14 @@ class ShareProviderFactory extends \OCA\OpenCloudMesh\ShareProviderFactory {
 	 */
 	public function getProvider($id) {
 		$provider = null;
-		if ($id === 'ocinternal') {
-			$provider = $this->defaultShareProvider();
+		if ($id === 'ocinternal' || $id === 'ocMixFederatedSharing') {
+			$provider = $this->mixedGroupShareProvider();
 		} elseif ($id === 'ocFederatedSharing') {
 			$provider = $this->federatedShareProvider();
-		}
-		elseif($id === 'ocMixFederatedSharing'){
-			$provider = $this->mixedGroupShareProvider();
-		}
+		}		
 		elseif($id === 'ocGroupFederatedSharing'){
 			$provider = $this->federatedGroupShareProvider();
 		}
-
 		if ($provider === null) {
 			throw new ProviderException('No provider with id .' . $id . ' found.');
 		}
