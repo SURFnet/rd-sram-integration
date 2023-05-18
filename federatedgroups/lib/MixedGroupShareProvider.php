@@ -372,24 +372,11 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		// Create group share locally
 		$created = parent::create($share);
 		if($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP){
-			$remotes = [];
-			// Send OCM invites to remote group members
-			$group = $this->groupManager->get($share->getSharedWith());
-			$backend = $group->getBackend();
-			$recipients = $backend->usersInGroup($share->getSharedWith());
-
-			foreach ($recipients as $k => $v) {
-				$parts = explode(self::SEPARATOR, $v);
-				if (count($parts) > 1) {
-					$remotes[$parts[1]] = true;
-				} else {
-					error_log("Local user: $v");
-				}
-			}
-
+			$remotes = $this->getRemotePartieslist($share->getSharedWith());
 			$created->setToken($this->tokenHandler->generateToken());
+			// Send OCM invites to remote group members
 			try {
-				foreach ($remotes as $remote => $_dummy) {
+				foreach ($remotes as $remote) {
 					$this->sendOcmInvite($created, $remote);
 				}
 				$qb = $this->dbConn->getQueryBuilder();
@@ -399,14 +386,83 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 					->execute();
 
 			}
-			catch (\Exception $x){
-				throw $x;
+			catch (\Exception $e){
+				throw $e;
 			}
 			return $created;
 		}
 	}
 
+	/**
+	 * Delete all shares received by this group. As well as any custom group
+	 * shares for group members.
+	 *
+	 * @param string $gid
+	 */
 
+	public function delete(\OCP\Share\IShare $share) {
+		parent::delete($share);
+		if ($share->getShareType() == \OCP\Share::SHARE_TYPE_GROUP ){
+			$remotes = $this->getRemotePartieslist($share->getSharedWith());
+			foreach($remotes as $remote){
+				$this->sendUnshareNotification($share, $remote);
+			}
+		}
+	}
+
+	/**
+	* @param IShare $share
+	* @param string $remote
+	* @return void
+	*/
+   	private function sendUnshareNotification($share, $remote) {
+		try {
+		   $sharedBy = $share->getSharedBy();
+		   if ($this->userManager->userExists($sharedBy)) {
+			   $sharedByAddress = $this->addressHandler->getLocalUserFederatedAddress($sharedBy);
+		   } else {
+			   $sharedByAddress = new Address($sharedBy);
+		   }
+
+		   $owner = $share->getShareOwner();
+		   $ownerAddress = $this->addressHandler->getLocalUserFederatedAddress($owner);
+		   $sharedWith = $share->getSharedWith() . "@" . $remote;
+		   $shareWithAddress = new Address($sharedWith);
+		   
+		   $result = $this->groupNotifications->sendRemoteUnshare(
+				$remote, $share->getId(), $share->getToken()			   
+		   );
+
+		   /* Check for failure or null return from sending and pick up an error message
+			* if there is one coming from the remote server, otherwise use a generic one.
+			*/
+		   if (\is_bool($result)) {
+			   $status = $result;
+		   } elseif (isset($result['ocs']['meta']['status'])) {
+			   $status = $result['ocs']['meta']['status'];
+		   } else {
+			   $status = false;
+		   }
+
+		   if ($status === false) {
+			   $msg = $result['ocs']['meta']['message'] ?? false;
+			   if (!$msg) {
+				   $message_t = $this->l->t(
+					   'Unsharing %s failed, could not find %s, maybe the server is currently unreachable.',
+					   [$share->getNode()->getName(), $share->getSharedWith()]
+				   );
+			   } else {
+				   $message_t = $this->l->t("remote Unsharing failed: %s", [$msg]);
+			   }
+			   throw new \Exception($message_t);
+		   }
+	   } catch (\Exception $e) {
+		   $this->logger->error('Failed to notify remote server of mixed group share, panic (' . $e->getMessage() . ')');
+		   // FIXME: https://github.com/SURFnet/rd-sram-integration/issues/92
+		   // $this->removeShareFromTableById($shareId);
+		   throw $e;
+	   }
+   }
 	/**
 	 * Get a share by token
 	 *
@@ -446,6 +502,20 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		return $share;
 	}
 
+
+	private function getRemotePartieslist($groupName){
+		$remotes = [];
+		$group = $this->groupManager->get($groupName);
+		$backend = $group->getBackend();
+		$recipients = $backend->usersInGroup($groupName);
+			foreach ($recipients as $k => $v) {
+			$parts = explode(self::SEPARATOR, $v);
+			if (count($parts) > 1) {
+				$remotes[] = $parts[1];
+			}
+		}
+		return $remotes; 
+	}
 
 	/**
 	 * Create a share object from an database row
@@ -515,6 +585,65 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 				);
 			}
 			$share->setAttributes($attributes);
+		}
+
+		return $share;
+	}
+
+	public function getShareById($id, $recipientId = null) {
+		if (!ctype_digit($id)) {
+			// share id is defined as a field of type integer
+			// if someone calls the API asking for a share id like "abc"
+			// then there is no point trying to query the database,
+			// and, depending on the database, the query may throw an exception
+			// with a message like "invalid input syntax for type integer"
+			// So throw ShareNotFound now.
+			throw new ShareNotFound();
+		}
+		$qb = $this->dbConn->getQueryBuilder();
+
+		$qb->select('*')
+			->from('share')
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere(
+				$qb->expr()->in(
+					'share_type',
+					$qb->createNamedParameter([
+						\OCP\Share::SHARE_TYPE_USER,
+						\OCP\Share::SHARE_TYPE_GROUP,
+						\OCP\Share::SHARE_TYPE_LINK,
+					], IQueryBuilder::PARAM_INT_ARRAY)
+				)
+			)
+			->andWhere($qb->expr()->orX(
+				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
+				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
+			));
+
+		$cursor = $qb->execute();
+		$data = $cursor->fetch();
+		$cursor->closeCursor();
+
+		if ($data === false) {
+			throw new ShareNotFound();
+		}
+
+		try {
+			$share = $this->createShare($data);
+		} catch (InvalidShare $e) {
+			throw new ShareNotFound();
+		}
+
+		// If the recipient is set for a group share resolve to that user
+		if ($recipientId !== null && $share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP) {
+			$resolvedShares = $this->resolveGroupShares([$share], $recipientId);
+			if (\count($resolvedShares) === 1) {
+				// If we pass to resolveGroupShares() an with one element,
+				// we expect to receive exactly one element, otherwise it is error
+				$share = $resolvedShares[0];
+			} else {
+				throw new ProviderException("ResolveGroupShares() returned wrong result");
+			}
 		}
 
 		return $share;
