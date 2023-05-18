@@ -235,8 +235,6 @@ class Manager extends AbstractManager {
 	}
 
 	public function userRemovedFromGroup($uid, $gid) {
-		error_log("UID:$uid , GID:$gid");
-
 		$getShares = $this->connection->prepare("
 			SELECT `id` FROM `*PREFIX*{$this->tableName}` WHERE `parent` = ? AND `user` = ?");
 		if ($getShares->execute([-1, $gid])) {
@@ -248,7 +246,6 @@ class Manager extends AbstractManager {
 					$qb->delete($this->tableName)
 						->where($qb->expr()->eq('user', $qb->expr()->literal($uid)))
 						->andWhere($qb->expr()->eq('parent', $qb->expr()->literal($parentShare['id'])));
-					error_log($qb->getSQL());
 					$qb->execute();
 				}
 			}
