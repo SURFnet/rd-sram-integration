@@ -404,13 +404,9 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 
 	public function delete(\OCP\Share\IShare $share) {
 		parent::delete($share);
-		error_log("Ohhh I am there ...... {$share->getShareType()}");
 		if ($share->getShareType() == \OCP\Share::SHARE_TYPE_GROUP ){
-			error_log("after if ");
 			$remotes = $this->getRemotePartieslist($share->getSharedWith());
-			error_log("remotes". var_export($remotes, true));
 			foreach($remotes as $remote){
-				error_log("unshare called on {$remote}"); 
 				$this->sendUnshareNotification($share, $remote);
 			}
 		}
