@@ -31,6 +31,7 @@ use OCA\OpenCloudMesh\FederatedFileSharing\UserNotifications;
 use OCA\OpenCloudMesh\FederatedGroupShareProvider;
 use OCA\OpenCloudMesh\FederatedUserShareProvider;
 use OCA\OpenCloudMesh\Controller\OcmController;
+use OCA\OpenCloudMesh\Files_Sharing\Hooks;
 use OCA\OpenCloudMesh\Files_Sharing\Middleware\RemoteOcsMiddleware;
 use OCA\OpenCloudMesh\ShareProviderFactory;
 
@@ -58,6 +59,8 @@ class Application extends App {
 				\OC\Files\Filesystem::getLoader(),
 				$server->getNotificationManager(),
 				$server->getEventDispatcher(),
+				$server->getUserManager(),
+				$server->getGroupManager(),
 				$uid
 			);
 		});
@@ -187,6 +190,17 @@ class Application extends App {
 				);
 			}
 		);
+
+		$container->registerService('Hooks', function ($c) {
+			return new Hooks(
+				$c->getServer()->getLazyRootFolder(),
+				$c->getServer()->getUrlGenerator(),
+				$c->getServer()->getEventDispatcher(),
+				$c->getServer()->getShareManager(),
+				$c->getServer()->getActivityManager(),
+				$c->getServer()->getUserSession()
+			);
+		});
 	}
 
 	/**
@@ -315,5 +329,9 @@ class Application extends App {
 			$mountProviderCollection->registerProvider($this->getContainer()->query('ExternalMountProvider'));
 			$this->isProviderRegistered = true;
 		}
+	}
+
+	public function registerEvents() {
+		$this->getContainer()->query('Hooks')->registerListeners();
 	}
 } 

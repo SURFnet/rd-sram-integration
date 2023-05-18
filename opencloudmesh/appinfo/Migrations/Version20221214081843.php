@@ -30,9 +30,9 @@ class Version20221214081843 implements ISchemaMigration {
             ]);
 
             $table->addColumn('parent', 'integer', [
-                'unsigned' => true,
+                'unsigned' => false,
                 'notnull' => false,
-                'default' => null
+                'default' => -1
             ]);
 
             $table->addColumn('remote', 'string', [

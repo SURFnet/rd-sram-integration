@@ -33,7 +33,10 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use OC\Files\Filesystem;
 use OC\User\NoUserException;
 use OCA\Files_Sharing\Helper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\Files;
+use OCP\IGroupManager;
+use OCP\IUserManager;
 use OCP\Notification\IManager;
 use OCP\Share\Events\AcceptShare;
 use OCP\Share\Events\DeclineShare;
@@ -85,11 +88,23 @@ abstract class AbstractManager {
 	private $eventDispatcher;
 
 	/**
+	 * @var IUserManager
+	 */
+	private $userManager;
+
+	/**
+	 * @var IGroupManager
+	 */
+	private $groupManager;
+
+	/**
 	 * @param \OCP\IDBConnection $connection
 	 * @param \OC\Files\Mount\Manager $mountManager
 	 * @param \OCP\Files\Storage\IStorageFactory $storageLoader
 	 * @param IManager $notificationManager
 	 * @param EventDispatcherInterface $eventDispatcher
+	 * @param IUserManager $userManager
+	 * @param IGroupManager $groupManager
 	 * @param string $uid
 	 * @param string $storage
 	 */
@@ -101,6 +116,8 @@ abstract class AbstractManager {
 		\OCP\Files\Storage\IStorageFactory $storageLoader,
 		IManager $notificationManager,
 		EventDispatcherInterface $eventDispatcher,
+		IUserManager $userManager,
+		IGroupManager $groupManager,
 		$uid = null
 	) {
 		$this->storage = $storage;
@@ -111,6 +128,8 @@ abstract class AbstractManager {
 		$this->uid = $uid;
 		$this->notificationManager = $notificationManager;
 		$this->eventDispatcher = $eventDispatcher;
+		$this->userManager = $userManager;
+		$this->groupManager = $groupManager;
 	}
 
 	/**
@@ -162,8 +181,6 @@ abstract class AbstractManager {
 				$i++;
 			}
 
-			$this->insertedUnacceptedShare($data);
-
 			return null;
 		}
 
@@ -194,10 +211,6 @@ abstract class AbstractManager {
 
 	}
 
-	protected function insertedUnacceptedShare(array $data) {
-
-	}
-
 	protected function insertedAcceptedShare(array $options) {
 
 	}
@@ -208,14 +221,41 @@ abstract class AbstractManager {
 	 * @param int $id share id
 	 * @return mixed share of false
 	 */
-	public function getShare($id) {
+	private function fetchShare($id) {
 		$getShare = $this->connection->prepare("
-			SELECT `id`, `remote`, `remote_id`, `share_token`, `name`, `owner`, `user`, `mountpoint`, `accepted`
+			SELECT `id`, `parent`, `remote`, `remote_id`, `share_token`, `name`, `owner`, `user`, `mountpoint`, `accepted`
 			FROM  `*PREFIX*{$this->tableName}`
-			WHERE `id` = ? AND `user` = ?");
-		$result = $getShare->execute([$id, $this->uid]);
+			WHERE `id` = ?");
+		$result = $getShare->execute([$id]);
 
 		return $result ? $getShare->fetch() : false;
+	}
+
+	/**
+	 * get share
+	 *
+	 * @param int $id share id
+	 * @return mixed share of false
+	 */
+	public function getShare($id) {
+		$share = $this->fetchShare($id);
+		$validShare = is_array($share) && isset($share['user']);
+
+		if ($validShare) {
+			$parentId = (int)$share['parent'];
+			if ($parentId !== -1) {
+				// we just retrieved a sub-share, switch to the parent entry for verification
+				$groupShare = $this->fetchShare($parentId);
+			} else {
+				$groupShare = $share;
+			}
+			$user = $this->userManager->get($this->uid);
+			if ($this->groupManager->get($groupShare['user'])->inGroup($user)) {
+				return $share;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -279,13 +319,12 @@ abstract class AbstractManager {
 			$mountPoint = $this->getShareRecipientMountPoint($share);
 			$hash = \md5($mountPoint);
 
-			$acceptShare = $this->connection->prepare("
-				UPDATE `*PREFIX*{$this->tableName}`
-				SET `accepted` = ?,
-					`mountpoint` = ?,
-					`mountpoint_hash` = ?
-				WHERE `id` = ? AND `user` = ?");
-			$acceptShare->execute([1, $mountPoint, $hash, $id, $this->uid]);
+			$result = $this->acceptShareInDb($share, $mountPoint, $hash);
+
+			if (!$result) {
+				$this->processNotification($id);
+				return false;
+			}
 
 			$fileId = $this->getShareFileId($share, $mountPoint);
 
@@ -316,6 +355,11 @@ abstract class AbstractManager {
 	}
 
 	/**
+	 * @return bool True if db could be accepted, false otherwise
+	 */
+	abstract protected function acceptShareInDb($share, $mountPoint, $hash);
+
+	/**
 	 * decline server-to-server share
 	 *
 	 * @param int $id
@@ -325,7 +369,7 @@ abstract class AbstractManager {
 		$share = $this->getShare($id);
 
 		if ($share) {
-			$this->executeDeclineShareStatement($id);
+			$this->executeDeclineShareStatement($share);
 
 			$this->eventDispatcher->dispatch(
 				new DeclineShare($share),
@@ -451,25 +495,17 @@ abstract class AbstractManager {
 			WHERE `mountpoint_hash` = ? AND `user` = ?");
 		$result = $getShare->execute([$hash, $this->uid]);
 
+		$removeResult = false;
+
 		if ($result) {
 			$share = $getShare->fetch();
 			if (isset($share)) {
-				$this->eventDispatcher->dispatch(
-					new DeclineShare($share),
-					DeclineShare::class
-				);
+				$removeResult = $this->executeRemoveShareStatement($share, $hash);
 			}
 		}
 		$getShare->closeCursor();
 
-		$query = $this->connection->prepare("
-			DELETE FROM `*PREFIX*{$this->tableName}`
-			WHERE `mountpoint_hash` = ?
-			AND `user` = ?
-		");
-		$result = (bool)$query->execute([$hash, $this->uid]);
-
-		if ($result) {
+		if ($removeResult) {
 			$this->removeReShares($id);
 			$event = new GenericEvent(null, ['user' => $this->uid, 'targetmount' => $mountPoint]);
 			$this->eventDispatcher->dispatch($event, '\OCA\Files_Sharing::unshareEvent');
@@ -477,6 +513,8 @@ abstract class AbstractManager {
 
 		return $result;
 	}
+
+	abstract protected function executeRemoveShareStatement($share, $mountHash);
 
 	/**
 	 * remove re-shares from share table and mapping in the federated_reshares table
@@ -506,29 +544,7 @@ abstract class AbstractManager {
 	 * @param string $uid
 	 * @return bool
 	 */
-	public function removeUserShares($uid) {
-		$getShare = $this->connection->prepare("
-			SELECT `remote`, `share_token`, `remote_id`
-			FROM  `*PREFIX*{$this->tableName}`
-			WHERE `user` = ?");
-		$result = $getShare->execute([$uid]);
-
-		if ($result) {
-			$shares = $getShare->fetchAll();
-			foreach ($shares as $share) {
-				$this->eventDispatcher->dispatch(
-					new DeclineShare($share),
-					DeclineShare::class
-				);
-			}
-		}
-
-		$query = $this->connection->prepare("
-			DELETE FROM `*PREFIX*{$this->tableName}`
-			WHERE `user` = ?
-		");
-		return (bool)$query->execute([$uid]);
-	}
+	abstract public function removeUserShares($uid);
 
 	/**
 	 * return a list of shares which are not yet accepted by the user
@@ -557,20 +573,37 @@ abstract class AbstractManager {
 	 * @return array list of open server-to-server shares
 	 */
 	private function getShares($accepted) {
-		$query = "SELECT `id`, `remote`, `remote_id`, `share_token`, `name`, `owner`, `user`, `mountpoint`, `accepted`
-		          FROM `*PREFIX*{$this->tableName}` 
-				  WHERE `user` = ?";
-		$parameters = [$this->uid];
-		if ($accepted !== null) {
-			$query .= ' AND `accepted` = ?';
-			$parameters[] = (int) $accepted;
+		$user = $this->userManager->get($this->uid);
+		$groups = $this->groupManager->getUserGroups($user);
+		$userGroups = [];
+		foreach ($groups as $group) {
+			$userGroups[] = $group->getGID();
 		}
-		$query .= ' ORDER BY `id` ASC';
 
-		$shares = $this->connection->prepare($query);
-		$result = $shares->execute($parameters);
+		$qb = $this->connection->getQueryBuilder();
+		$qb->select('id', 'parent', 'remote', 'remote_id', 'share_token', 'name', 'owner', 'user', 'mountpoint', 'accepted')
+			->from($this->tableName)
+			->where(
+				$qb->expr()->orX(
+					$qb->expr()->eq('user', $qb->createNamedParameter($this->uid)),
+					$qb->expr()->in(
+						'user',
+						$qb->createNamedParameter($userGroups, IQueryBuilder::PARAM_STR_ARRAY)
+					)
+				)
+			)
+			->orderBy('id', 'ASC');
 
-		return $result ? $this->fetchShares($shares) : [];
+		$result = $qb->execute();
+
+		$shares = $result ? $this->fetchShares($result) : [];
+
+		if (!is_null($accepted)) {
+			$shares = array_filter($shares, function ($share) use ($accepted) {
+				return (bool)$share['accepted'] === $accepted;
+			});
+		}
+		return $shares;
 	}
 
 	abstract protected function fetchShares($shares);

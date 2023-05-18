@@ -4,9 +4,10 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-/**
- *
- */
 
 $app = new \OCA\OpenCloudMesh\AppInfo\Application();
 $app->registerMountProviders();
+$app->registerEvents();
+
+\OCP\Util::connectHook('OC_User', 'post_deleteUser', '\OCA\OpenCloudMesh\Files_Sharing\Hooks', 'deleteUser');
+\OCP\Util::connectHook('OC_Group', 'post_deleteGroup', '\OCA\OpenCloudMesh\Files_Sharing\Hooks', 'post_deleteGroup');

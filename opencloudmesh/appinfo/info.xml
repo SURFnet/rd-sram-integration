@@ -29,6 +29,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 		<dav/>
 	</types>
 	<use-migrations>true</use-migrations>
+	<background-jobs>
+		<job>OCA\OpenCloudMesh\Files_Sharing\External\ScanExternalSharesJob</job>
+	</background-jobs>
 	<dependencies>
 		<owncloud min-version="10.4" max-version="10" />
 	</dependencies>

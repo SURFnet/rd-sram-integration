@@ -77,6 +77,8 @@ class ManagerTest extends TestCase {
 			new StorageFactory(),
 			\OC::$server->getNotificationManager(),
 			$eventDispatcher,
+			\OC::$server->getUserManager(),
+			\OC::$server->getGroupManager(),
 			$this->uid
 		);
 		$this->mountProvider = new MountProvider(\OC::$server->getDatabaseConnection(), function () {
@@ -375,6 +377,8 @@ class ManagerTest extends TestCase {
 			$storageFactory,
 			\OC::$server->getNotificationManager(),
 			\OC::$server->getEventDispatcher(),
+			\OC::$server->getUserManager(),
+			\OC::$server->getGroupManager(),
 			$this->uid
 		);
 

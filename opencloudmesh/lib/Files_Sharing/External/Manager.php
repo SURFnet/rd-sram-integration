@@ -41,6 +41,8 @@ class Manager extends AbstractManager {
 	 * @param \OCP\Files\Storage\IStorageFactory $storageLoader
 	 * @param IManager $notificationManager
 	 * @param EventDispatcherInterface $eventDispatcher
+	 * @param \OCP\IUserManager $userManger
+	 * @param \OCP\IGroupManager $groupManager
 	 * @param string $uid
 	 */
 	public function __construct(
@@ -49,6 +51,8 @@ class Manager extends AbstractManager {
 		\OCP\Files\Storage\IStorageFactory $storageLoader,
 		IManager $notificationManager,
 		EventDispatcherInterface $eventDispatcher,
+		\OCP\IUserManager $userManager,
+		\OCP\IGroupManager $groupManager,
 		$uid = null
 	) {
 		parent::__construct(
@@ -59,44 +63,256 @@ class Manager extends AbstractManager {
 			$storageLoader,
 			$notificationManager,
 			$eventDispatcher,
+			$userManager,
+			$groupManager,
 			$uid);
 	}
 
 	protected function prepareData(array &$data) {
-		$data['parent'] = null;
+		$data['parent'] = -1;
 		$data['lastscan'] = time();
 	}
-
-	protected function insertedUnacceptedShare(array $data) {
-		$groupRowId = $this->connection->lastInsertId("*PREFIX*{$this->tableName}");
-		$users = \OC::$server->getGroupManager()->findUsersInGroup($data['user']);
-		$data['parent'] = $groupRowId;
-		foreach($users as $item){
-			$data['user'] = $item->getUID();
-			$query = $this->connection->prepare("
+	
+	/**
+	 * write remote share to the database
+	 *
+	 * @param $remote
+	 * @param $token
+	 * @param $password
+	 * @param $name
+	 * @param $owner
+	 * @param $user
+	 * @param $mountPoint
+	 * @param $hash
+	 * @param $accepted
+	 * @param $remoteId
+	 * @param $parent
+	 * @param $shareType
+	 *
+	 * @return void
+	 * @throws \Doctrine\DBAL\Driver\Exception
+	 */
+	private function writeShareToDb($remote, $token, $password, $name, $owner, $user, $mountPoint, $hash, $accepted, $remoteId, $parent): void {
+		$query = $this->connection->prepare("
 				INSERT INTO `*PREFIX*{$this->tableName}`
-					(`remote`, `share_token`, `password`, `name`, `owner`, `user`,
-					`mountpoint`, `mountpoint_hash`, `accepted`, `remote_id`, `parent`, `lastscan`)
+					(`remote`, `share_token`, `password`, `name`, `owner`, `user`, `mountpoint`, `mountpoint_hash`, `accepted`, `remote_id`, `parent`, `lastscan`)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			");
-			$query->execute([$data['remote'], $data['share_token'], $data['password'], $data['name'], $data['owner'], $data['user'], 
-				$data['mountpoint'], $data['mountpoint_hash'], $data['accepted'], $data['remote_id'], $data['parent'], $data['lastscan']]
-			);
-		}
+		$query->execute([$remote, $token, $password, $name, $owner, $user, $mountPoint, $hash, $accepted, $remoteId, $parent, time()]);
 	}
 
-	protected function executeDeclineShareStatement($id) {
+	private function fetchUserShare($parentId, $uid) {
+		$getShare = $this->connection->prepare("
+			SELECT `id`, `remote`, `remote_id`, `share_token`, `name`, `owner`, `user`, `mountpoint`, `accepted`, `parent`, `password`, `mountpoint_hash`
+			FROM  `*PREFIX*{$this->tableName}`
+			WHERE `parent` = ? AND `user` = ?");
+		if ($getShare->execute([$parentId, $uid])) {
+			$share = $getShare->fetch();
+			$getShare->closeCursor();
+			if ($share !== false) {
+				return $share;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @return bool True if db could be accepted, false otherwise
+	 */
+	protected function acceptShareInDb($share, $mountPoint, $hash) {
+		$id = $share['id'];
+		$parentId = (int)$share['parent'];
+		if ($parentId !== -1) {
+			// this is the sub-share
+			$subshare = $share;
+		} else {
+			$subshare = $this->fetchUserShare($id, $this->uid);
+		}
+
+		if ($subshare !== null) {
+			try {
+				$acceptShare = $this->connection->prepare("
+				UPDATE `*PREFIX*{$this->tableName}`
+				SET `accepted` = ?,
+					`mountpoint` = ?,
+					`mountpoint_hash` = ?
+				WHERE `id` = ? AND `user` = ?");
+				$acceptShare->execute([1, $mountPoint, $hash, $subshare['id'], $this->uid]);
+				$result = true;
+			} catch (Exception $e) {
+				error_log('Could not update share: '.$e->getMessage());
+				$result = false;
+			}
+		} else {
+			try {
+				$this->writeShareToDb(
+					$share['remote'],
+					$share['share_token'],
+					$share['password'],
+					$share['name'],
+					$share['owner'],
+					$this->uid,
+					$mountPoint, $hash, 1,
+					$share['remote_id'],
+					$id);
+				$result = true;
+			} catch (Exception $e) {
+				error_log('Could not create share: '.$e->getMessage());
+				$result = false;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Updates accepted flag in the database
+	 *
+	 * @param int $id
+	 */
+	private function updateAccepted(int $shareId, bool $accepted) : void {
+		$query = $this->connection->prepare("
+			UPDATE `*PREFIX*{$this->tableName}`
+			SET `accepted` = ?
+			WHERE `id` = ?");
+		$query->execute([$accepted ? 1 : 0, $shareId]);
+		$query->closeCursor();
+	}
+
+	protected function executeDeclineShareStatement($share) {
+		$id = $share['id'];
+		$parentId = (int)$share['parent'];
+		if ($parentId !== -1) {
+			// this is the sub-share
+			$subshare = $share;
+		} else {
+			$subshare = $this->fetchUserShare($id, $this->uid);
+		}
+
+		if ($subshare !== null) {
+			try {
+				$this->updateAccepted((int)$subshare['id'], false);
+				$result = true;
+			} catch (Exception $e) {
+				$this->logger->emergency('Could not update share', ['exception' => $e]);
+				$result = false;
+			}
+		} else {
+			try {
+				$this->writeShareToDb(
+					$share['remote'],
+					$share['share_token'],
+					$share['password'],
+					$share['name'],
+					$share['owner'],
+					$this->uid,
+					$share['mountpoint'],
+					$share['mountpoint_hash'],
+					0,
+					$share['remote_id'],
+					$id);
+				$result = true;
+			} catch (Exception $e) {
+				$this->logger->emergency('Could not create share', ['exception' => $e]);
+				$result = false;
+			}
+		}
+
+		return $result;
+
 		$removeShare = $this->connection->prepare("
 			Update `*PREFIX*{$this->tableName}` set `accepted` = 2 WHERE `id` = ? AND `user` = ?");
 		$removeShare->execute([$id, $this->uid]);
 	}
 
+	public function removeUserShares($uid) {
+		$qb = $this->connection->getQueryBuilder();
+		$qb->delete($this->tableName)
+			->where($qb->expr()->eq('user', $qb->createNamedParameter($uid)))
+			->andWhere($qb->expr()->neq('parent', $qb->expr()->literal(-1)));
+		$qb->execute();
+		return true;
+	}
+
+	public function userRemovedFromGroup($uid, $gid) {
+		error_log("UID:$uid , GID:$gid");
+
+		$getShares = $this->connection->prepare("
+			SELECT `id` FROM `*PREFIX*{$this->tableName}` WHERE `parent` = ? AND `user` = ?");
+		if ($getShares->execute([-1, $gid])) {
+			$parentShares = $getShares->fetchAll();
+			$getShares->closeCursor();
+			if (!empty($parentShares)) {
+				foreach ($parentShares as $parentShare) {
+					$qb = $this->connection->getQueryBuilder();
+					$qb->delete($this->tableName)
+						->where($qb->expr()->eq('user', $qb->expr()->literal($uid)))
+						->andWhere($qb->expr()->eq('parent', $qb->expr()->literal($parentShare['id'])));
+					error_log($qb->getSQL());
+					$qb->execute();
+				}
+			}
+		}
+
+		return true;
+	}
+
+	public function removeGroupShares($gid): bool {
+		try {
+			$getShare = $this->connection->prepare("
+				SELECT `id`, `remote`, `share_token`, `remote_id`
+				FROM  `*PREFIX*{$this->tableName}`
+				WHERE `user` = ?");
+			$result = $getShare->execute([$gid]);
+			$shares = $getShare->fetchAll();
+			$getShare->closeCursor();
+
+			$deletedGroupShares = [];
+			$qb = $this->connection->getQueryBuilder();
+			// delete group share entry and matching sub-entries
+			$qb->delete($this->tableName)
+			   ->where(
+			   	$qb->expr()->orX(
+			   		$qb->expr()->eq('id', $qb->createParameter('share_id')),
+			   		$qb->expr()->eq('parent', $qb->createParameter('share_parent_id'))
+			   	)
+			   );
+
+			foreach ($shares as $share) {
+				$qb->setParameter('share_id', $share['id']);
+				$qb->setParameter('share_parent_id', $share['id']);
+				$qb->execute();
+			}
+		} catch (\Doctrine\DBAL\Exception $ex) {
+			error_log('Could not delete user shares: '.$ex->getMessage());
+			return false;
+		}
+
+		return true;
+	}
+
+	protected function executeRemoveShareStatement($share, $mountHash) {
+		$this->updateAccepted((int)$share['id'], false);
+	}
+
 	protected function fetchShares($shares) {
-		$groupShared = $shares->fetchAll();
-		$sharedFiles = array_map(function ($item) {
+		$shares = $shares->fetchAll();
+
+		// remove parent group share entry if we have a specific user share entry for the user
+		$toRemove = [];
+		foreach ($shares as $share) {
+			if ((int)$share['parent'] > 0) {
+				$toRemove[] = $share['parent'];
+			}
+		}
+		$shares = array_filter($shares, function ($share) use ($toRemove) {
+			return !in_array($share['id'], $toRemove, true) && ((int)$share['parent'] === -1 || (int)$share['accepted'] === 1);
+		});
+
+		$shares = array_map(function ($item) {
 			$item["share_type"] = "group";
 			return $item;
-		}, $groupShared);
-		return $sharedFiles;
+		}, $shares);
+		return $shares;
 	}
 }
