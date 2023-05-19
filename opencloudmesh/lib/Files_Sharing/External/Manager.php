@@ -194,7 +194,7 @@ class Manager extends AbstractManager {
 				$this->updateAccepted((int)$subshare['id'], false);
 				$result = true;
 			} catch (Exception $e) {
-				$this->logger->emergency('Could not update share', ['exception' => $e]);
+				error_log('Could not update share: '.$e->getMessage());
 				$result = false;
 			}
 		} else {
@@ -213,16 +213,12 @@ class Manager extends AbstractManager {
 					$id);
 				$result = true;
 			} catch (Exception $e) {
-				$this->logger->emergency('Could not create share', ['exception' => $e]);
+				error_log('Could not create share: '.$e->getMessage());
 				$result = false;
 			}
 		}
 
 		return $result;
-
-		$removeShare = $this->connection->prepare("
-			Update `*PREFIX*{$this->tableName}` set `accepted` = 2 WHERE `id` = ? AND `user` = ?");
-		$removeShare->execute([$id, $this->uid]);
 	}
 
 	public function removeUserShares($uid) {

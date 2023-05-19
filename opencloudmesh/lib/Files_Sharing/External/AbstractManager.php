@@ -223,7 +223,7 @@ abstract class AbstractManager {
 	 */
 	private function fetchShare($id) {
 		$getShare = $this->connection->prepare("
-			SELECT `id`, `parent`, `remote`, `remote_id`, `share_token`, `name`, `owner`, `user`, `mountpoint`, `accepted`
+			SELECT `id`, `parent`, `remote`, `remote_id`, `share_token`, `password`, `name`, `owner`, `user`, `mountpoint`, `mountpoint_hash`, `accepted`, `lastscan`
 			FROM  `*PREFIX*{$this->tableName}`
 			WHERE `id` = ?");
 		$result = $getShare->execute([$id]);
@@ -370,16 +370,6 @@ abstract class AbstractManager {
 
 		if ($share) {
 			$this->executeDeclineShareStatement($share);
-
-			$this->eventDispatcher->dispatch(
-				new DeclineShare($share),
-				DeclineShare::class
-			);
-
-			$event = new GenericEvent(null, ['sharedItem' => $share['name'], 'shareAcceptedFrom' => $share['owner'],
-				'remoteUrl' => $share['remote']]);
-			$this->eventDispatcher->dispatch($event, 'remoteshare.declined');
-
 			$this->processNotification($id);
 			return true;
 		}
