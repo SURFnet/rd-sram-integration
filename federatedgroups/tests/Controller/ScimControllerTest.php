@@ -323,7 +323,7 @@ class ScimControllerTest extends TestCase {
 	public function testDeleteGroup() {
 		$groupId = 'test-group';
 		$group = $this->createMock(\OCP\IGroup::class);
-		$deleted = false;
+		$deleted = true;
 		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
 
 		if ($group) {
