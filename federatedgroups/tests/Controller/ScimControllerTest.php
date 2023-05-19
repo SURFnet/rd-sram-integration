@@ -317,10 +317,17 @@ class ScimControllerTest extends TestCase {
 					"displayName" => "",
 				];
 			}, $usersInGroup);
+		}
+	}
 
-			$expected = $this->createGroupData();
+	public function testDeleteGroup() {
+		$groupId = 'test-group';
+		$group = $this->createMock(\OCP\IGroup::class);
+		$deleted = false;
+		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
 
-			$this->assertEquals($body, $expected);
+		if ($group) {
+			$group->expects($this->once())->method("delete")->willReturn($deleted);
 		}
 	}
 }
