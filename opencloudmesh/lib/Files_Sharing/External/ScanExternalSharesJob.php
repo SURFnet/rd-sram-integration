@@ -95,6 +95,8 @@ class ScanExternalSharesJob extends TimedJob {
 			\OC\Files\Filesystem::getLoader(),
 			\OC::$server->getNotificationManager(),
 			\OC::$server->getEventDispatcher(),
+			\OC::$server->getUserManager(),
+			\OC::$server->getGroupManager(),
 			null
 		);
 	}
@@ -253,7 +255,7 @@ class ScanExternalSharesJob extends TimedJob {
 	protected function getAcceptedShares($limit, $offset) {
 		$qb = $this->connection->getQueryBuilder();
 		$qb->select('*')
-			->from('share_external')
+			->from('share_external_group')
 			->where($qb->expr()->eq('accepted', $qb->expr()->literal('1')));
 
 		$qb->setMaxResults($limit);
@@ -266,7 +268,7 @@ class ScanExternalSharesJob extends TimedJob {
 
 	protected function updateLastScanned($id, $updatedTime) {
 		$qb = $this->connection->getQueryBuilder();
-		$qb->update('share_external')
+		$qb->update('share_external_group')
 			->set('lastscan', $qb->createNamedParameter($updatedTime))
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
 

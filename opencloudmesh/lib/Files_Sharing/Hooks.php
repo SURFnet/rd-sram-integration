@@ -120,9 +120,13 @@ class Hooks {
 				$this->externalManager->userRemovedFromGroup($user->getUID(), $group->getGID());
 			}
 		);
-	}
 
-	public static function post_deleteGroup($arguments) {
-		// Group deleted $arguments['gid']
+		// $this->eventDispatcher->addListener(
+		// 	'group.postDelete',
+		// 	function (GenericEvent $event) {
+		// 		$group = $event->getSubject();
+		// 		// Group deleted
+		// 	}
+		// );
 	}
 }

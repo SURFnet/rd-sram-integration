@@ -10,4 +10,3 @@ $app->registerMountProviders();
 $app->registerEvents();
 
 \OCP\Util::connectHook('OC_User', 'post_deleteUser', '\OCA\OpenCloudMesh\Files_Sharing\Hooks', 'deleteUser');
-\OCP\Util::connectHook('OC_Group', 'post_deleteGroup', '\OCA\OpenCloudMesh\Files_Sharing\Hooks', 'post_deleteGroup');
