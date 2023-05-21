@@ -100,6 +100,28 @@ class Manager extends AbstractManager {
 			");
 		$query->execute([$remote, $token, $password, $name, $owner, $user, $mountPoint, $hash, $accepted, $remoteId, $parent, time()]);
 	}
+	
+	public function getShare($id) {
+		$share = $this->fetchShare($id);
+		$validShare = is_array($share) && isset($share['user']);
+
+		if ($validShare) {
+			$parentId = (int)$share['parent'];
+			if ($parentId !== -1) {
+				// we just retrieved a sub-share, switch to the parent entry for verification
+				$groupShare = $this->fetchShare($parentId);
+			} else {
+				$groupShare = $share;
+			}
+			$user = $this->userManager->get($this->uid);
+			$group = $this->groupManager->get($groupShare['user']);
+			if (isset($group) && $group->inGroup($user)) {
+				return $share;
+			}
+		}
+
+		return false;
+	}
 
 	private function fetchUserShare($parentId, $uid) {
 		$getShare = $this->connection->prepare("
@@ -286,6 +308,7 @@ class Manager extends AbstractManager {
 
 	protected function executeRemoveShareStatement($share, $mountHash) {
 		$this->updateAccepted((int)$share['id'], false);
+		return true;
 	}
 
 	protected function fetchShares($shares) {

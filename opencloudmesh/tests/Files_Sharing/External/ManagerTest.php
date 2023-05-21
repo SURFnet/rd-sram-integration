@@ -54,6 +54,7 @@ class ManagerTest extends TestCase {
 	private $eventDispatcher;
 
 	private $uid;
+	private $gid;
 
 	/**
 	 * @var \OCP\IUser
@@ -67,6 +68,13 @@ class ManagerTest extends TestCase {
 		$this->uid = $this->getUniqueID('user');
 		$this->createUser($this->uid);
 		$this->user = \OC::$server->getUserManager()->get($this->uid);
+
+		$this->gid = $this->getUniqueID('group');
+		$groupBackend = new \Test\Util\Group\Dummy();
+		$groupBackend->createGroup($this->gid);
+		$groupBackend->addToGroup($this->uid, $this->gid);
+		\OC::$server->getGroupManager()->addBackend($groupBackend);
+
 		$this->mountManager = new \OC\Files\Mount\Manager();
 		$this->eventDispatcher = $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
 
@@ -101,12 +109,18 @@ class ManagerTest extends TestCase {
 			'name' => '/SharedFolder',
 			'owner' => 'foobar',
 			'accepted' => false,
-			'user' => $this->uid,
+			'user' => $this->gid,
 		];
+		$acceptedShareData1 = $shareData1;
+		$acceptedShareData1['user'] = $this->uid;
 		$shareData2 = $shareData1;
 		$shareData2['token'] = 'token2';
+		$acceptedShareData2 = $shareData2;
+		$acceptedShareData2['user'] = $this->uid;
 		$shareData3 = $shareData1;
 		$shareData3['token'] = 'token3';
+		$acceptedShareData3 = $shareData3;
+		$acceptedShareData3['user'] = $this->uid;
 
 		// Add a share for "user"
 		$this->assertNull(\call_user_func_array([$this->manager, 'addShare'], $shareData1));
@@ -169,8 +183,8 @@ class ManagerTest extends TestCase {
 		// Check remaining shares - Accepted
 		$acceptedShares = self::invokePrivate($this->manager, 'getShares', [true]);
 		$this->assertCount(1, $acceptedShares);
-		$shareData1['accepted'] = true;
-		$this->assertExternalShareEntry($shareData1, $acceptedShares[0], 1, $shareData1['name']);
+		$acceptedShareData1['accepted'] = true;
+		$this->assertExternalShareEntry($acceptedShareData1, $acceptedShares[0], 1, $shareData1['name']);
 		// Check remaining shares - Open
 		$openShares = $this->manager->getOpenShares();
 		$this->assertCount(1, $openShares);
@@ -186,8 +200,7 @@ class ManagerTest extends TestCase {
 		$openShares = $this->manager->getOpenShares();
 		$this->assertCount(2, $openShares);
 		$this->assertExternalShareEntry($shareData2, $openShares[0], 2, '{{TemporaryMountPointName#' . $shareData2['name'] . '}}-1');
-		// New share falls back to the original name (no "-\d", because the name is not taken)
-		$this->assertExternalShareEntry($shareData3, $openShares[1], 3, '{{TemporaryMountPointName#' . $shareData3['name'] . '}}');
+		$this->assertExternalShareEntry($shareData3, $openShares[1], 3, '{{TemporaryMountPointName#' . $shareData3['name'] . '}}-2');
 
 		$this->setupMounts();
 		$this->assertMount($shareData1['name']);
@@ -228,8 +241,8 @@ class ManagerTest extends TestCase {
 		// Check remaining shares - Accepted
 		$acceptedShares = self::invokePrivate($this->manager, 'getShares', [true]);
 		$this->assertCount(1, $acceptedShares);
-		$shareData1['accepted'] = true;
-		$this->assertExternalShareEntry($shareData1, $acceptedShares[0], 1, $shareData1['name']);
+		$acceptedShareData1['accepted'] = true;
+		$this->assertExternalShareEntry($acceptedShareData1, $acceptedShares[0], 1, $shareData1['name']);
 		// Check remaining shares - Open
 		$openShares = $this->manager->getOpenShares();
 		$this->assertCount(1, $openShares);
@@ -262,7 +275,7 @@ class ManagerTest extends TestCase {
 			);
 
 		$this->manager->removeUserShares($this->uid);
-		$this->assertEmpty(self::invokePrivate($this->manager, 'getShares', [null]), 'Asserting all shares for the user have been deleted');
+		$this->assertCount(3, self::invokePrivate($this->manager, 'getShares', [null]), 'Asserting all shares for the user have been deleted but the open group shares remain');
 
 		$this->mountManager->clear();
 		self::invokePrivate($this->manager, 'setupMounts');

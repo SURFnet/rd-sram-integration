@@ -90,12 +90,12 @@ abstract class AbstractManager {
 	/**
 	 * @var IUserManager
 	 */
-	private $userManager;
+	protected $userManager;
 
 	/**
 	 * @var IGroupManager
 	 */
-	private $groupManager;
+	protected $groupManager;
 
 	/**
 	 * @param \OCP\IDBConnection $connection
@@ -221,9 +221,9 @@ abstract class AbstractManager {
 	 * @param int $id share id
 	 * @return mixed share of false
 	 */
-	private function fetchShare($id) {
+	protected function fetchShare($id) {
 		$getShare = $this->connection->prepare("
-			SELECT `id`, `parent`, `remote`, `remote_id`, `share_token`, `password`, `name`, `owner`, `user`, `mountpoint`, `mountpoint_hash`, `accepted`, `lastscan`
+			SELECT *
 			FROM  `*PREFIX*{$this->tableName}`
 			WHERE `id` = ?");
 		$result = $getShare->execute([$id]);
@@ -237,26 +237,7 @@ abstract class AbstractManager {
 	 * @param int $id share id
 	 * @return mixed share of false
 	 */
-	public function getShare($id) {
-		$share = $this->fetchShare($id);
-		$validShare = is_array($share) && isset($share['user']);
-
-		if ($validShare) {
-			$parentId = (int)$share['parent'];
-			if ($parentId !== -1) {
-				// we just retrieved a sub-share, switch to the parent entry for verification
-				$groupShare = $this->fetchShare($parentId);
-			} else {
-				$groupShare = $share;
-			}
-			$user = $this->userManager->get($this->uid);
-			if ($this->groupManager->get($groupShare['user'])->inGroup($user)) {
-				return $share;
-			}
-		}
-
-		return false;
-	}
+	abstract public function getShare($id);
 
 	/**
 	 * Get the file id for an accepted share. Returns null when
@@ -492,6 +473,9 @@ abstract class AbstractManager {
 			if (isset($share)) {
 				$removeResult = $this->executeRemoveShareStatement($share, $hash);
 			}
+			else {
+				$removeResult = true;
+			}
 		}
 		$getShare->closeCursor();
 
@@ -571,7 +555,7 @@ abstract class AbstractManager {
 		}
 
 		$qb = $this->connection->getQueryBuilder();
-		$qb->select('id', 'parent', 'remote', 'remote_id', 'share_token', 'name', 'owner', 'user', 'mountpoint', 'accepted')
+		$qb->select('*')
 			->from($this->tableName)
 			->where(
 				$qb->expr()->orX(
@@ -593,7 +577,7 @@ abstract class AbstractManager {
 				return (bool)$share['accepted'] === $accepted;
 			});
 		}
-		return $shares;
+		return \array_values($shares);
 	}
 
 	abstract protected function fetchShares($shares);
