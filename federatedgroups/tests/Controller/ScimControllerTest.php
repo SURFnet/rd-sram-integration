@@ -282,52 +282,128 @@ class ScimControllerTest extends TestCase {
 		];
 	}
 
-	public function testGetGroups() {
+
+
+
+	// updateGroup START
+
+	// updateGroup END
+
+
+
+	// deleteGroup START
+	public function test_it_can_delete_created_group() {
+		$groupId = 'test-group';
+		$members = [["value" => "test_user@oc2.docker"]];
+
+		// Create First
+		$createResponse = $this->controller->createGroup($groupId, $members);
+
+		$this->assertEquals(Http::STATUS_CREATED, $createResponse->getStatus());
+
+
+		$group = $this->createMock(\OCP\IGroup::class);
+
+		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
+
+		$group->expects($this->once())->method("delete");
+
+		$deleteResponse = $this->controller->deleteGroup($groupId);
+
+		$this->assertEquals(Http::STATUS_OK, $deleteResponse->getStatus());
+	}
+
+	public function test_it_returns_204_when_delete_non_existing_group() {
+		$groupId = 'test-group';
+
+		$this->groupManager->expects($this->once())->method("get")->with($groupId);
+
+		$deleteResponse = $this->controller->deleteGroup($groupId);
+
+		$this->assertEquals(Http::STATUS_NO_CONTENT, $deleteResponse->getStatus());
+	}
+	// deleteGroup END
+
+
+	// getGroups START
+	public function test_it_can_get_list_of_groups() {
+
 		$response = $this->controller->getGroups();
-		$this->assertEquals(200, $response->getStatus());
+
+		$this->assertEquals(Http::STATUS_OK, $response->getStatus());
+	}
+	// getGroups END
+
+
+	// getGroup START
+	public function test_it_returns_404_if_groups_not_exists() {
+		$groupId = 'test-group';
+
+		$this->groupManager->expects($this->once())->method("get")->with($groupId);
+
+		$getResponse = $this->controller->getGroup($groupId);
+
+		$this->assertEquals(Http::STATUS_NOT_FOUND, $getResponse->getStatus());
 	}
 
-	public function test_GetGroup() {
-		$groupId = 'federalists';
-
-		$response = $this->controller->getGroup($groupId);
-		$this->assertEquals(200, $response->getStatus());
-	}
-
-	public function testGetGroup() {
+	public function test_it_can_get_group_if_exists() {
 		$groupId = 'test-group';
 		$displayName = 'test-group';
-		$usersInGroup = ['user-in-group'];
+		$members = [["value" => "test_user@oc2.docker"]];
+
+		$createResponse = $this->controller->createGroup($groupId, $members);
+
+		// $this->assertEquals(Http::STATUS_CREATED, $createResponse->getStatus());
 
 		$group = $this->createMock(\OCP\IGroup::class);
 		$groupBackend = $this->createMock(\OC\Group\Backend::class);
 
 		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
-		if ($group) {
-			$group->expects($this->once())->method("getGID")->willReturn($groupId);
-			$group->expects($this->once())->method("getDisplayName")->willReturn($displayName);
-			$group->expects($this->once())->method("getBackend")->willReturn($groupBackend);
 
-			$groupBackend->expects($this->once())->method("usersInGroup")->with($groupId)->willReturn($usersInGroup);
+		$group->expects($this->once())->method("getGID")->willReturn($groupId);
+		$group->expects($this->once())->method("getDisplayName")->willReturn($displayName);
+		$group->expects($this->once())->method("getBackend")->willReturn($groupBackend);
 
-			$members = array_map(function ($item) {
-				return [
-					"value" => $item,
-					"ref" => "",
-					"displayName" => "",
-				];
-			}, $usersInGroup);
-		}
+		$groupBackend->expects($this->once())->method("usersInGroup")->with($groupId);
+
+		$getResponse = $this->controller->getGroup($groupId);
+
+		$this->assertEquals(Http::STATUS_OK, $getResponse->getStatus());
 	}
+	// getGroup END
 
-	public function testDeleteGroup() {
+
+
+
+	#region updateGroup
+	public function test_it_can_update_group_if_exists() {
+
 		$groupId = 'test-group';
-		$group = $this->createMock(\OCP\IGroup::class);
-		$deleted = true;
-		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
+		$currentMembers = ["currentMember"];
+		$members = [["value" => "test_user@oc2.docker"]];
+		$newMembers = ["test_user#oc2.docker"];
 
-		if ($group) {
-			$group->expects($this->once())->method("delete")->willReturn($deleted);
-		}
+		// Create First
+		$createResponse = $this->controller->createGroup($groupId, $members);
+
+
+		$group = $this->createMock(\OCP\IGroup::class);
+		$groupBackend = $this->createMock(\OC\Group\Backend::class);
+
+
+		$this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
+		$group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
+		$groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
+
+		$newDomain = explode("#", $newMembers[0]);
+		// $groupBackend->expects($this->once())->method('removeFromGroup');
+		$this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
+
+		$groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[0], $groupId);
+
+		$response = $this->controller->updateGroup($groupId, $members);
+
+		$this->assertEquals(Http::STATUS_OK, $response->getStatus());
 	}
+	#endregion updateGroup
 }
