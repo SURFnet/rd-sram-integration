@@ -153,16 +153,15 @@ class ScimController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
-	public function createGroup() {
-		$body = json_decode(file_get_contents("php://input"), true);
-		$groupId = $body["id"];
+	public function createGroup($id, $members) {
+		$body = ["id" => $id, "members" => $members];
 
-		$this->groupManager->createGroup($groupId);
+		$this->groupManager->createGroup($id);
 
 		// expect group to already exist
 		// we are probably receiving this create due to 
 		// https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
-		$this->handleUpdateGroup($groupId, $body);
+		$this->handleUpdateGroup($id, $body);
 		return new JSONResponse(
 			$body,
 			RESPONSE_TO_GROUP_CREATE
@@ -173,8 +172,8 @@ class ScimController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
-	public function updateGroup($groupId) {
-		$body = json_decode(file_get_contents("php://input"), true);
+	public function updateGroup($groupId, $members) {
+		$body = ["members" => $members];
 
 		try {
 			$this->handleUpdateGroup($groupId, $body);
