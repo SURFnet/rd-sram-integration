@@ -4,10 +4,20 @@ declare(strict_types=1);
 
 namespace OCA\FederatedGroups\Tests\Controller;
 
-use OCA\FederatedGroups\Controller\ScimController;
+use OCA\OpenCloudMesh\AppInfo\Application;
 use OCA\FederatedGroups\MixedGroupShareProvider;
+use OCA\FederatedGroups\Controller\ScimController;
 use OCP\AppFramework\Http;
 use Test\TestCase;
+use OCP\IRequest;
+use OCP\IGroupManager;
+use OCP\IUserManager;
+use OCP\IDBConnection;
+use OCP\Files\IRootFolder;
+use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
+use OCA\FederatedFileSharing\TokenHandler;
+use OCA\FederatedFileSharing\AddressHandler;
+
 
 const RESPONSE_TO_USER_CREATE = Http::STATUS_CREATED;
 const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
