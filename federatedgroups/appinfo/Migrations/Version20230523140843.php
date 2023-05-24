@@ -4,9 +4,10 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-namespace OCA\OpenCloudMesh\Migrations;
+namespace OCA\FederatedGroups\Migrations;
 
 use Doctrine\DBAL\Schema\Schema;
+use OCP\IDBConnection;
 use OCP\Migration\ISqlMigration;
 
 class Version20230523140843 implements ISqlMigration {
