@@ -30,6 +30,7 @@ use OCP\IDBConnection;
 use OCP\IRequest;
 use OCP\IGroupManager;
 use OCA\FederatedGroups\AppInfo\Application;
+use OCA\FederatedGroups\GroupBackend;
 use OCA\FederatedGroups\MixedGroupShareProvider;
 
 const RESPONSE_TO_USER_CREATE = Http::STATUS_CREATED;
@@ -61,6 +62,11 @@ class ScimController extends Controller {
 	private $groupManager;
 
 	/**
+	 * @var GroupBackend $groupBackend
+	 */
+	private $groupBackend;
+
+	/**
 	 * @var MixedGroupShareProvider
 	 */
 	protected $mixedGroupShareProvider;
@@ -73,11 +79,12 @@ class ScimController extends Controller {
 	 * @param IGroupManager $groupManager
 
 	 */
-	public function __construct($appName, IRequest $request, IGroupManager $groupManager) {
+	public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend) {
 		parent::__construct($appName, $request);
 		$federatedGroupsApp = new Application();
 		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		$this->groupManager = $groupManager;
+		$this->groupBackend = $groupBackend;
 	}
 
 	private function checkNeedToSend($newUser, $existingUsers) {
@@ -157,7 +164,7 @@ class ScimController extends Controller {
 		$body = json_decode(file_get_contents("php://input"), true);
 		$groupId = $body["id"];
 
-		$this->groupManager->createGroup($groupId);
+		$this->groupBackend->createGroup($groupId);
 
 		// expect group to already exist
 		// we are probably receiving this create due to 
@@ -229,13 +236,8 @@ class ScimController extends Controller {
 	 * @PublicPage
 	 */
 	public function getGroups() {
-		$groups = [];
+		$groups = $this->groupBackend->getGroups();
 		$res = [];
-
-		foreach ($this->groupManager->getBackends() as $backend) {
-			$_groups = $backend->getGroups();
-			\array_push($groups, ...$_groups);
-		}
 
 		foreach ($groups as $groupId) {
 			$group = $this->groupManager->get(\urldecode($groupId));

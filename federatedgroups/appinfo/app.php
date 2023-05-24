@@ -9,3 +9,4 @@
  */
 
 $app = new \OCA\FederatedGroups\AppInfo\Application();
+$app->registerBackends();
