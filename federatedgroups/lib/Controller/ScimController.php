@@ -209,6 +209,8 @@ class ScimController extends Controller {
 					],
 					Http::STATUS_OK
 				);
+			}else{
+				
 			}
 		} else {
 			return new JSONResponse(
