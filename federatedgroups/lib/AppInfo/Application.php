@@ -20,6 +20,7 @@ use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
 use OCA\FederatedFileSharing\Ocm\Permissions;
+use OCA\FederatedGroups\GroupBackend;
 use OCA\FederatedGroups\SRAMFederatedGroupShareProvider;
 
 
@@ -27,8 +28,14 @@ class Application extends App {
 	private $isProviderRegistered = false;
 	
 	public function __construct(array $urlParams = []) {
-		// error_log("fg: ". get_parent_class($this));
 		parent::__construct('federatedgroups', $urlParams);
+
+		$container = $this->getContainer();
+		$server = $container->getServer();
+
+		$container->registerService('OCA\\FederatedGroups\\GroupBackend', function (SimpleContainer $c) use ($server) {
+			return new GroupBackend();
+		});
 	}
 		
   	public static  function getMixedGroupShareProvider() {
@@ -100,5 +107,11 @@ class Application extends App {
 				return $ocmApp->getContainer()->query('OCA\\OpenCloudMesh\\GroupExternalManager');
 			}
 		);
+	}
+
+	public function registerBackends() {
+		$server = $this->getContainer()->getServer();
+		$groupBackend = $this->getContainer()->query('OCA\\FederatedGroups\\GroupBackend');
+		$server->getGroupManager()->addBackend($groupBackend);
 	}
 } 
