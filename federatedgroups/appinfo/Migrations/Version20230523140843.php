@@ -13,14 +13,16 @@ use OCP\Migration\ISqlMigration;
 class Version20230523140843 implements ISqlMigration {
 
     public function sql(IDBConnection $connection) {
-		$sql1 = 'CREATE TABLE `fg_groups` (
+        $prefix = $connection->getPrefix();
+
+		$sql1 = "CREATE TABLE `{$prefix}fg_groups` (
             `gid` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
             PRIMARY KEY (`gid`)
-            ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci';
-        $sql2 = 'CREATE TABLE `fg_group_user` (
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+        $sql2 = "CREATE TABLE `{$prefix}fg_group_user` (
             `gid` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
             `uid` varchar(256) COLLATE utf8_unicode_ci NOT NULL
-            ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci';
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
 		return [$sql1, $sql2];
 	}
 }
