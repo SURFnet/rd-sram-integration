@@ -40,7 +40,8 @@ const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
 
 const IGNORE_DOMAIN = "sram.surf.nl";
 
-function getOurDomain() {
+function getOurDomain()
+{
 	return getenv("SITE") . ".pondersource.net";
 }
 
@@ -49,7 +50,8 @@ function getOurDomain() {
  *
  * @package OCA\FederatedGroups\Controller
  */
-class ScimController extends Controller {
+class ScimController extends Controller
+{
 	/**
 	 * @var IDBConnection
 	 */
@@ -66,23 +68,26 @@ class ScimController extends Controller {
 	protected $mixedGroupShareProvider;
 
 	/**
-	 * OcmController constructor.
-	 *
-	 * @param string $appName
-	 * @param IRequest $request
-	 * @param IGroupManager $groupManager
+		* OcmController constructor.
+		*
+		* @param string $appName
+		* @param IRequest $request
+		* @param IGroupManager $groupManager
 
-	 */
-	public function __construct($appName, IRequest $request, IGroupManager $groupManager) {
+		*/
+	public function __construct($appName, IRequest $request, IGroupManager $groupManager)
+	{
 		parent::__construct($appName, $request);
 		$federatedGroupsApp = new Application();
 		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
 		$this->groupManager = $groupManager;
 	}
 
-	private function checkNeedToSend($newUser, $existingUsers) {
+	private function checkNeedToSend($newUser, $existingUsers)
+	{
 		$newUserParts = explode("#", $newUser);
-		if (count($newUserParts) == 1) return false; // local user
+		if (count($newUserParts) == 1)
+			return false; // local user
 
 		if (count($newUserParts) == 2) { // remote user
 			if (str_contains($newUserParts[1], '#') && !str_contains($newUserParts[1], getOurDomain())) {
@@ -102,7 +107,8 @@ class ScimController extends Controller {
 		return false;
 	}
 
-	private function handleUpdateGroup(string $groupId, $obj) {
+	private function handleUpdateGroup(string $groupId, $obj)
+	{
 		$group = $this->groupManager->get($groupId);
 		$backend = $group->getBackend();
 		$currentMembers = $backend->usersInGroup($groupId);
@@ -153,7 +159,8 @@ class ScimController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
-	public function createGroup($id, $members) {
+	public function createGroup($id, $members)
+	{
 		$body = ["id" => $id, "members" => $members];
 
 		$this->groupManager->createGroup($id);
@@ -172,7 +179,8 @@ class ScimController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
-	public function updateGroup($groupId, $members) {
+	public function updateGroup($groupId, $members)
+	{
 		$body = ["members" => $members];
 
 		try {
@@ -195,7 +203,8 @@ class ScimController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
-	public function deleteGroup($groupId) {
+	public function deleteGroup($groupId)
+	{
 		$group = $this->groupManager->get(\urldecode($groupId));
 		if ($group) {
 			$deleted = $group->delete();
@@ -209,8 +218,16 @@ class ScimController extends Controller {
 					],
 					Http::STATUS_OK
 				);
-			}else{
-				
+			} else {
+				return new JSONResponse(
+					[
+						'status' => 'error',
+						'data' => [
+							'message' => "Falure in deleting group: {$groupId}"
+						]
+					],
+					Http::STATUS_BAD_GATEWAY
+				);
 			}
 		} else {
 			return new JSONResponse(
@@ -229,7 +246,8 @@ class ScimController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
-	public function getGroups() {
+	public function getGroups()
+	{
 		$groups = [];
 		$res = [];
 
@@ -268,7 +286,8 @@ class ScimController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 */
-	public function getGroup($groupId) {
+	public function getGroup($groupId)
+	{
 		// work around #129
 		$group = $this->groupManager->get(\urldecode($groupId));
 		if ($group) {
