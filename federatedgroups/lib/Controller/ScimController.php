@@ -216,7 +216,7 @@ class ScimController extends Controller
 							'message' => "Succesfully deleted group: {$groupId}"
 						]
 					],
-					Http::STATUS_OK
+					Http::STATUS_NO_CONTENT
 				);
 			} else {
 				return new JSONResponse(
@@ -237,7 +237,7 @@ class ScimController extends Controller
 						'message' => "Could not find Group with the given identifier: {$groupId}"
 					],
 				],
-				Http::STATUS_NO_CONTENT
+				Http::STATUS_NOT_FOUND
 			);
 		}
 	}
