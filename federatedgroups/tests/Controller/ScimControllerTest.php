@@ -77,6 +77,8 @@ class ScimControllerTest extends TestCase {
     // getGroups START
     public function test_it_can_get_list_of_groups() {
         $groups = ["admin", "federalists"];
+        $usersInGroup = ["admin"];
+
         $backend = $this->createMock(Dummy::class);
         $backends = [$backend];
 
@@ -84,17 +86,15 @@ class ScimControllerTest extends TestCase {
         $groups = [$group];
 
         $this->groupManager->expects($this->once())->method("getBackends")->willReturn($backends);
-
-        $groupItem = $this->createMock(IGroup::class);
-
-        $this->groupManager->expects($this->once())->method("get")->willReturn($groupItem);
-
         $backend->expects($this->any())->method("getGroups")->willReturn($groups);
 
-        $this->groupManager->expects($this->any())->method("get")->with($group);
+
+        $this->groupManager->expects($this->any())->method("get")->with($group)->willReturn($group);
+        $group->expects($this->any())->method("getGID");
+        $group->expects($this->any())->method("getDisplayName");
+
         $groupBackend = $this->createMock(\OC\Group\Backend::class);
-        $groupItem->expects($this->any())->method("getBackend")->willReturn($groupBackend);
-        $usersInGroup = ["admin"];
+        $group->expects($this->any())->method("getBackend")->willReturn($groupBackend);
 
         $groupBackend->expects($this->any())->method("usersInGroup")->with($group)->willReturn($usersInGroup);
 
