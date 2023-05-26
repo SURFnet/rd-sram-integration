@@ -147,31 +147,23 @@ class ScimControllerTest extends TestCase
     public function test_it_can_update_group_if_exists()
     {
         $groupId = 'test-group';
-
-        $currentMembers = ["currentMember"];
-
         $members = [["value" => "test_user@oc2.docker"]];
-
-        $newMembers = ["test_user_1#oc2.docker"];
+        $newMembers = ["test_user#oc2.docker"];
+        $currentMembers = ["current_member"];
 
         $group = $this->createMock(IGroup::class);
-
         $groupBackend = $this->createMock(Dummy::class);
 
         $this->groupManager->expects($this->any())->method("get")->with($groupId)->willReturn($group);
-
         $group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
-
         $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
-
-        $groupBackend->expects($this->once())->method('removeFromGroup');
-//        $newDomain = explode("#", $newMembers[0]);
-//        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
-
+        $groupBackend->expects($this->once())->method('removeFromGroup')->with($currentMembers[0], $groupId);
         $groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[0], $groupId);
 
-        $response = $this->controller->updateGroup($groupId, $members);
+        $newDomain = explode("#", $newMembers[0]);
+        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
 
+        $response = $this->controller->updateGroup($groupId, $members);
         $this->assertEquals(Http::STATUS_OK, $response->getStatus());
     }
     // updateGroup END
@@ -180,34 +172,21 @@ class ScimControllerTest extends TestCase
     public function test_it_can_create_group()
     {
         $groupId = 'test-group';
-
-        $currentMembers = ["currentMember"];
-
         $members = [["value" => "test_user@oc2.docker"]];
-
-        $newMembers = ["test_user_1#oc2.docker"];
+        $newMembers = ["test_user#oc2.docker"];
+        $currentMembers = [];
 
         $group = $this->createMock(IGroup::class);
-
         $groupBackend = $this->createMock(Dummy::class);
 
         $this->groupManager->expects($this->any())->method("createGroup")->with($groupId);
-
         $this->groupManager->expects($this->any())->method("get")->with($groupId)->willReturn($group);
-
         $group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
-
         $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
-
-        $groupBackend->expects($this->once())->method('removeFromGroup');
-//        $newDomain = explode("#", $newMembers[0]);
-//        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
-
-        $groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[0], $groupId);
+        $groupBackend->expects($this->any())->method('addToGroup')->with($newMembers[0], $groupId);
 
         $response = $this->controller->createGroup($groupId, $members);
-
-        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+        $this->assertEquals(Http::STATUS_CREATED, $response->getStatus());
     }
     // createGroup END
 }

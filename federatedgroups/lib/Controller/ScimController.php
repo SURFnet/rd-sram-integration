@@ -148,16 +148,7 @@ class ScimController extends Controller
     {
         $body = ["members" => $members];
 
-        try {
-            $this->handleUpdateGroup($groupId, $body);
-        } catch (\Throwable $th) {
-            return new JSONResponse([
-                'status' => 'error',
-                'data' => [
-                    'message' => "Falure in sending ocm invites"
-                ]
-            ], Http::STATUS_BAD_REQUEST);
-        }
+        $this->handleUpdateGroup($groupId, $body);
         return new JSONResponse(
             $body,
             Http::STATUS_OK
