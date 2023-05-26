@@ -6,7 +6,6 @@ namespace OCA\FederatedGroups\Tests\Controller;
 
 use OCA\FederatedGroups\Controller\ScimController;
 use OCP\AppFramework\Http;
-use OCP\GroupInterface;
 use OCP\IGroup;
 use Test\TestCase;
 use OCP\IRequest;
@@ -19,26 +18,15 @@ use Test\Util\Group\Dummy;
  */
 class ScimControllerTest extends TestCase
 {
-
-    /**
-     * @var IGroupManager $groupManager
-     */
-    private $groupManager;
-    /**
-     * @var ScimController
-     */
-    private $controller;
-    /**
-     * @var IRequest
-     */
-    private $request;
+    private IGroupManager $groupManager;
+    private ScimController $controller;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->request = $this->createMock(IRequest::class);
+        $request = $this->createMock(IRequest::class);
         $this->groupManager = $this->createMock(IGroupManager::class);
-        $this->controller = new ScimController("federatedGroups", $this->request, $this->groupManager);
+        $this->controller = new ScimController("federatedGroups", $request, $this->groupManager);
     }
 
 
@@ -62,7 +50,6 @@ class ScimControllerTest extends TestCase
         $groupBackend->expects($this->once())->method("usersInGroup")->willReturn($currentMembers);
         $groupBackend->expects($this->once())->method("removeFromGroup");
 
-        // Create First
         $createResponse = $this->controller->createGroup($groupId, $members);
 
         $this->assertEquals(Http::STATUS_CREATED, $createResponse->getStatus());
@@ -123,30 +110,45 @@ class ScimControllerTest extends TestCase
     public function test_it_can_get_group_if_exists()
     {
         $groupId = 'test-group';
+
         $usersInGroup = ["admin"];
+
         $group = $this->createMock(IGroup::class);
+
         $groupBackend = $this->createMock(Dummy::class);
+
         $this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
+
         $group->expects($this->once())->method("getBackend")->willReturn($groupBackend);
+
         $groupBackend->expects($this->once())->method("usersInGroup")->willReturn($usersInGroup);
+
         $responce = $this->controller->getGroup($groupId);
+
         $this->assertEquals(Http::STATUS_OK, $responce->getStatus());
     }
     // getGroup END
+
     // updateGroup START
     public function test_it_can_update_group_if_exists()
     {
 
         $groupId = 'test-group';
+
         $currentMembers = ["currentMember"];
+
         $members = [["value" => "test_user@oc2.docker"]];
+
         $newMembers = ["test_user#oc2.docker"];
 
         $group = $this->createMock(IGroup::class);
+
         $groupBackend = $this->createMock(Dummy::class);
 
         $this->groupManager->expects($this->any())->method("get")->with($groupId)->willReturn($group);
+
         $group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
+
         $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
 
         $groupBackend->expects($this->once())->method('removeFromGroup');
@@ -165,16 +167,23 @@ class ScimControllerTest extends TestCase
     public function test_it_can_create_group()
     {
         $groupId = 'test-group';
+
         $currentMembers = ["currentMember"];
+
         $members = [["value" => "test_user@oc2.docker"]];
+
         $newMembers = ["test_user#oc2.docker"];
 
         $group = $this->createMock(IGroup::class);
+
         $groupBackend = $this->createMock(Dummy::class);
 
         $this->groupManager->expects($this->any())->method("createGroup")->with($groupId);
+
         $this->groupManager->expects($this->any())->method("get")->with($groupId)->willReturn($group);
+
         $group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
+
         $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
 
         $groupBackend->expects($this->once())->method('removeFromGroup');
