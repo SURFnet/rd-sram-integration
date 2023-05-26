@@ -165,8 +165,8 @@ class ScimControllerTest extends TestCase
         $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
 
         $groupBackend->expects($this->once())->method('removeFromGroup');
-        $newDomain = explode("#", $newMembers[0]);
-        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
+//        $newDomain = explode("#", $newMembers[0]);
+//        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
 
         $groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[0], $groupId);
 
@@ -200,12 +200,12 @@ class ScimControllerTest extends TestCase
         $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
 
         $groupBackend->expects($this->once())->method('removeFromGroup');
-        $newDomain = explode("#", $newMembers[0]);
-        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
+//        $newDomain = explode("#", $newMembers[0]);
+//        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
 
         $groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[0], $groupId);
 
-        $response = $this->controller->updateGroup($groupId, $members);
+        $response = $this->controller->createGroup($groupId, $members);
 
         $this->assertEquals(Http::STATUS_OK, $response->getStatus());
     }

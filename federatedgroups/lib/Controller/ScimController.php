@@ -111,7 +111,7 @@ class ScimController extends Controller
         foreach ($newMembers as $newMember) {
             if (!in_array($newMember, $currentMembers)) {
                 $backend->addToGroup($newMember, $groupId);
-                
+
                 $newDomain = $this->getNewDomainIfNeeded($newMember, $currentMembers);
                 if ($newDomain) {
                     $this->mixedGroupShareProvider->sendOcmInviteForExistingShares($newDomain, $groupId);
