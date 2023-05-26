@@ -17,27 +17,23 @@ use Test\Util\Group\Dummy;
 /**
  * @group DB
  */
-class ScimControllerTest extends TestCase
-{
+class ScimControllerTest extends TestCase {
     private IGroupManager $groupManager;
 
     private ScimController $controller;
     private MixedGroupShareProvider $mixedGroupShareProvider;
 
-    protected function setUp(): void
-    {
+    protected function setUp(): void {
         parent::setUp();
         $request = $this->createMock(IRequest::class);
         $this->groupManager = $this->createMock(IGroupManager::class);
         $this->controller = new ScimController("federatedGroups", $request, $this->groupManager);
         $this->mixedGroupShareProvider = $this->createMock(MixedGroupShareProvider::class);
-
     }
 
 
     // deleteGroup START
-    public function test_it_can_delete_created_group()
-    {
+    public function test_it_can_delete_created_group() {
         $groupId = 'test-group';
         $members = [["value" => "test_user@oc2.docker"]];
         $deleted = true;
@@ -66,8 +62,7 @@ class ScimControllerTest extends TestCase
         $this->assertEquals(Http::STATUS_NO_CONTENT, $deleteResponse->getStatus());
     }
 
-    public function test_it_returns_404_when_delete_non_existing_group()
-    {
+    public function test_it_returns_404_when_delete_non_existing_group() {
         $groupId = 'test-group';
 
         $this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn(null);
@@ -80,29 +75,28 @@ class ScimControllerTest extends TestCase
 
 
     // getGroups START
-//    public function test_it_can_get_list_of_groups()
-//    {
-//
-////        $stub = $this->getMockBuilder(GroupInterface::class)->getMock()->method("")->willReturn();
-//
-//        $groups = ["admin", "federalists"];
-//        $backend = $this->createMock(GroupInterface::class);
-//        $backends = [$backend];
-////        $backend = $this->createMock(\OCP\GroupInterface::class);
-////        $backends = [$backend];
-////        $group_1 = $this->createMock(IGroup::class);
-////        $group_2 = $this->createMock(IGroup::class);
-//        $this->groupManager->expects($this->once())->method("getBackends")->willReturn([$backend]);
-//        $backend->expects($this->any())->method("getGroups");
-//        $this->groupManager->expects($this->any())->method("get")->with($groups[0]);
-//        $response = $this->controller->getGroups();
-//        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
-//    }
+    //    public function test_it_can_get_list_of_groups()
+    //    {
+    //
+    ////        $stub = $this->getMockBuilder(GroupInterface::class)->getMock()->method("")->willReturn();
+    //
+    //        $groups = ["admin", "federalists"];
+    //        $backend = $this->createMock(GroupInterface::class);
+    //        $backends = [$backend];
+    ////        $backend = $this->createMock(\OCP\GroupInterface::class);
+    ////        $backends = [$backend];
+    ////        $group_1 = $this->createMock(IGroup::class);
+    ////        $group_2 = $this->createMock(IGroup::class);
+    //        $this->groupManager->expects($this->once())->method("getBackends")->willReturn([$backend]);
+    //        $backend->expects($this->any())->method("getGroups");
+    //        $this->groupManager->expects($this->any())->method("get")->with($groups[0]);
+    //        $response = $this->controller->getGroups();
+    //        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+    //    }
     // getGroups END
 
     // getGroup START
-    public function test_it_returns_404_if_groups_not_exists()
-    {
+    public function test_it_returns_404_if_groups_not_exists() {
         $groupId = 'test-group';
 
         $this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn(null);
@@ -112,8 +106,7 @@ class ScimControllerTest extends TestCase
         $this->assertEquals(Http::STATUS_NOT_FOUND, $getResponse->getStatus());
     }
 
-    public function test_it_can_get_group_if_exists()
-    {
+    public function test_it_can_get_group_if_exists() {
         $groupId = 'test-group';
 
         $usersInGroup = ["admin"];
@@ -134,18 +127,9 @@ class ScimControllerTest extends TestCase
     }
     // getGroup END
 
-//{
-//"members": [
-//{
-//"value": "fed_user_2@oc2.docker",
-//"ref": "",
-//"displayName": ""
-//}
-//]
-//}
+
     // updateGroup START
-    public function test_it_can_update_group_if_exists()
-    {
+    public function test_it_can_update_group_if_exists() {
         $groupId = 'test-group';
         $members = [["value" => "test_user@oc2.docker"]];
         $newMembers = ["test_user#oc2.docker"];
@@ -169,8 +153,7 @@ class ScimControllerTest extends TestCase
     // updateGroup END
 
     // createGroup START
-    public function test_it_can_create_group()
-    {
+    public function test_it_can_create_group() {
         $groupId = 'test-group';
         $members = [["value" => "test_user@oc2.docker"]];
         $newMembers = ["test_user#oc2.docker"];
