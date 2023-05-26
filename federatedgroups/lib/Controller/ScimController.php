@@ -33,10 +33,9 @@ use OCA\FederatedGroups\MixedGroupShareProvider;
 
 const IGNORE_DOMAIN = "sram.surf.nl";
 
-function getOurDomain()
-{
-//    return getenv("SITE") . ".pondersource.net";
-//    return $_SERVER['HTTP_HOST'];
+function getOurDomain() {
+    //    return getenv("SITE") . ".pondersource.net";
+    //    return $_SERVER['HTTP_HOST'];
     return "oc1.docker";
 }
 
@@ -45,21 +44,18 @@ function getOurDomain()
  *
  * @package OCA\FederatedGroups\Controller
  */
-class ScimController extends Controller
-{
+class ScimController extends Controller {
     private IGroupManager $groupManager;
     protected MixedGroupShareProvider $mixedGroupShareProvider;
 
-    public function __construct(string $appName, IRequest $request, IGroupManager $groupManager)
-    {
+    public function __construct(string $appName, IRequest $request, IGroupManager $groupManager) {
         parent::__construct($appName, $request);
         $federatedGroupsApp = new Application();
         $this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
         $this->groupManager = $groupManager;
     }
 
-    private function getNewDomainIfNeeded($newMember, $currentMembers)
-    {
+    private function getNewDomainIfNeeded($newMember, $currentMembers) {
         $newMemberParts = explode("#", $newMember);
         if (count($newMemberParts) == 1) return null;
 
@@ -78,8 +74,7 @@ class ScimController extends Controller
         }
     }
 
-    private function handleUpdateGroup(string $groupId, $obj)
-    {
+    private function handleUpdateGroup(string $groupId, $obj) {
         $group = $this->groupManager->get($groupId);
         $backend = $group->getBackend();
         $currentMembers = $backend->usersInGroup($groupId);
@@ -101,7 +96,12 @@ class ScimController extends Controller
             }
             $newMembers[] = $newMember;
         }
-
+        // error_log("currentMembers");
+        // error_log(json_encode($currentMembers));
+        // error_log("currentMembers");
+        // error_log("newMembers");
+        // error_log(json_encode($newMembers));
+        // error_log("newMembers");
         foreach ($currentMembers as $currentMember) {
             if (!in_array($currentMember, $newMembers)) {
                 $backend->removeFromGroup($currentMember, $groupId);
@@ -113,8 +113,12 @@ class ScimController extends Controller
                 $backend->addToGroup($newMember, $groupId);
 
                 $newDomain = $this->getNewDomainIfNeeded($newMember, $currentMembers);
+                // error_log("newDomain");
+                // error_log(json_encode($newDomain));
+                // error_log("newDomain");
                 if ($newDomain) {
                     $this->mixedGroupShareProvider->sendOcmInviteForExistingShares($newDomain, $groupId);
+                    // error_log("sendOcmInviteForExistingShares");
                 }
             }
         }
@@ -124,8 +128,7 @@ class ScimController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function createGroup($id, $members)
-    {
+    public function createGroup($id, $members) {
         $body = ["id" => $id, "members" => $members];
 
         $this->groupManager->createGroup($id);
@@ -144,8 +147,7 @@ class ScimController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function updateGroup($groupId, $members)
-    {
+    public function updateGroup($groupId, $members) {
         $body = ["members" => $members];
 
         $this->handleUpdateGroup($groupId, $body);
@@ -159,8 +161,7 @@ class ScimController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function deleteGroup($groupId)
-    {
+    public function deleteGroup($groupId) {
         $group = $this->groupManager->get(\urldecode($groupId));
         if ($group) {
             $deleted = $group->delete();
@@ -202,8 +203,7 @@ class ScimController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function getGroups()
-    {
+    public function getGroups() {
         $groups = [];
         $res = [];
 
@@ -243,8 +243,7 @@ class ScimController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function getGroup($groupId)
-    {
+    public function getGroup($groupId) {
         // work around #129
         $group = $this->groupManager->get(\urldecode($groupId));
         if ($group) {

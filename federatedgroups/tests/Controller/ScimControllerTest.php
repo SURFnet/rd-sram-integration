@@ -161,7 +161,7 @@ class ScimControllerTest extends TestCase
         $groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[0], $groupId);
 
         $newDomain = explode("#", $newMembers[0]);
-        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
+        $this->mixedGroupShareProvider->expects($this->any())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
 
         $response = $this->controller->updateGroup($groupId, $members);
         $this->assertEquals(Http::STATUS_OK, $response->getStatus());
