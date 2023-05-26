@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\FederatedGroups\Tests\Controller;
 
 use OCA\FederatedGroups\Controller\ScimController;
+use OCA\FederatedGroups\MixedGroupShareProvider;
 use OCP\AppFramework\Http;
 use OCP\IGroup;
 use Test\TestCase;
@@ -19,7 +20,9 @@ use Test\Util\Group\Dummy;
 class ScimControllerTest extends TestCase
 {
     private IGroupManager $groupManager;
+
     private ScimController $controller;
+    private MixedGroupShareProvider $mixedGroupShareProvider;
 
     protected function setUp(): void
     {
@@ -27,6 +30,8 @@ class ScimControllerTest extends TestCase
         $request = $this->createMock(IRequest::class);
         $this->groupManager = $this->createMock(IGroupManager::class);
         $this->controller = new ScimController("federatedGroups", $request, $this->groupManager);
+        $this->mixedGroupShareProvider = $this->createMock(MixedGroupShareProvider::class);
+
     }
 
 
@@ -129,17 +134,25 @@ class ScimControllerTest extends TestCase
     }
     // getGroup END
 
+//{
+//"members": [
+//{
+//"value": "fed_user_2@oc2.docker",
+//"ref": "",
+//"displayName": ""
+//}
+//]
+//}
     // updateGroup START
     public function test_it_can_update_group_if_exists()
     {
-
         $groupId = 'test-group';
 
         $currentMembers = ["currentMember"];
 
         $members = [["value" => "test_user@oc2.docker"]];
 
-        $newMembers = ["test_user#oc2.docker"];
+        $newMembers = ["test_user_1#oc2.docker"];
 
         $group = $this->createMock(IGroup::class);
 
@@ -152,8 +165,8 @@ class ScimControllerTest extends TestCase
         $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
 
         $groupBackend->expects($this->once())->method('removeFromGroup');
-//        $newDomain = explode("#", $newMembers[0]);
-//        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
+        $newDomain = explode("#", $newMembers[0]);
+        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
 
         $groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[0], $groupId);
 
@@ -172,7 +185,7 @@ class ScimControllerTest extends TestCase
 
         $members = [["value" => "test_user@oc2.docker"]];
 
-        $newMembers = ["test_user#oc2.docker"];
+        $newMembers = ["test_user_1#oc2.docker"];
 
         $group = $this->createMock(IGroup::class);
 
@@ -187,8 +200,8 @@ class ScimControllerTest extends TestCase
         $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
 
         $groupBackend->expects($this->once())->method('removeFromGroup');
-//        $newDomain = explode("#", $newMembers[0]);
-//        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
+        $newDomain = explode("#", $newMembers[0]);
+        $this->mixedGroupShareProvider->expects($this->once())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
 
         $groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[0], $groupId);
 
