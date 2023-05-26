@@ -75,24 +75,32 @@ class ScimControllerTest extends TestCase {
 
 
     // getGroups START
-    //    public function test_it_can_get_list_of_groups()
-    //    {
-    //
-    ////        $stub = $this->getMockBuilder(GroupInterface::class)->getMock()->method("")->willReturn();
-    //
-    //        $groups = ["admin", "federalists"];
-    //        $backend = $this->createMock(GroupInterface::class);
-    //        $backends = [$backend];
-    ////        $backend = $this->createMock(\OCP\GroupInterface::class);
-    ////        $backends = [$backend];
-    ////        $group_1 = $this->createMock(IGroup::class);
-    ////        $group_2 = $this->createMock(IGroup::class);
-    //        $this->groupManager->expects($this->once())->method("getBackends")->willReturn([$backend]);
-    //        $backend->expects($this->any())->method("getGroups");
-    //        $this->groupManager->expects($this->any())->method("get")->with($groups[0]);
-    //        $response = $this->controller->getGroups();
-    //        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
-    //    }
+    public function test_it_can_get_list_of_groups() {
+        $groups = ["admin", "federalists"];
+        $backend = $this->createMock(Dummy::class);
+        $backends = [$backend];
+
+        $group = $this->createMock(IGroup::class);
+        $groups = [$group];
+
+        $this->groupManager->expects($this->once())->method("getBackends")->willReturn($backends);
+
+        $groupItem = $this->createMock(IGroup::class);
+
+        $this->groupManager->expects($this->once())->method("get")->willReturn($groupItem);
+
+        $backend->expects($this->any())->method("getGroups")->willReturn($groups);
+
+        $this->groupManager->expects($this->any())->method("get")->with($group);
+        $groupBackend = $this->createMock(\OC\Group\Backend::class);
+        $groupItem->expects($this->any())->method("getBackend")->willReturn($groupBackend);
+        $usersInGroup = ["admin"];
+
+        $groupBackend->expects($this->any())->method("usersInGroup")->with($group)->willReturn($usersInGroup);
+
+        $response = $this->controller->getGroups();
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+    }
     // getGroups END
 
     // getGroup START

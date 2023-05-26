@@ -208,12 +208,11 @@ class ScimController extends Controller {
         $res = [];
 
         foreach ($this->groupManager->getBackends() as $backend) {
-            $_groups = $backend->getGroups();
-            \array_push($groups, ...$_groups);
+            array_push($groups, ...$backend->getGroups());
         }
 
         foreach ($groups as $groupId) {
-            $group = $this->groupManager->get(\urldecode($groupId));
+            $group = $this->groupManager->get($groupId);
             $groupObj = [];
 
             $groupObj["id"] = $group->getGID();
