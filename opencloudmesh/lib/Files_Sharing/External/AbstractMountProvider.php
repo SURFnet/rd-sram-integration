@@ -29,9 +29,6 @@ use OCP\Files\Storage\IStorageFactory;
 use OCP\IDBConnection;
 use OCP\IUser;
 
-/**
- * This class is extended by other applications like OpenCloudMesh.
- */
 class AbstractMountProvider implements IMountProvider {
 	/**
 	 * @var \OCP\IDBConnection

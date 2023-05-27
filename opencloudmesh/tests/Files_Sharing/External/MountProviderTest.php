@@ -35,7 +35,7 @@ use Test\TestCase;
  *
  * @group DB
  *
- * @package OCA\Files_Sharing\Tests\External
+ * @package OCA\OpenCloudMesh\Tests\Files_Sharing\External
  */
 class MountProviderTest extends TestCase {
 	/** @var IDBConnection */

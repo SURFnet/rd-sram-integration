@@ -46,9 +46,6 @@ use OCP\Share\Events\DeclineShare;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
-/**
- * Some applications like OpenCloudMesh extend this class.
- */
 abstract class AbstractManager {
 	/**
 	 * @var string
@@ -206,15 +203,13 @@ abstract class AbstractManager {
 			'mountpoint'	=> $mountPoint,
 			'owner'		=> $owner
 		];
-		$this->insertedAcceptedShare($options);
 		return $this->mountShare($options);
 	}
 
+	/**
+	 * Prepare data to be inserter into the database. i.e. set values for additional columns.
+	 */
 	protected function prepareData(array &$data) {
-
-	}
-
-	protected function insertedAcceptedShare(array $options) {
 
 	}
 

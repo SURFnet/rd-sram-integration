@@ -46,7 +46,7 @@ use OCP\Share\IShare;
 /**
  * Class OcmControllerTest
  *
- * @package OCA\FederatedFileSharing\Tests
+ * @package OCA\OpenCloudMesh\Tests
  * @group DB
  */
 class OcmControllerTest extends TestCase {

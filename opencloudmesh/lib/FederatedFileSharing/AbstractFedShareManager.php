@@ -39,10 +39,8 @@ use OCP\Share\Exceptions\ShareNotFound;
 
 /**
  * Class AbstractFedShareManager holds the share logic
- * 
- * This class is extended by other applications like OpenCloudMesh.
  *
- * @package OCA\FederatedFileSharing
+ * @package OCA\OpenCloudMesh\FederatedFileSharing
  */
 abstract class AbstractFedShareManager {
 	public const ACTION_URL = 'ocs/v1.php/apps/files_sharing/api/v1/remote_shares/pending/';

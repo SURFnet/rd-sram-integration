@@ -23,44 +23,14 @@
 namespace OCA\OpenCloudMesh\Files_Sharing;
 
 use OC\Files\Filesystem;
-use OCP\IURLGenerator;
-use OCP\Files\IRootFolder;
-use OCP\IUserSession;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use OCP\Share\IShare;
 use Symfony\Component\EventDispatcher\GenericEvent;
-use OCP\Activity\IManager as ActivityManager;
 
 class Hooks {
-	/**
-	 * @var IURLGenerator
-	 */
-	private $urlGenerator;
-
-	/**
-	 * @var IRootFolder
-	 */
-	private $rootFolder;
-
-	/**
-	 * @var IUserSession|null
-	 */
-	private $userSession;
-
 	/**
 	 * @var EventDispatcher
 	 */
 	private $eventDispatcher;
-
-	/**
-	 * @var \OCP\Share\IManager
-	 */
-	private $shareManager;
-
-	/**
-	 * @var ActivityManager
-	 */
-	private $activityManager;
 
 	/**
 	 * @var \OCA\OpenCloudMesh\Files_Sharing\External\Manager
@@ -70,27 +40,12 @@ class Hooks {
 	/**
 	 * Hooks constructor.
 	 *
-	 * @param IRootFolder $rootFolder
-	 * @param IURLGenerator $urlGenerator
 	 * @param EventDispatcher $eventDispatcher
-	 * @param \OCP\Share\IManager $shareManager
-	 * @param ActivityManager $activityManager
-	 * @param IUserSession|null $userSession
 	 */
 	public function __construct(
-		IRootFolder $rootFolder,
-		IUrlGenerator $urlGenerator,
-		EventDispatcher $eventDispatcher,
-		\OCP\Share\IManager $shareManager,
-		ActivityManager $activityManager,
-		$userSession
+		EventDispatcher $eventDispatcher
 	) {
-		$this->userSession = $userSession;
-		$this->rootFolder = $rootFolder;
-		$this->urlGenerator = $urlGenerator;
 		$this->eventDispatcher = $eventDispatcher;
-		$this->shareManager = $shareManager;
-		$this->activityManager = $activityManager;
 
 		$this->externalManager = new \OCA\OpenCloudMesh\Files_Sharing\External\Manager(
 			\OC::$server->getDatabaseConnection(),

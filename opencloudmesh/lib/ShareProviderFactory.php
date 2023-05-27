@@ -31,6 +31,11 @@ use OC\Share20\ProviderFactory;
 use OCA\OpenCloudMesh\AppInfo\Application;
 use OCP\IServerContainer;
 
+/**
+ * Class ProviderFactory
+ *
+ * @package OCA\OpenCloudMesh
+ */
 class ShareProviderFactory extends ProviderFactory {
 
 	/** @var FederatedGroupShareProvider */

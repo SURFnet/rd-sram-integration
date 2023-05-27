@@ -56,10 +56,8 @@ use Symfony\Component\EventDispatcher\GenericEvent;
 
 /**
  * Class AbstractFederatedShareProvider
- * 
- * This class is extended by other applications like OpenCloudMesh.
  *
- * @package OCA\FederatedFileSharing
+ * @package OCA\OpenCloudMesh\FederatedFileSharing
  */
 abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 	/** @var IDBConnection */
@@ -362,7 +360,7 @@ abstract class AbstractFederatedShareProvider implements IRemoteShareProvider {
 	}
 
 	/**
-	 * get federated share from the share_external table but exclude mounted link shares
+	 * get federated share from the local share external table but exclude mounted link shares
 	 *
 	 * @param IShare $share
 	 * @return array

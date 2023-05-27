@@ -145,7 +145,7 @@ class OcmController extends Controller {
 	 *							to share the resource
 	 * @param string $senderDisplayName Display name of the user that wants
 	 * 									to share the resource
-	 * @param string $shareType Share type ('user' is supported atm)
+	 * @param string $shareType Share type ('user' is supported by federatedgroups and 'group' is supported by OpenCloudMesh)
 	 * @param string $resourceType only 'file' is supported atm
 	 * @param array $protocol
 	 * 		[
@@ -174,7 +174,6 @@ class OcmController extends Controller {
 		$resourceType,
 		$protocol
 	) {
-/* START COPY-PASTE BLOCK https://github.com/owncloud/core/blob/v10.12.1/apps/federatedfilesharing/lib/Controller/OcmController.php#L180-L233 */
 		try {
 			$this->ocmMiddleware->assertIncomingSharingEnabled();
 			$this->ocmMiddleware->assertNotNull(
@@ -229,7 +228,6 @@ class OcmController extends Controller {
 
 			$ownerAddress = new Address($owner, $ownerDisplayName);
 			$sharedByAddress = new Address($sender, $senderDisplayName);
-/* END COPY-PASTE BLOCK https://github.com/owncloud/core/blob/v10.12.1/apps/federatedfilesharing/lib/Controller/OcmController.php#L180-L233 */
 
 			$this->fedGroupShareManager->createShare(
 				$ownerAddress,
@@ -240,8 +238,6 @@ class OcmController extends Controller {
 				$protocol['options']['sharedSecret'],
 				$shareType // this is not a Share::SHARE_TYPE_.. constant, but the OCM POST param of the same name, so 'user' or 'group'
 			);
-
-/* START COPY-PASTE BLOCK https://github.com/owncloud/core/blob/v10.12.1/apps/federatedfilesharing/lib/Controller/OcmController.php#L243-L263 */
 		} catch (OcmException $e) {
 			return new JSONResponse(
 				['message' => $e->getMessage()],
@@ -263,7 +259,6 @@ class OcmController extends Controller {
 			[],
 			Http::STATUS_CREATED
 		);
-/* END COPY-PASTE BLOCK https://github.com/owncloud/core/blob/v10.12.1/apps/federatedfilesharing/lib/Controller/OcmController.php#L243-L263 */
 	}
 
 	/**

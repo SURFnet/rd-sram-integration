@@ -38,9 +38,6 @@ use OCP\Http\Client\IClientService;
 use OCP\IConfig;
 use GuzzleHttp\Exception\ClientException;
 
-/**
- * This class is extended by other applications like OpenCloudMesh.
- */
 abstract class AbstractNotifications {
 	public const RESPONSE_FORMAT = 'json'; // default response format for ocs calls
 

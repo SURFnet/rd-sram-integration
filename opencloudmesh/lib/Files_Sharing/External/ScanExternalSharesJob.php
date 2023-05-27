@@ -46,7 +46,7 @@ use OCP\Files\StorageNotAvailableException;
  *  - external share root etag/mtime changed, signaling that remote changed
  *    and requires scan
  *
- * @package OCA\Files_Sharing\External\BackgroundJob
+ * @package OCA\OpenCloudMesh\Files_Sharing\External\BackgroundJob
  */
 class ScanExternalSharesJob extends TimedJob {
 	/** @var IDBConnection */

@@ -207,18 +207,13 @@ class Application extends App {
 
 		$container->registerService('Hooks', function ($c) {
 			return new Hooks(
-				$c->getServer()->getLazyRootFolder(),
-				$c->getServer()->getUrlGenerator(),
-				$c->getServer()->getEventDispatcher(),
-				$c->getServer()->getShareManager(),
-				$c->getServer()->getActivityManager(),
-				$c->getServer()->getUserSession()
+				$c->getServer()->getEventDispatcher()
 			);
 		});
 	}
 
 	/**
-	 * get instance of federated share provider
+	 * get instance of federated group share provider
 	 *
 	 * @return FederatedGroupShareProvider
 	 */
@@ -230,7 +225,7 @@ class Application extends App {
 	}
 
 	/**
-	 * get instance of federated share provider
+	 * get instance of federated user share provider
 	 *
 	 * @return FederatedUserShareProvider
 	 */
@@ -242,7 +237,7 @@ class Application extends App {
 	}
 
 	/**
-	 * initialize federated share provider
+	 * initialize federated group share provider
 	 */
 	protected function initFederatedGroupShareProvider() {
 		$addressHandler = new AddressHandler(
@@ -287,7 +282,7 @@ class Application extends App {
 	}
 
 	/**
-	 * initialize federated share provider
+	 * initialize federated user share provider
 	 */
 	protected function initFederatedUserShareProvider() {
 		$addressHandler = new AddressHandler(
