@@ -3,18 +3,18 @@
 	<id>opencloudmesh</id>
 	<name>Federated Groups</name>
 	<namespace>OpenCloudMesh</namespace>
-	<summary>Support groups with both local and foreign users</summary>
+	<summary>Supports federated sharing with groups</summary>
 	<description>
 	</description>
-	<website>https://github.com/Spondersource/oc-opencloudmesh</website>
-	<bugs>https://github.com/Spondersource/oc-opencloudmesh/issues</bugs>
-	<repository type="git">https://github.com/Spondersource/oc-opencloudmesh.git</repository>
+	<website>https://github.com/pondersource/oc-opencloudmesh</website>
+	<bugs>https://github.com/pondersource/oc-opencloudmesh/issues</bugs>
+	<repository type="git">https://github.com/pondersource/oc-opencloudmesh.git</repository>
 	<licence>TBD</licence>
 	<author>SURF with contributions from Ponder Source</author>
 	<version>0.1.0</version>
 	<documentation>
-    		<user>https://github.com/Spondersource/oc-opencloudmesh</user>
-		<admin>https://github.com/Spondersource/oc-opencloudmesh</admin>
+		<user>https://github.com/pondersource/oc-opencloudmesh</user>
+		<admin>https://github.com/pondersource/oc-opencloudmesh</admin>
 	</documentation>
 	<category>collaboration</category>
 	<types>
