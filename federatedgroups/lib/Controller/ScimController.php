@@ -31,8 +31,6 @@ use OCP\IGroupManager;
 use OCA\FederatedGroups\AppInfo\Application;
 use OCA\FederatedGroups\MixedGroupShareProvider;
 
-const IGNORE_DOMAIN = "sram.surf.nl";
-
 function getOurDomain() {
     return $_SERVER['HTTP_HOST'];
 }
@@ -88,9 +86,6 @@ class ScimController extends Controller {
             $newMember = $userIdParts[0];
             if ($userIdParts[1] !== getOurDomain()) {
                 $newMember .= "#" . $userIdParts[1];
-            }
-            if ($userIdParts[1] === IGNORE_DOMAIN) {
-                continue;
             }
             $newMembers[] = $newMember;
         }
