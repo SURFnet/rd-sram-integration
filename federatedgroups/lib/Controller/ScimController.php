@@ -34,9 +34,7 @@ use OCA\FederatedGroups\MixedGroupShareProvider;
 const IGNORE_DOMAIN = "sram.surf.nl";
 
 function getOurDomain() {
-    //    return getenv("SITE") . ".pondersource.net";
-    //    return $_SERVER['HTTP_HOST'];
-    return "oc1.docker";
+    return $_SERVER['HTTP_HOST'];
 }
 
 /**
