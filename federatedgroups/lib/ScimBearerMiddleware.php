@@ -91,7 +91,6 @@ class ScimBearerMiddleware extends Middleware
         for ($i = 0; $i < $length; $i++) {
             $randomString .= $characters[random_int(0, $charactersLength - 1)];
         }
-        error_log("token is: {$randomString}"); 
         return $randomString;
     }
 }
