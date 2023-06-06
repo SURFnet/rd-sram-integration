@@ -30,25 +30,41 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Middleware;
 use OCP\IRequest;
 use OCP\AppFramework\Http;
+use OCP\IConfig;
 
-class ScimBearerMiddleware extends Middleware{
+class ScimBearerMiddleware extends Middleware
+{
     
+    private $appName = "federatedgroups";
+    private $tokenKey = "scim_token";
+
     /**
      * @var IRequest $request
      */
     private $request; 
-    
-    public function __construct(IRequest $request){
+    /**
+     * @var IConfig $config
+     */
+    private $config;
+
+    public function __construct(IRequest $request, $config)
+    {
         $this->request = $request;
+        $this->config = $config;
+        
     }
 
     public function beforeController($controller, $methodName) {
         if(get_class($controller) === ScimController::class){
-            error_log("x-auth: ".$this->request->getHeader("x-auth"));
-            error_log("authorization: ".$this->request->getHeader("Authorization"));
-            error_log("\$_Server: ".json_encode($_SERVER));
-            if ($this->request->getHeader("x-auth") === null || $this->request->getHeader("x-auth") === ''){
+            $reqToken = $this->request->getHeader("x-auth");
+            if ( $reqToken === null || $reqToken === ''){
                 throw new ForbiddenException("x-auth header is required."); 
+            }
+            else {
+                $refToken = $this->getScimToken(); 
+                if ("Bearer {$refToken}" !== $reqToken){
+                    throw new ForbiddenException("invalide x-auth header provided."); 
+                }
             }
         }
 	}
@@ -58,4 +74,24 @@ class ScimBearerMiddleware extends Middleware{
             return new JSONResponse(["message" => $exception->getMessage()], Http::STATUS_FORBIDDEN);
         }
 	}
+
+    private function getScimToken (){
+        $token = $this->config->getAppValue($this->appName, $this->tokenKey);
+        if  ($token === null || $token === ''){
+            $token = $this->generateRandomString(32);
+            $this->config->setAppValue($this->appName, $this->tokenKey, $token);
+        }
+        return $token;
+    }
+
+    function generateRandomString($length = 10) {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[random_int(0, $charactersLength - 1)];
+        }
+        error_log("token is: {$randomString}"); 
+        return $randomString;
+    }
 }

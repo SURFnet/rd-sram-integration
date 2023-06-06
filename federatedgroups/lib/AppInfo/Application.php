@@ -32,7 +32,7 @@ class Application extends App {
 		});
 
 		$container->registerService('ScimBearerMiddleware', function($c) use($server){
-            return new ScimBearerMiddleware($server->getRequest());
+            return new ScimBearerMiddleware($server->getRequest(), $server->getConfig());
         });
 
         // executed in the order that it is registered
