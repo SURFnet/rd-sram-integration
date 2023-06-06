@@ -23,6 +23,7 @@
 namespace OCA\FederatedGroups\Controller;
 
 use Exception;
+use JsonException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -75,6 +76,9 @@ class ScimController extends Controller {
 
     private function handleUpdateGroup(string $groupId, $obj) {
         $group          = $this->groupManager->get($groupId);
+        if ($group === null){
+            throw new Exception("cannot find the given group " . $groupId);
+        }
         $backend        = $group->getBackend();
         $currentMembers = $backend->usersInGroup($groupId);
         $newMembers     = [];
@@ -149,7 +153,18 @@ class ScimController extends Controller {
 
         $body = ["members" => $members];
 
-        $this->handleUpdateGroup($groupId, $body);
+        try{
+            $this->handleUpdateGroup($groupId, $body);
+        }
+        catch(\Exception $ex){
+            return new JSONResponse(
+                [
+                    'status' => 'Error',
+                    "message" => $ex->getMessage()
+                ],
+                Http::STATUS_BAD_REQUEST
+            );    
+        }
         return new JSONResponse(
             $body,
             Http::STATUS_OK
