@@ -32,6 +32,7 @@ use OCP\IGroupManager;
 use OCA\FederatedGroups\AppInfo\Application;
 use OCA\FederatedGroups\GroupBackend;
 use OCA\FederatedGroups\MixedGroupShareProvider;
+use OCP\ILogger;
 
 const RESPONSE_TO_USER_CREATE = Http::STATUS_CREATED;
 const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
@@ -67,6 +68,11 @@ class ScimController extends Controller {
 	private $groupBackend;
 
 	/**
+	* @var ILogger
+	*/
+	private $logger;
+
+	/**
 	 * @var MixedGroupShareProvider
 	 */
 	protected $mixedGroupShareProvider;
@@ -79,10 +85,11 @@ class ScimController extends Controller {
 	 * @param IGroupManager $groupManager
 
 	 */
-	public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend) {
+	public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend, ILogger $logger) {
 		parent::__construct($appName, $request);
 		$federatedGroupsApp = new Application();
 		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
+		$this->logger = $logger;
 		$this->groupManager = $groupManager;
 		$this->groupBackend = $groupBackend;
 	}
@@ -111,11 +118,14 @@ class ScimController extends Controller {
 
 	private function handleUpdateGroup(string $groupId, $obj) {
 		$group = $this->groupManager->get($groupId);
+
+		$this->logger->debug('handleUpdateGroup GroupID: ' . $group);
+
 		$backend = $group->getBackend();
 		$currentMembers = $backend->usersInGroup($groupId);
 		$newMembers = [];
 		foreach ($obj["members"] as $member) {
-			$userIdParts = explode("@", $member["value"]); // "test_u@pondersource.net"  => ["test_u", "pondersource.net"] 
+			$userIdParts = explode("@", $member["value"]); // "test_u@pondersource.net"  => ["test_u", "pondersource.net"]
 			if (count($userIdParts) == 3) {
 				$userIdParts = [$userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
 			}
@@ -139,7 +149,7 @@ class ScimController extends Controller {
 		}
 
 		for ($i = 0; $i < count($newMembers); $i++) {
-			if (!in_array($newMembers[$i], $currentMembers)) { // meaning new member is not in current update, so let add it to group and 
+			if (!in_array($newMembers[$i], $currentMembers)) { // meaning new member is not in current update, so let add it to group and
 
 				$newDomain = $this->checkNeedToSend($newMembers[$i], $currentMembers);
 
@@ -164,10 +174,12 @@ class ScimController extends Controller {
 		$body = json_decode(file_get_contents("php://input"), true);
 		$groupId = $body["id"];
 
+		$this->logger->debug('GroupID ' . $groupId . ' and body: ' . print_r($body,true) );
+
 		$this->groupBackend->createGroup($groupId);
 
 		// expect group to already exist
-		// we are probably receiving this create due to 
+		// we are probably receiving this create due to
 		// https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
 		$this->handleUpdateGroup($groupId, $body);
 		return new JSONResponse(
@@ -243,13 +255,13 @@ class ScimController extends Controller {
 			$group = $this->groupManager->get(\urldecode($groupId));
 			if ($group) {
 				$groupObj = [];
-	
+
 				$groupObj["id"] = $group->getGID();
 				$groupObj["displayName"] = $group->getDisplayName();
-	
+
 				$groupBackend = $group->getBackend();
 				$usersInGroup = $groupBackend->usersInGroup($groupId);
-	
+
 				$groupObj["members"] = array_map(function ($item) {
 					return [
 						"value" => $item,
@@ -257,7 +269,7 @@ class ScimController extends Controller {
 						"displayName" => "",
 					];
 				}, $usersInGroup);
-	
+
 				$res[] = $groupObj;
 			}
 		}
