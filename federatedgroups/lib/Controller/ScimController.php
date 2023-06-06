@@ -23,6 +23,7 @@
 namespace OCA\FederatedGroups\Controller;
 
 use Exception;
+use JsonException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -74,7 +75,10 @@ class ScimController extends Controller {
     }
 
     private function handleUpdateGroup(string $groupId, $obj) {
-        $group          = $this->groupManager->get($groupId);
+        $group = $this->groupManager->get($groupId);
+        if ($group === null) {
+            throw new Exception("cannot find the given group " . $groupId);
+        }
         $backend        = $group->getBackend();
         $currentMembers = $backend->usersInGroup($groupId);
         $newMembers     = [];
@@ -116,11 +120,11 @@ class ScimController extends Controller {
      */
     public function createGroup($id, $members) {
         if (!$id) {
-            return new JSONResponse(['status' => 'Error', 'message' => "Missing id param"], Http::STATUS_BAD_REQUEST);
+            return new JSONResponse(['status' => 'error', 'message' => "Missing param: id", 'data' => null], Http::STATUS_BAD_REQUEST);
         } else if (!$members) {
-            return new JSONResponse(['status' => 'Error', 'message' => "Missing members param"], Http::STATUS_BAD_REQUEST);
+            return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
-        
+
         $body = ["id" => $id, "members" => $members];
 
 
@@ -130,8 +134,10 @@ class ScimController extends Controller {
         // we are probably receiving this create due to
         // https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
         $this->handleUpdateGroup($id, $body);
-        return new JSONResponse(
-            $body,
+        return new JSONResponse([
+            'status'  => 'success',
+            'message' => null,
+            'data'    => $body],
             Http::STATUS_CREATED
         );
     }
@@ -142,18 +148,19 @@ class ScimController extends Controller {
      */
     public function updateGroup($groupId, $members) {
         if (!$groupId) {
-            return new JSONResponse(['status' => 'Error', 'message' => "Missing groupId param"], Http::STATUS_BAD_REQUEST);
+            return new JSONResponse(['status' => 'error', 'message' => "Missing param: groupId", 'data' => null], Http::STATUS_BAD_REQUEST);
         } else if (!$members) {
-            return new JSONResponse(['status' => 'Error', 'message' => "Missing members param"], Http::STATUS_BAD_REQUEST);
+            return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
         $body = ["members" => $members];
 
-        $this->handleUpdateGroup($groupId, $body);
-        return new JSONResponse(
-            $body,
-            Http::STATUS_OK
-        );
+        try {
+            $this->handleUpdateGroup($groupId, $body);
+        } catch (\Exception $ex) {
+            return new JSONResponse(['status' => 'error', 'message' => $ex->getMessage(), 'data' => null], Http::STATUS_BAD_REQUEST);
+        }
+        return new JSONResponse(['status' => 'success', 'message' => null, 'data' => $body], Http::STATUS_OK);
     }
 
     /**
@@ -162,39 +169,16 @@ class ScimController extends Controller {
      */
     public function deleteGroup($groupId) {
         $group = $this->groupManager->get(\urldecode($groupId));
+        $group = $this->groupManager->get(\urldecode($groupId));
         if ($group) {
             $deleted = $group->delete();
             if ($deleted) {
-                return new JSONResponse(
-                    [
-                        'status' => 'success',
-                        'data'   => [
-                            'message' => "Succesfully deleted group: {$groupId}"
-                        ]
-                    ],
-                    Http::STATUS_NO_CONTENT
-                );
+                return new JSONResponse(['status' => 'success', 'message' => "Succesfully deleted group: {$groupId}", 'data' => null], Http::STATUS_NO_CONTENT);
             } else {
-                return new JSONResponse(
-                    [
-                        'status' => 'error',
-                        'data'   => [
-                            'message' => "Falure in deleting group: {$groupId}"
-                        ]
-                    ],
-                    Http::STATUS_BAD_GATEWAY
-                );
+                return new JSONResponse(['status' => 'error', 'message' => "Falure in deleting group: {$groupId}", 'data' => null], Http::STATUS_BAD_REQUEST);
             }
         } else {
-            return new JSONResponse(
-                [
-                    'status' => 'error',
-                    'data'   => [
-                        'message' => "Could not find Group with the given identifier: {$groupId}"
-                    ],
-                ],
-                Http::STATUS_NOT_FOUND
-            );
+            return new JSONResponse(['status' => 'error', 'message' => "Could not find Group with the given identifier: {$groupId}", 'data' => null], Http::STATUS_NOT_FOUND);
         }
     }
 
@@ -232,9 +216,11 @@ class ScimController extends Controller {
         }
 
         return new JSONResponse([
-            "totalResults" => count($groups),
-            "Resources"    => $res,
-        ], Http::STATUS_OK);
+            'status'  => 'success',
+            'message' => null,
+            'data'    => ["totalResults" => count($groups), "Resources" => $res,]],
+            Http::STATUS_OK
+        );
     }
 
     /**
@@ -260,33 +246,16 @@ class ScimController extends Controller {
             }, $usersInGroup);
 
             return new JSONResponse([
-                "id"                                              => $id,
-                "displayName"                                     => $displayName,
-                // 'usersInGroup' => $usersInGroup,
-                'members'                                         => $members,
-                "schemas"                                         => [
-                    // "urn:ietf:params:scim:schemas:core:2.0:Group",
-                    // "urn:ietf:params:scim:schemas:cyberark:1.0:Group"
-                ],
-                "meta"                                            => [
-                    "resourceType" => "Group",
-                    // "created" => "2022-04-12T09:21:40.2319276Z",
-                    // "lastModified" => "2022-04-12T09:21:40.2319276Z",
-                    // "location" => "https://aax5785.my.idaptive.qa/Scim/v2/Group/8"
-
-                ],
-                "urn:ietf:params:scim:schemas:cyberark:1.0:Group" => [
-                    // "directoryType" => "Vault"
-                ],
-            ], Http::STATUS_OK);
+                'status'  => 'success',
+                'message' => null,
+                'data'    => ["id" => $id, "displayName" => $displayName, 'members' => $members,]],
+                Http::STATUS_OK
+            );
         } else {
-            return new JSONResponse(
-                [
-                    'status' => 'error',
-                    'data'   => [
-                        'message' => "Could not find Group with the given identifier: {$groupId}"
-                    ],
-                ],
+            return new JSONResponse([
+                'status'  => 'error',
+                'message' => "Could not find Group with the given identifier: {$groupId}",
+                'data'    => null],
                 Http::STATUS_NOT_FOUND
             );
         }
