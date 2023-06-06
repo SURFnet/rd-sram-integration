@@ -7,13 +7,6 @@ namespace OCA\FederatedGroups\AppInfo;
 
 use OC\AppFramework\Utility\SimpleContainer;
 use OCP\AppFramework\App;
-use OCP\IRequest;
-use GuzzleHttp\Exception\ServerException;
-use OCP\AppFramework\Http;
-use OCP\Share\Events\AcceptShare;
-use OCP\Share\Events\DeclineShare;
-use OCP\Util;
-use OCP\IContainer;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\DiscoveryManager;
@@ -21,6 +14,7 @@ use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedGroups\GroupBackend;
+use OCA\FederatedGroups\ScimBearerMiddleware;
 use OCA\FederatedGroups\SRAMFederatedGroupShareProvider;
 
 
@@ -36,6 +30,13 @@ class Application extends App {
 		$container->registerService('OCA\\FederatedGroups\\GroupBackend', function (SimpleContainer $c) use ($server) {
 			return new GroupBackend();
 		});
+
+		$container->registerService('ScimBearerMiddleware', function($c) use($server){
+            return new ScimBearerMiddleware($server->getRequest());
+        });
+
+        // executed in the order that it is registered
+        $container->registerMiddleware('ScimBearerMiddleware');
 	}
 		
   	public static  function getMixedGroupShareProvider() {
