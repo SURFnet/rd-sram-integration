@@ -1,3 +1,11 @@
+# Authorization
+there is a token that is stored in **appconfig** table with key `scim_token` and appid `federatedgroups` it should be set to a random generated string. 
+
+please ask the adminstrator to share that token with you and then send requests with the below header: 
+
+> "x-auth: Bearer <SCIM_TOKEN>"
+
+
 # getGroups 
 Will return all groups in OwnCloud
 
