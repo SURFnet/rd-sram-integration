@@ -31,6 +31,7 @@ use OCP\IRequest;
 use OCP\IGroupManager;
 use OCA\FederatedGroups\AppInfo\Application;
 use OCA\FederatedGroups\MixedGroupShareProvider;
+use OCA\FederatedGroups\GroupBackend;
 
 function getOurDomain() {
     return $_SERVER['HTTP_HOST'];
@@ -44,13 +45,15 @@ function getOurDomain() {
 class ScimController extends Controller {
     private IGroupManager $groupManager;
     protected MixedGroupShareProvider $mixedGroupShareProvider;
+	private GroupBackend $groupBackend;
 
-    public function __construct(string $appName, IRequest $request, IGroupManager $groupManager) {
-        parent::__construct($appName, $request);
-        $federatedGroupsApp            = new Application();
-        $this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
-        $this->groupManager            = $groupManager;
-    }
+    public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend) {
+		parent::__construct($appName, $request);
+		$federatedGroupsApp = new Application();
+		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
+		$this->groupManager = $groupManager;
+		$this->groupBackend = $groupBackend;
+	}
 
     private function getNewDomainIfNeeded($newMember, $currentMembers) {
         $newMemberParts = explode("#", $newMember);
@@ -79,8 +82,8 @@ class ScimController extends Controller {
         if ($group === null) {
             throw new Exception("cannot find the given group " . $groupId);
         }
-        $backend        = $group->getBackend();
-        $currentMembers = $backend->usersInGroup($groupId);
+        // $backend        = $group->getBackend();
+        $currentMembers = $this->groupBackend->usersInGroup($groupId);
         $newMembers     = [];
         foreach ($obj["members"] as $member) {
             $userIdParts = explode("@", $member["value"]);
@@ -98,13 +101,13 @@ class ScimController extends Controller {
         }
         foreach ($currentMembers as $currentMember) {
             if (!in_array($currentMember, $newMembers)) {
-                $backend->removeFromGroup($currentMember, $groupId);
+                $this->groupBackend->removeFromGroup($currentMember, $groupId);
             }
         }
 
         foreach ($newMembers as $newMember) {
             if (!in_array($newMember, $currentMembers)) {
-                $backend->addToGroup($newMember, $groupId);
+                $this->groupBackend->addToGroup($newMember, $groupId);
 
                 $newDomain = $this->getNewDomainIfNeeded($newMember, $currentMembers);
                 if ($newDomain) {
@@ -127,8 +130,11 @@ class ScimController extends Controller {
 
         $body = ["id" => $id, "members" => $members];
 
+        if(!$this->groupManager->get($id)){
+            $this->groupBackend->createGroup($id);
+        }
 
-        $this->groupManager->createGroup($id);
+        // $this->groupManager->createGroup($id);
 
         // expect group to already exist
         // we are probably receiving this create due to
@@ -141,7 +147,7 @@ class ScimController extends Controller {
             Http::STATUS_CREATED
         );
     }
-
+    
     /**
      * @NoCSRFRequired
      * @PublicPage
@@ -169,7 +175,6 @@ class ScimController extends Controller {
      */
     public function deleteGroup($groupId) {
         $group = $this->groupManager->get(\urldecode($groupId));
-        $group = $this->groupManager->get(\urldecode($groupId));
         if ($group) {
             $deleted = $group->delete();
             if ($deleted) {
@@ -187,6 +192,9 @@ class ScimController extends Controller {
      * @PublicPage
      */
     public function getGroups() {
+        // $groups = $this->groupBackend->getGroups();
+        // $res    = [];
+
         $groups = [];
         $res    = [];
 
@@ -201,6 +209,7 @@ class ScimController extends Controller {
             $groupObj["id"]          = $group->getGID();
             $groupObj["displayName"] = $group->getDisplayName();
 
+            // $usersInGroup = $this->groupBackend->usersInGroup($groupId);
             $groupBackend = $group->getBackend();
             $usersInGroup = $groupBackend->usersInGroup($groupId);
 
@@ -236,6 +245,7 @@ class ScimController extends Controller {
 
             $groupBackend = $group->getBackend();
             $usersInGroup = $groupBackend->usersInGroup($groupId);
+            // $usersInGroup = $this->groupBackend->usersInGroup($groupId);
 
             $members = array_map(function ($item) {
                 return [

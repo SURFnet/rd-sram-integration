@@ -93,7 +93,6 @@ class GroupBackend extends \OC\Group\Backend {
 		$result = $this->dbConn->insertIfNotExist('*PREFIX*fg_groups', [
 			'gid' => $gid,
 		]);
-
 		// Add to cache
 		$this->groupCache[$gid] = $gid;
 
