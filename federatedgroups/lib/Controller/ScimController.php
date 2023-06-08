@@ -23,7 +23,6 @@
 namespace OCA\FederatedGroups\Controller;
 
 use Exception;
-use JsonException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -31,6 +30,7 @@ use OCP\IRequest;
 use OCP\IGroupManager;
 use OCA\FederatedGroups\AppInfo\Application;
 use OCA\FederatedGroups\MixedGroupShareProvider;
+use OCA\FederatedGroups\GroupBackend;
 
 function getOurDomain() {
     return $_SERVER['HTTP_HOST'];
@@ -44,12 +44,14 @@ function getOurDomain() {
 class ScimController extends Controller {
     private IGroupManager $groupManager;
     protected MixedGroupShareProvider $mixedGroupShareProvider;
+    private GroupBackend $groupBackend;
 
-    public function __construct(string $appName, IRequest $request, IGroupManager $groupManager) {
+    public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend) {
         parent::__construct($appName, $request);
-        $federatedGroupsApp            = new Application();
+        $federatedGroupsApp = new Application();
         $this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
-        $this->groupManager            = $groupManager;
+        $this->groupManager = $groupManager;
+        $this->groupBackend = $groupBackend;
     }
 
     private function getNewDomainIfNeeded($newMember, $currentMembers) {
@@ -79,8 +81,11 @@ class ScimController extends Controller {
         if ($group === null) {
             throw new Exception("cannot find the given group " . $groupId);
         }
-        $backend        = $group->getBackend();
-        $currentMembers = $backend->usersInGroup($groupId);
+        $backend = $group->getBackend();
+
+        $currentMembers =  $backend->usersInGroup($groupId);
+
+        // $currentMembers = $this->groupBackend->usersInGroup($groupId);
         $newMembers     = [];
         foreach ($obj["members"] as $member) {
             $userIdParts = explode("@", $member["value"]);
@@ -99,12 +104,14 @@ class ScimController extends Controller {
         foreach ($currentMembers as $currentMember) {
             if (!in_array($currentMember, $newMembers)) {
                 $backend->removeFromGroup($currentMember, $groupId);
+                // $this->groupBackend->removeFromGroup($currentMember, $groupId);
             }
         }
 
         foreach ($newMembers as $newMember) {
             if (!in_array($newMember, $currentMembers)) {
                 $backend->addToGroup($newMember, $groupId);
+                // $this->groupBackend->addToGroup($newMember, $groupId);
 
                 $newDomain = $this->getNewDomainIfNeeded($newMember, $currentMembers);
                 if ($newDomain) {
@@ -121,23 +128,32 @@ class ScimController extends Controller {
     public function createGroup($id, $members) {
         if (!$id) {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: id", 'data' => null], Http::STATUS_BAD_REQUEST);
-        } else if (!$members) {
+        } else if (!is_array($members)) {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
         $body = ["id" => $id, "members" => $members];
 
+        if (!$this->groupManager->get($id)) {
+            $this->groupBackend->createGroup($id);
+        }
 
-        $this->groupManager->createGroup($id);
+        // $this->groupManager->createGroup($id);
 
         // expect group to already exist
         // we are probably receiving this create due to
         // https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
-        $this->handleUpdateGroup($id, $body);
-        return new JSONResponse([
-            'status'  => 'success',
-            'message' => null,
-            'data'    => $body],
+        try {
+            $this->handleUpdateGroup($id, $body);
+        } catch (\Exception $ex) {
+            return new JSONResponse(['status' => 'error', 'message' => $ex->getMessage(), 'data' => null], Http::STATUS_BAD_REQUEST);
+        }
+        return new JSONResponse(
+            [
+                'status'  => 'success',
+                'message' => null,
+                'data'    => $body
+            ],
             Http::STATUS_CREATED
         );
     }
@@ -149,7 +165,7 @@ class ScimController extends Controller {
     public function updateGroup($groupId, $members) {
         if (!$groupId) {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: groupId", 'data' => null], Http::STATUS_BAD_REQUEST);
-        } else if (!$members) {
+        } else if (!is_array($members)) {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
@@ -169,7 +185,6 @@ class ScimController extends Controller {
      */
     public function deleteGroup($groupId) {
         $group = $this->groupManager->get(\urldecode($groupId));
-        $group = $this->groupManager->get(\urldecode($groupId));
         if ($group) {
             $deleted = $group->delete();
             if ($deleted) {
@@ -187,6 +202,7 @@ class ScimController extends Controller {
      * @PublicPage
      */
     public function getGroups() {
+        // $groups = $this->groupBackend->getGroups();
         $groups = [];
         $res    = [];
 
@@ -200,9 +216,9 @@ class ScimController extends Controller {
 
             $groupObj["id"]          = $group->getGID();
             $groupObj["displayName"] = $group->getDisplayName();
-
-            $groupBackend = $group->getBackend();
-            $usersInGroup = $groupBackend->usersInGroup($groupId);
+            
+            $usersInGroup = $group->getBackend()->usersInGroup($groupId);
+            // $usersInGroup = [...$group->getBackend()->usersInGroup($groupId), $this->groupBackend->usersInGroup($groupId)];
 
             $groupObj["members"] = array_map(function ($item) {
                 return [
@@ -215,10 +231,12 @@ class ScimController extends Controller {
             $res[] = $groupObj;
         }
 
-        return new JSONResponse([
-            'status'  => 'success',
-            'message' => null,
-            'data'    => ["totalResults" => count($groups), "Resources" => $res,]],
+        return new JSONResponse(
+            [
+                'status'  => 'success',
+                'message' => null,
+                'data'    => ["totalResults" => count($groups), "Resources" => $res,]
+            ],
             Http::STATUS_OK
         );
     }
@@ -234,9 +252,9 @@ class ScimController extends Controller {
             $id          = $group->getGID();
             $displayName = $group->getDisplayName();
 
-            $groupBackend = $group->getBackend();
-            $usersInGroup = $groupBackend->usersInGroup($groupId);
+            $usersInGroup = $group->getBackend()->usersInGroup($groupId);
 
+            // $usersInGroup = [...$group->getBackend()->usersInGroup($groupId), ...$this->groupBackend->usersInGroup($groupId)];
             $members = array_map(function ($item) {
                 return [
                     "value"       => $item,
@@ -245,17 +263,21 @@ class ScimController extends Controller {
                 ];
             }, $usersInGroup);
 
-            return new JSONResponse([
-                'status'  => 'success',
-                'message' => null,
-                'data'    => ["id" => $id, "displayName" => $displayName, 'members' => $members,]],
+            return new JSONResponse(
+                [
+                    'status'  => 'success',
+                    'message' => null,
+                    'data'    => ["id" => $id, "displayName" => $displayName, 'members' => $members,]
+                ],
                 Http::STATUS_OK
             );
         } else {
-            return new JSONResponse([
-                'status'  => 'error',
-                'message' => "Could not find Group with the given identifier: {$groupId}",
-                'data'    => null],
+            return new JSONResponse(
+                [
+                    'status'  => 'error',
+                    'message' => "Could not find Group with the given identifier: {$groupId}",
+                    'data'    => null
+                ],
                 Http::STATUS_NOT_FOUND
             );
         }
