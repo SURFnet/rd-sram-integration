@@ -90,7 +90,7 @@ class GroupBackend extends \OC\Group\Backend {
 	 */
 	public function createGroup($gid) {
 		$this->fixDI();
-		$gid = self::GROUP_ID_PREFIX . $gid;
+		// $gid = self::GROUP_ID_PREFIX . $gid;
 		// Add group
 		$result = $this->dbConn->insertIfNotExist('*PREFIX*fg_groups', [
 			'gid' => $gid,
