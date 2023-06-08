@@ -124,17 +124,17 @@ class ScimController extends Controller {
     public function createGroup($id, $members) {
         if (!$id) {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: id", 'data' => null], Http::STATUS_BAD_REQUEST);
-        } else if (!$members) {
+        } else if (!is_array($members)) {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
         $body = ["id" => $id, "members" => $members];
 
-        if(!$this->groupManager->get($id)){
-            $this->groupBackend->createGroup($id);
-        }
+        // if(!$this->groupManager->get($id)){
+        //     $this->groupBackend->createGroup($id);
+        // }
 
-        // $this->groupManager->createGroup($id);
+        $this->groupManager->createGroup($id);
 
         // expect group to already exist
         // we are probably receiving this create due to
@@ -155,7 +155,7 @@ class ScimController extends Controller {
     public function updateGroup($groupId, $members) {
         if (!$groupId) {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: groupId", 'data' => null], Http::STATUS_BAD_REQUEST);
-        } else if (!$members) {
+        } else if (!is_array($members)) {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
@@ -208,10 +208,15 @@ class ScimController extends Controller {
 
             $groupObj["id"]          = $group->getGID();
             $groupObj["displayName"] = $group->getDisplayName();
-
-            // $usersInGroup = $this->groupBackend->usersInGroup($groupId);
-            $groupBackend = $group->getBackend();
-            $usersInGroup = $groupBackend->usersInGroup($groupId);
+            // if (str_contains($groupObj["id"], "_fed_group_")) {
+            //     $usersInGroup = $this->groupBackend->usersInGroup($groupId);
+            // }else{
+            //     $groupBackend = $group->getBackend();
+            //     $usersInGroup = $groupBackend->usersInGroup($groupId);
+            // }
+            // $groupBackend = $group->getBackend();
+            // $usersInGroup = $groupBackend->usersInGroup($groupId);
+            $usersInGroup = [...$group->getBackend()->usersInGroup($groupId), $this->groupBackend->usersInGroup($groupId)];
 
             $groupObj["members"] = array_map(function ($item) {
                 return [
@@ -243,10 +248,10 @@ class ScimController extends Controller {
             $id          = $group->getGID();
             $displayName = $group->getDisplayName();
 
-            $groupBackend = $group->getBackend();
-            $usersInGroup = $groupBackend->usersInGroup($groupId);
+            // $groupBackend = $group->getBackend();
+            // $usersInGroup = $groupBackend->usersInGroup($groupId);
             // $usersInGroup = $this->groupBackend->usersInGroup($groupId);
-
+            $usersInGroup = [...$group->getBackend()->usersInGroup($groupId), ...$this->groupBackend->usersInGroup($groupId)];
             $members = array_map(function ($item) {
                 return [
                     "value"       => $item,

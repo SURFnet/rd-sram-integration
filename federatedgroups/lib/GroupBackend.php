@@ -43,6 +43,8 @@
  * Class for group management in a SQL Database (e.g. MySQL, SQLite)
  */
 class GroupBackend extends \OC\Group\Backend {
+	public const GROUP_ID_PREFIX = 'customgroup_';
+
 	/** @var string[] */
 	private $groupCache = [];
 
@@ -88,7 +90,7 @@ class GroupBackend extends \OC\Group\Backend {
 	 */
 	public function createGroup($gid) {
 		$this->fixDI();
-
+		$gid = self::GROUP_ID_PREFIX . $gid;
 		// Add group
 		$result = $this->dbConn->insertIfNotExist('*PREFIX*fg_groups', [
 			'gid' => $gid,
