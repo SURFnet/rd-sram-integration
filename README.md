@@ -26,12 +26,12 @@ Change **sharing.managerFactory** config entry to **OCA\\FederatedGroups\\ShareP
 there are two configuration those should be done in oc_appconfig table: 
 
 ```
-+-----------------+-------------+----------------------------------+
-| appid           | configkey   | configvalue                      |
-+-----------------+-------------+----------------------------------+
-| federatedgroups | allowed_ips | 172.21.0.2,172.21.0.1            |
-| federatedgroups | scim_token  | VGfRewYoHu6lTCoVSAQ6GevfGYznIBZT |
-+-----------------+-------------+----------------------------------+
++-----------------+-------------+--------------------------------------------------+
+| appid           | configkey   | configvalue                                      |
++-----------------+-------------+--------------------------------------------------+
+| federatedgroups | allowed_ips | some comma seperated valid ips or (*)            |
+| federatedgroups | scim_token  | some top secret random generated secrets         |
++-----------------+-------------+--------------------------------------------------+
 ```
 
 these configuration will done with the first SCIM Api call but you can set them by these sql commands:
