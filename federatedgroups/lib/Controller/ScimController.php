@@ -23,7 +23,6 @@
 namespace OCA\FederatedGroups\Controller;
 
 use Exception;
-use JsonException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -82,16 +81,9 @@ class ScimController extends Controller {
         if ($group === null) {
             throw new Exception("cannot find the given group " . $groupId);
         }
-        $backend        = $group->getBackend();
-
-        error_log("-------getBackend---------");
-        error_log(get_class($backend));
-        error_log("-------getBackend---------");
+        $backend = $group->getBackend();
 
         $currentMembers =  $backend->usersInGroup($groupId);
-        error_log("-------currentMembers---------");
-        error_log(json_encode($currentMembers));
-        error_log("-------currentMembers---------");
 
         // $currentMembers = $this->groupBackend->usersInGroup($groupId);
         $newMembers     = [];
@@ -211,8 +203,6 @@ class ScimController extends Controller {
      */
     public function getGroups() {
         // $groups = $this->groupBackend->getGroups();
-        // $res    = [];
-
         $groups = [];
         $res    = [];
 
@@ -226,13 +216,7 @@ class ScimController extends Controller {
 
             $groupObj["id"]          = $group->getGID();
             $groupObj["displayName"] = $group->getDisplayName();
-            // if (str_contains($groupObj["id"], "_fed_group_")) {
-            //     $usersInGroup = $this->groupBackend->usersInGroup($groupId);
-            // }else{
-            //     $groupBackend = $group->getBackend();
-            //     $usersInGroup = $groupBackend->usersInGroup($groupId);
-            // }
-            // $groupBackend = $group->getBackend();
+            
             $usersInGroup = $group->getBackend()->usersInGroup($groupId);
             // $usersInGroup = [...$group->getBackend()->usersInGroup($groupId), $this->groupBackend->usersInGroup($groupId)];
 
@@ -268,11 +252,8 @@ class ScimController extends Controller {
             $id          = $group->getGID();
             $displayName = $group->getDisplayName();
 
-            // $groupBackend = $group->getBackend();
-            // $usersInGroup = $groupBackend->usersInGroup($groupId);
             $usersInGroup = $group->getBackend()->usersInGroup($groupId);
 
-            // $usersInGroup = $this->groupBackend->usersInGroup($groupId);
             // $usersInGroup = [...$group->getBackend()->usersInGroup($groupId), ...$this->groupBackend->usersInGroup($groupId)];
             $members = array_map(function ($item) {
                 return [
