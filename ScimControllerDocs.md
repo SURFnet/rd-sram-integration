@@ -5,6 +5,13 @@ please ask the adminstrator to share that token with you and then send requests 
 
 > "x-auth: Bearer <SCIM_TOKEN>"
 
+# IP Restriction
+You can restrict the incomming scim api calls from some white listed IPs. 
+
+there is an `allowed_ips` config key that is set to `*` (means all IPs are white listed) by default. 
+you can set your own white list (seperated by `,`). and then just machine with listed IPs can send scim 
+requests.
+
 
 # getGroups 
 Will return all groups in OwnCloud

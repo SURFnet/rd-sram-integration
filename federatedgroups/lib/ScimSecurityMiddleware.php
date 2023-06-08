@@ -37,6 +37,7 @@ class ScimSecurityMiddleware extends Middleware
     
     private $appName = "federatedgroups";
     private $tokenKey = "scim_token";
+    private $allowedIPs = "allowed_ips";
 
     /**
      * @var IRequest $request
@@ -56,6 +57,11 @@ class ScimSecurityMiddleware extends Middleware
 
     public function beforeController($controller, $methodName) {
         if(get_class($controller) === ScimController::class){
+            
+            if(!$this->isRequestFromAllowedIP()){
+                throw new ForbiddenException("Your machine Ip is not allowed to sending the reaquest. Please contact the administrator."); 
+            }
+
             $reqToken = $this->request->getHeader("x-auth");
             if ( $reqToken === null || $reqToken === ''){
                 throw new ForbiddenException("x-auth header is required."); 
@@ -63,7 +69,7 @@ class ScimSecurityMiddleware extends Middleware
             else {
                 $refToken = $this->getScimToken(); 
                 if ("Bearer {$refToken}" !== $reqToken){
-                    throw new ForbiddenException("invalide x-auth header provided."); 
+                    throw new ForbiddenException("invalid x-auth header provided."); 
                 }
             }
         }
@@ -84,7 +90,29 @@ class ScimSecurityMiddleware extends Middleware
         return $token;
     }
 
-    function generateRandomString($length = 10) {
+    private function isRequestFromAllowedIP(){
+        $whiteList = $this->getAllowedIPs();
+        if($whiteList === "*"){
+            return true;
+        } 
+
+        $whiteList = explode(",", $whiteList); 
+        if(in_array($this->request->getRemoteAddress(), $whiteList)){
+            return true;
+        }
+        return false; 
+    }
+
+    private function getAllowedIPs (){
+        $whiteList = $this->config->getAppValue($this->appName, $this->allowedIPs);
+        if  ($whiteList === null || $whiteList === ''){
+            $whiteList = "*";
+            $this->config->setAppValue($this->appName, $this->allowedIPs, $whiteList);
+        }
+        return $whiteList;
+    }
+
+    private function generateRandomString($length = 10) {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
         $randomString = '';
