@@ -32,7 +32,7 @@ use OCP\IRequest;
 use OCP\AppFramework\Http;
 use OCP\IConfig;
 
-class ScimBearerMiddleware extends Middleware
+class ScimSecurityMiddleware extends Middleware
 {
     
     private $appName = "federatedgroups";

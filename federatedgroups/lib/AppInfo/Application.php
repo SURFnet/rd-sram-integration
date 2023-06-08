@@ -14,7 +14,7 @@ use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedGroups\GroupBackend;
-use OCA\FederatedGroups\ScimBearerMiddleware;
+use OCA\FederatedGroups\ScimSecurityMiddleware;
 use OCA\FederatedGroups\SRAMFederatedGroupShareProvider;
 
 
@@ -31,12 +31,12 @@ class Application extends App {
 			return new GroupBackend();
 		});
 
-		$container->registerService('ScimBearerMiddleware', function($c) use($server){
-            return new ScimBearerMiddleware($server->getRequest(), $server->getConfig());
+		$container->registerService('ScimSecurityMiddleware', function($c) use($server){
+            return new ScimSecurityMiddleware($server->getRequest(), $server->getConfig());
         });
 
         // executed in the order that it is registered
-        $container->registerMiddleware('ScimBearerMiddleware');
+        $container->registerMiddleware('ScimSecurityMiddleware');
 	}
 		
   	public static  function getMixedGroupShareProvider() {
