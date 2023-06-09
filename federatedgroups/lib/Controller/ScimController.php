@@ -30,19 +30,8 @@ use OCP\IRequest;
 use OCP\IGroupManager;
 use OCA\FederatedGroups\AppInfo\Application;
 use OCA\FederatedGroups\MixedGroupShareProvider;
-<<<<<<< HEAD
-use OCP\ILogger;
-
-const RESPONSE_TO_USER_CREATE = Http::STATUS_CREATED;
-const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
-
-const RESPONSE_TO_GROUP_CREATE = Http::STATUS_CREATED;
-const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
-
-const IGNORE_DOMAIN = "sram.surf.nl";
-=======
 use OCA\FederatedGroups\GroupBackend;
->>>>>>> main
+use OCP\ILogger;
 
 function getOurDomain() {
     return $_SERVER['HTTP_HOST'];
@@ -58,12 +47,18 @@ class ScimController extends Controller {
     protected MixedGroupShareProvider $mixedGroupShareProvider;
     private GroupBackend $groupBackend;
 
-    public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend) {
+    /**
+  	* @var ILogger
+  	*/
+  	private $logger;
+
+    public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend, ILogger $logger) {
         parent::__construct($appName, $request);
         $federatedGroupsApp = new Application();
         $this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
         $this->groupManager = $groupManager;
         $this->groupBackend = $groupBackend;
+        $this->logger = $logger;
     }
 
     private function getNewDomainIfNeeded($newMember, $currentMembers) {
@@ -71,17 +66,6 @@ class ScimController extends Controller {
         if (count($newMemberParts) == 1)
             return null;
 
-<<<<<<< HEAD
-	/**
-	* @var ILogger
-	*/
-	private $logger;
-
-	/**
-	 * @var MixedGroupShareProvider
-	 */
-	protected $mixedGroupShareProvider;
-=======
         if (count($newMemberParts) == 2) {
             $newDomain = $newMemberParts[1];
             if (str_contains($newDomain, getOurDomain()))
@@ -98,7 +82,6 @@ class ScimController extends Controller {
             return $newDomain;
         }
     }
->>>>>>> main
 
     private function handleUpdateGroup(string $groupId, $obj) {
         $group = $this->groupManager->get($groupId);
@@ -107,19 +90,7 @@ class ScimController extends Controller {
         }
         $backend = $group->getBackend();
 
-<<<<<<< HEAD
-	 */
-	public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend, ILogger $logger) {
-		parent::__construct($appName, $request);
-		$federatedGroupsApp = new Application();
-		$this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
-		$this->logger = $logger;
-		$this->groupManager = $groupManager;
-		$this->groupBackend = $groupBackend;
-	}
-=======
         $currentMembers =  $backend->usersInGroup($groupId);
->>>>>>> main
 
         // $currentMembers = $this->groupBackend->usersInGroup($groupId);
         $newMembers     = [];
@@ -149,33 +120,6 @@ class ScimController extends Controller {
                 $backend->addToGroup($newMember, $groupId);
                 // $this->groupBackend->addToGroup($newMember, $groupId);
 
-<<<<<<< HEAD
-	private function handleUpdateGroup(string $groupId, $obj) {
-		$group = $this->groupManager->get($groupId);
-
-		$this->logger->debug('handleUpdateGroup GroupID: ' . $group);
-
-		$backend = $group->getBackend();
-		$currentMembers = $backend->usersInGroup($groupId);
-		$newMembers = [];
-		foreach ($obj["members"] as $member) {
-			$userIdParts = explode("@", $member["value"]); // "test_u@pondersource.net"  => ["test_u", "pondersource.net"]
-			if (count($userIdParts) == 3) {
-				$userIdParts = [$userIdParts[0] . "@" . $userIdParts[1], $userIdParts[2]];
-			}
-			if (count($userIdParts) != 2) {
-				throw new Exception("cannot parse OCM user " . $member["value"]);
-			}
-			$newMember = $userIdParts[0];
-			if ($userIdParts[1] !== getOurDomain()) {
-				$newMember .= "#" . $userIdParts[1];
-			}
-			if ($userIdParts[1] === IGNORE_DOMAIN) {
-				continue;
-			}
-			$newMembers[] = $newMember;
-		}
-=======
                 $newDomain = $this->getNewDomainIfNeeded($newMember, $currentMembers);
                 if ($newDomain) {
                     $this->mixedGroupShareProvider->sendOcmInviteForExistingShares($newDomain, $groupId);
@@ -183,7 +127,6 @@ class ScimController extends Controller {
             }
         }
     }
->>>>>>> main
 
     /**
      * @NoCSRFRequired
@@ -196,12 +139,9 @@ class ScimController extends Controller {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
-<<<<<<< HEAD
-		for ($i = 0; $i < count($newMembers); $i++) {
-			if (!in_array($newMembers[$i], $currentMembers)) { // meaning new member is not in current update, so let add it to group and
-=======
+        $this->logger->info('Create Group ' . $id . ' with members: ' . print_r($members,true) );
+
         $body = ["id" => $id, "members" => $members];
->>>>>>> main
 
         if (!$this->groupManager->get($id)) {
             $this->groupBackend->createGroup($id);
@@ -238,21 +178,8 @@ class ScimController extends Controller {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
-<<<<<<< HEAD
-		$this->logger->debug('GroupID ' . $groupId . ' and body: ' . print_r($body,true) );
+        $this->logger->info('Update Group ' . $groupId . ' with members: ' . print_r($members,true) );
 
-		$this->groupBackend->createGroup($groupId);
-
-		// expect group to already exist
-		// we are probably receiving this create due to
-		// https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
-		$this->handleUpdateGroup($groupId, $body);
-		return new JSONResponse(
-			$body,
-			RESPONSE_TO_GROUP_CREATE
-		);
-	}
-=======
         $body = ["members" => $members];
 
         try {
@@ -262,7 +189,6 @@ class ScimController extends Controller {
         }
         return new JSONResponse(['status' => 'success', 'message' => null, 'data' => $body], Http::STATUS_OK);
     }
->>>>>>> main
 
     /**
      * @NoCSRFRequired
@@ -271,6 +197,9 @@ class ScimController extends Controller {
     public function deleteGroup($groupId) {
         $group = $this->groupManager->get(\urldecode($groupId));
         if ($group) {
+
+            $this->logger->info('Delete Group ' . $groupId );
+
             $deleted = $group->delete();
             if ($deleted) {
                 return new JSONResponse(['status' => 'success', 'message' => "Succesfully deleted group: {$groupId}", 'data' => null], Http::STATUS_NO_CONTENT);
@@ -299,36 +228,11 @@ class ScimController extends Controller {
             $group    = $this->groupManager->get($groupId);
             $groupObj = [];
 
-<<<<<<< HEAD
-		foreach ($groups as $groupId) {
-			$group = $this->groupManager->get(\urldecode($groupId));
-			if ($group) {
-				$groupObj = [];
-
-				$groupObj["id"] = $group->getGID();
-				$groupObj["displayName"] = $group->getDisplayName();
-
-				$groupBackend = $group->getBackend();
-				$usersInGroup = $groupBackend->usersInGroup($groupId);
-
-				$groupObj["members"] = array_map(function ($item) {
-					return [
-						"value" => $item,
-						"ref" => "",
-						"displayName" => "",
-					];
-				}, $usersInGroup);
-
-				$res[] = $groupObj;
-			}
-		}
-=======
             $groupObj["id"]          = $group->getGID();
             $groupObj["displayName"] = $group->getDisplayName();
-            
+
             $usersInGroup = $group->getBackend()->usersInGroup($groupId);
             // $usersInGroup = [...$group->getBackend()->usersInGroup($groupId), $this->groupBackend->usersInGroup($groupId)];
->>>>>>> main
 
             $groupObj["members"] = array_map(function ($item) {
                 return [
@@ -357,6 +261,8 @@ class ScimController extends Controller {
      */
     public function getGroup($groupId) {
         // work around #129
+        $this->logger->info('Get Group ' . $groupId );
+
         $group = $this->groupManager->get(\urldecode($groupId));
         if ($group) {
             $id          = $group->getGID();
