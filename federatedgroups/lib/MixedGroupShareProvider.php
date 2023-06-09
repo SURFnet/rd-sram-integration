@@ -376,7 +376,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$created->setToken($this->tokenHandler->generateToken());
 			// Send OCM invites to remote group members
 			try {
-				foreach ($remotes as $remote) {
+				foreach (\array_unique($remotes) as $remote) {
 					$this->sendOcmInvite($created, $remote);
 				}
 				$qb = $this->dbConn->getQueryBuilder();
