@@ -19,9 +19,25 @@ Einstein on `OC1.Docker` can share a file with the `federalists` group and the r
 
 2- You can find more detail about the Owncloud administration [here](https://doc.owncloud.com/server/next/admin_manual/configuration/server/occ_command.html);
 
-
 Copy `federatedgroups` folder into apps folder of your owncloud. 
 Change **sharing.managerFactory** config entry to **OCA\\FederatedGroups\\ShareProviderFactory** inside *config.php* file.
+
+## configuration
+there are two configuration those should be done in oc_appconfig table: 
+
+```
++-----------------+-------------+--------------------------------------------------+
+| appid           | configkey   | configvalue                                      |
++-----------------+-------------+--------------------------------------------------+
+| federatedgroups | allowed_ips | some comma seperated valid ips or (*)            |
+| federatedgroups | scim_token  | some top secret random generated secrets         |
++-----------------+-------------+--------------------------------------------------+
+```
+
+these configuration will done with the first SCIM Api call but you can set them by these sql commands:
+> insert into oc_appconfig (appid, configkey, configvalue) VALUES ('federatedgroups', 'scim_token', 'something-super-secret');
+
+> insert into oc_appconfig (appid, configkey, configvalue) VALUES ('federatedgroups', 'allowed_ips', '<* | desiered white listed ips (seperated by comma)>');
 
 AND HERE WE GO!!!!! 🚀
 
@@ -30,7 +46,6 @@ AND HERE WE GO!!!!! 🚀
 
 you can test this application using using this repository: 
 https://github.com/pondersource/dev-stock
-
 
 ### Note:
 You should install Docker on you system as requirement **OR** just using the **Github Codespaces**
