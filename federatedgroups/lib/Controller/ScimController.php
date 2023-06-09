@@ -48,9 +48,9 @@ class ScimController extends Controller {
     private GroupBackend $groupBackend;
 
     /**
-  	* @var ILogger
-  	*/
-  	private $logger;
+    * @var ILogger
+    */
+    private $logger;
 
     public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend, ILogger $logger) {
         parent::__construct($appName, $request);
