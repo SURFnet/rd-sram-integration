@@ -24,7 +24,7 @@ class Version20230523140843 implements ISqlMigration {
         $sql2 = "CREATE TABLE `{$prefix}fg_group_user` ( 
                     `gid` varchar(64) COLLATE utf8_unicode_ci NOT NULL, 
                     `uid` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
-                    UNIQUE INDEX `{$prefix}uc_fg_group_user` (`gid`,`uid`) USING BTREE
+                    CONSTRAINT `{$prefix}uc_fg_group_user` UNIQUE (gui,uid)
                 )
                 ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
         
