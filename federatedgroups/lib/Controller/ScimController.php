@@ -137,25 +137,14 @@ class ScimController extends Controller {
         if (!$this->groupManager->get($id)) {
             $this->groupBackend->createGroup($id);
         }
-
-        // $this->groupManager->createGroup($id);
-
-        // expect group to already exist
-        // we are probably receiving this create due to
-        // https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
+        
         try {
             $this->handleUpdateGroup($id, $body);
+            $groupData = $this->handleGetGroupData($id);
+            return new JSONResponse(['status'  => 'success', 'message' => null, 'data' => $groupData], Http::STATUS_CREATED);
         } catch (\Exception $ex) {
             return new JSONResponse(['status' => 'error', 'message' => $ex->getMessage(), 'data' => null], Http::STATUS_BAD_REQUEST);
         }
-        return new JSONResponse(
-            [
-                'status'  => 'success',
-                'message' => null,
-                'data'    => $body
-            ],
-            Http::STATUS_CREATED
-        );
     }
 
     /**
@@ -173,11 +162,15 @@ class ScimController extends Controller {
 
         try {
             $this->handleUpdateGroup($groupId, $body);
+            $groupData = $this->handleGetGroupData($groupId);
+            return new JSONResponse(['status' => 'success', 'message' => null, 'data' => $groupData], Http::STATUS_OK);
         } catch (\Exception $ex) {
             return new JSONResponse(['status' => 'error', 'message' => $ex->getMessage(), 'data' => null], Http::STATUS_BAD_REQUEST);
         }
-        return new JSONResponse(['status' => 'success', 'message' => null, 'data' => $body], Http::STATUS_OK);
     }
+
+
+
 
     /**
      * @NoCSRFRequired
@@ -202,40 +195,22 @@ class ScimController extends Controller {
      * @PublicPage
      */
     public function getGroups() {
-        // $groups = $this->groupBackend->getGroups();
         $groups = [];
-        $res    = [];
+        $groupDataArr    = [];
 
         foreach ($this->groupManager->getBackends() as $backend) {
             array_push($groups, ...$backend->getGroups());
         }
 
         foreach ($groups as $groupId) {
-            $group    = $this->groupManager->get($groupId);
-            $groupObj = [];
-
-            $groupObj["id"]          = $group->getGID();
-            $groupObj["displayName"] = $group->getDisplayName();
-            
-            $usersInGroup = $group->getBackend()->usersInGroup($groupId);
-            // $usersInGroup = [...$group->getBackend()->usersInGroup($groupId), $this->groupBackend->usersInGroup($groupId)];
-
-            $groupObj["members"] = array_map(function ($item) {
-                return [
-                    "value"       => $item,
-                    "ref"         => "",
-                    "displayName" => "",
-                ];
-            }, $usersInGroup);
-
-            $res[] = $groupObj;
+            $groupDataArr[] = $this->handleGetGroupData($groupId);
         }
 
         return new JSONResponse(
             [
                 'status'  => 'success',
                 'message' => null,
-                'data'    => ["totalResults" => count($groups), "Resources" => $res,]
+                'data'    => ["totalResults" => count($groups), "Resources" => $groupDataArr]
             ],
             Http::STATUS_OK
         );
@@ -246,28 +221,13 @@ class ScimController extends Controller {
      * @PublicPage
      */
     public function getGroup($groupId) {
-        // work around #129
-        $group = $this->groupManager->get(\urldecode($groupId));
-        if ($group) {
-            $id          = $group->getGID();
-            $displayName = $group->getDisplayName();
-
-            $usersInGroup = $group->getBackend()->usersInGroup($groupId);
-
-            // $usersInGroup = [...$group->getBackend()->usersInGroup($groupId), ...$this->groupBackend->usersInGroup($groupId)];
-            $members = array_map(function ($item) {
-                return [
-                    "value"       => $item,
-                    "ref"         => "",
-                    "displayName" => "",
-                ];
-            }, $usersInGroup);
-
+        $groupData = $this->handleGetGroupData($groupId);
+        if ($groupData) {
             return new JSONResponse(
                 [
                     'status'  => 'success',
                     'message' => null,
-                    'data'    => ["id" => $id, "displayName" => $displayName, 'members' => $members,]
+                    'data'    => $groupData
                 ],
                 Http::STATUS_OK
             );
@@ -280,6 +240,27 @@ class ScimController extends Controller {
                 ],
                 Http::STATUS_NOT_FOUND
             );
+        }
+    }
+
+
+    private function handleGetGroupData($groupId) {
+        $group = $this->groupManager->get(\urldecode($groupId));
+        if ($group) {
+            $id = $group->getGID();
+            $displayName = $group->getDisplayName();
+            $usersInGroup = $group->getBackend()->usersInGroup($groupId);
+            $members = array_map(fn ($item) => ["value" => $item, "ref" => "", "displayName" => ""], $usersInGroup);
+
+            return ["id" => $id, "displayName" => $displayName, 'members' => $members,];
+        }
+    }
+
+    private function validateGroupInput($id, $members) {
+        if (!$id) {
+            return new JSONResponse(['status' => 'error', 'message' => "Missing param: groupId", 'data' => null], Http::STATUS_BAD_REQUEST);
+        } else if (!is_array($members)) {
+            return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
     }
 }
