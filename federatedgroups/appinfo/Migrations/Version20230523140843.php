@@ -16,13 +16,18 @@ class Version20230523140843 implements ISqlMigration {
         $prefix = $connection->getPrefix();
 
 		$sql1 = "CREATE TABLE `{$prefix}fg_groups` (
-            `gid` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
-            PRIMARY KEY (`gid`)
-            ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
-        $sql2 = "CREATE TABLE `{$prefix}fg_group_user` (
-            `gid` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
-            `uid` varchar(256) COLLATE utf8_unicode_ci NOT NULL
-            ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+                    `gid` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+                     PRIMARY KEY (`gid`) 
+                ) 
+                ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+
+        $sql2 = "CREATE TABLE `{$prefix}fg_group_user` ( 
+                    `gid` varchar(64) COLLATE utf8_unicode_ci NOT NULL, 
+                    `uid` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
+                    UNIQUE INDEX `{$prefix}uc_fg_group_user` (`gid`,`uid`) USING BTREE
+                )
+                ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+        
 		return [$sql1, $sql2];
 	}
 }
