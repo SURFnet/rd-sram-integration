@@ -258,7 +258,7 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 	 * @return array [user, remoteURL]
 	 * @throws \Exception
 	 */
-	public function splitUserRemote($address) {
+	private function splitUserRemote($address) {
 		if (\strpos($address, '@') === false) {
 			throw new \Exception('Invalid Federated Cloud ID');
 		}
