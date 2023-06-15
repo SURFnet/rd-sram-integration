@@ -131,7 +131,7 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 				}
 
 				// CLOUD matching is done above
-				unset($searchProperties['CLOUD']);
+				unset($searchProperties[array_search('CLOUD',$searchProperties)]);
 				foreach ($searchProperties as $property) {
 					// do we even have this property for this contact/
 					if (!isset($contact[$property])) {
@@ -154,14 +154,6 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 									'server' => $serverUrl,
 								],
 							];
-							$this->result['exact']['remotes'][] = [
-								'label' =>  $contact['FN'],
-								'value' => [
-									'shareType' => Share::SHARE_TYPE_REMOTE_GROUP,
-									'shareWith' => $cloudId,
-									'server' => $serverUrl,
-								],
-							];
 
 							// Now skip to next CLOUD
 							continue 3;
@@ -175,14 +167,6 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 						'label' => $contact['FN'],
 						'value' => [
 							'shareType' => Share::SHARE_TYPE_REMOTE,
-							'shareWith' => $cloudId,
-							'server' => $serverUrl,
-						],
-					];
-					$this->result['exact']['remotes'][] = [
-						'label' =>  $contact['FN'],
-						'value' => [
-							'shareType' => Share::SHARE_TYPE_REMOTE_GROUP,
 							'shareWith' => $cloudId,
 							'server' => $serverUrl,
 						],

@@ -48,17 +48,30 @@ class ShareeSearchPluginTest extends \Test\TestCase{
         $this->userManager = $this->createMock(IUserManager::class);
         $this->config = $this->createMock(IConfig::class);
         $this->config->method('getAppValue')
-			->willReturn('yes');
+			->willReturnCallback(function ($appname, $configKey) {
+                if ($appname === 'core' && $configKey ==='shareapi_allow_share_dialog_user_enumeration')
+                    return "yes";
+                if ($appname === 'dav' && $configKey ==='remote_search_properties')
+                    return 'CLOUD,FN';
+                else {
+                    return null;
+                }
+            });
+        //$this->config->method('getAppValue')->with('core', 'shareapi_allow_share_dialog_user_enumeration')
+		//	->willReturn('CLOUD,FN');
+            
         $this->contactsManager = $this->createMock(IManager::class);
         $this->userSearch = $this->createMock(UserSearch::class); 
+        $this->userSearch->method("isSearchable")->willReturn(true); 
         
         $this->user = $this->createMock(IUser::class); 
         $this->user->method("getUID")->willReturn($this->userId);
 
         $this->userSession = $this->createMock(IUserSession::class);
         $this->userSession->method("getUser")->willReturn($this->user);
-
-        
+        $this->shareeSearchPluguin = new ShareeSearchPlugin($this->config, $this->userManager, 
+            $this->userSession, $this->contactsManager, $this->userSearch
+        );
 
     }
 
@@ -68,26 +81,18 @@ class ShareeSearchPluginTest extends \Test\TestCase{
         $this->contactsManager->expects($this->once())
             ->method("search")->willReturn([
                 [
-                    "CLOUD"=>"someCloudId@someCloud.com", 
-                    "uid" =>"someCloudId",
+                    "CLOUD"=>"somecloudId@somecloud.com", 
+                    "uid" =>"somecloudId",
                     "FN" => "someone"
                 ]]);
-        $this->shareeSearchPluguin = new ShareeSearchPlugin($this->config, $this->userManager, 
-            $this->userSession, $this->contactsManager, $this->userSearch
-        );
 
-        $actual = $this->shareeSearchPluguin->search("someCloudId@someCloud.com");
+        $actual = $this->shareeSearchPluguin->search("somecloudId@somecloud.com");
         $this->assertCount(1, $actual);
         $hasRemote = array_reduce($actual, function($carry,$item){
-            return $carry || $item["value"]["shareType"] == Share::SHARE_TYPE_REMOTE;
-        });
-
-        $hasRemoteGroup = array_reduce($actual, function($carry,$item){
-            return $carry && $item["value"]["shareType"] != Share::SHARE_TYPE_REMOTE_GROUP;
+            return $carry || $item["value"]["shareType"] === Share::SHARE_TYPE_REMOTE;
         });
 
         $this->assertTrue($hasRemote);
-        $this->assertFalse($hasRemoteGroup);
     }
 
     public function test_search_for_local_entities(){
@@ -95,11 +100,60 @@ class ShareeSearchPluginTest extends \Test\TestCase{
         $this->contactsManager->expects($this->once())
             ->method("search")->willReturn([
                 []]);
-        $this->shareeSearchPluguin = new ShareeSearchPlugin($this->config, $this->userManager, 
-            $this->userSession, $this->contactsManager, $this->userSearch
-        );
 
         $actual = $this->shareeSearchPluguin->search("someLocalId");
         $this->assertEmpty($actual);
+    }
+
+    public function test_search_for_not_local_nor_contact_entities(){
+
+        $this->contactsManager->expects($this->once())
+            ->method("search")->willReturn([
+                []]);
+                
+        $actual = $this->shareeSearchPluguin->search("someLocalId@cloud");
+
+        $this->assertCount(2, $actual);
+        $hasRemote = array_reduce($actual, function($carry,$item){
+            return $carry || $item["value"]["shareType"] === Share::SHARE_TYPE_REMOTE;
+        });
+
+        $hasRemoteGroup = array_reduce($actual, function($carry,$item){
+            return $carry || $item["value"]["shareType"] === Share::SHARE_TYPE_REMOTE_GROUP;
+        });
+        $this->assertTrue($hasRemote);
+        $this->assertTrue($hasRemoteGroup);
+    }
+
+    public function test_search_when_contact_manager_has_CLOUD_and_searchfields(){
+
+        $this->contactsManager->expects($this->once())
+            ->method("search")->willReturn([
+                [
+                    "CLOUD"=>"someone@somecloud.com", 
+                    "uid" =>"someCloudId",
+                    "FN" => "someuser"
+                ], 
+                [
+                    "CLOUD"=>"another_user@anothercloud", 
+                    "uid" =>"someCloudId",
+                    "FN" => "someone@somecloud.com"
+                ]
+            
+            ]);
+
+        $actual = $this->shareeSearchPluguin->search("someone@somecloud.com");
+        $this->assertCount(2, $actual);
+       
+        $hasRemote = array_reduce($actual, function($carry,$item){
+            return $carry || $item["value"]["shareType"] === Share::SHARE_TYPE_REMOTE;
+        });
+
+        $hasRemoteGroup = array_reduce($actual, function($carry, $item){
+            return $carry || $item["value"]["shareType"] === Share::SHARE_TYPE_REMOTE_GROUP;
+        });
+
+        $this->assertTrue($hasRemote);
+        $this->assertFalse($hasRemoteGroup);
     }
 }
