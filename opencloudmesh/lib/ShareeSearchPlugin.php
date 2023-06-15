@@ -61,6 +61,8 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 	/** @var int */
 	private $offset = 0;
 
+	private $result = [];
+
 	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, IManager $contactsManager, UserSearch $userSearch) {
 		$this->config = $config;
 		$this->userManager = $userManager;
@@ -219,8 +221,9 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 				],
 			];
 		}
-		
-		return $this->result['exact']['remotes'];
+		if (isset($this->result) && count($this->result) > 0 )
+			return $this->result['exact']['remotes'];
+		return [];
 	}
 
 	/**

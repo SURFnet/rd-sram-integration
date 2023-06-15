@@ -90,4 +90,16 @@ class ShareeSearchPluginTest extends \Test\TestCase{
         $this->assertFalse($hasRemoteGroup);
     }
 
+    public function test_search_for_local_entities(){
+
+        $this->contactsManager->expects($this->once())
+            ->method("search")->willReturn([
+                []]);
+        $this->shareeSearchPluguin = new ShareeSearchPlugin($this->config, $this->userManager, 
+            $this->userSession, $this->contactsManager, $this->userSearch
+        );
+
+        $actual = $this->shareeSearchPluguin->search("someLocalId");
+        $this->assertEmpty($actual);
+    }
 }
