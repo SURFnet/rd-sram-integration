@@ -61,6 +61,8 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 	/** @var int */
 	private $offset = 0;
 
+	private $result = [];
+
 	public function __construct(IConfig $config, IUserManager $userManager, IUserSession $userSession, IManager $contactsManager, UserSearch $userSearch) {
 		$this->config = $config;
 		$this->userManager = $userManager;
@@ -124,19 +126,12 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 							'shareType' => Share::SHARE_TYPE_REMOTE,
 							'shareWith' => $cloudId,
 							'server' => $serverUrl,
-						],
-						'label' =>  $contact['FN'],
-						'value' => [
-							'shareType' => Share::SHARE_TYPE_REMOTE_GROUP,
-							'shareWith' => $cloudId,
-							'server' => $serverUrl,
-						],
-					];
+						]];
 					continue;
 				}
 
 				// CLOUD matching is done above
-				unset($searchProperties['CLOUD']);
+				unset($searchProperties[array_search('CLOUD',$searchProperties)]);
 				foreach ($searchProperties as $property) {
 					// do we even have this property for this contact/
 					if (!isset($contact[$property])) {
@@ -159,14 +154,6 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 									'server' => $serverUrl,
 								],
 							];
-							$this->result['exact']['remotes'][] = [
-								'label' =>  $contact['FN'],
-								'value' => [
-									'shareType' => Share::SHARE_TYPE_REMOTE_GROUP,
-									'shareWith' => $cloudId,
-									'server' => $serverUrl,
-								],
-							];
 
 							// Now skip to next CLOUD
 							continue 3;
@@ -184,14 +171,6 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 							'server' => $serverUrl,
 						],
 					];
-					$this->result['exact']['remotes'][] = [
-						'label' =>  $contact['FN'],
-						'value' => [
-							'shareType' => Share::SHARE_TYPE_REMOTE_GROUP,
-							'shareWith' => $cloudId,
-							'server' => $serverUrl,
-						],
-					];
 				}
 			}
 		}
@@ -200,9 +179,10 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 		if (!$this->shareeEnumeration) {
 			$this->result['remotes'] = [];
 		}
-		$this->result['exact']['remotes'] = [];
+		
 		if (!$foundRemoteById && \substr_count($search, '@') >= 1
 			&& $this->offset === 0 && $this->userSearch->isSearchable($search)
+			
 			// if an exact local user is found, only keep the remote entry if
 			// its domain does not match the trusted domains
 			// (if it does, it is a user whose local login domain matches the ownCloud
@@ -225,7 +205,9 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 				],
 			];
 		}
-		return $this->result['exact']['remotes'];
+		if (isset($this->result) && count($this->result) > 0 )
+			return $this->result['exact']['remotes'];
+		return [];
 	}
 
 	/**
@@ -249,5 +231,72 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 		$trustedDomains = $this->config->getSystemValue('trusted_domains', []);
 
 		return \in_array($domainName, $trustedDomains, true);
+	}
+
+	/**
+	 * split user and remote from federated cloud id
+	 *
+	 * @param string $address federated share address
+	 * @return array [user, remoteURL]
+	 * @throws \Exception
+	 */
+	private function splitUserRemote($address) {
+		if (\strpos($address, '@') === false) {
+			throw new \Exception('Invalid Federated Cloud ID');
+		}
+
+		// Find the first character that is not allowed in user names
+		$id = \str_replace('\\', '/', $address);
+		$posSlash = \strpos($id, '/');
+		$posColon = \strpos($id, ':');
+
+		if ($posSlash === false && $posColon === false) {
+			$invalidPos = \strlen($id);
+		} elseif ($posSlash === false) {
+			$invalidPos = $posColon;
+		} elseif ($posColon === false) {
+			$invalidPos = $posSlash;
+		} else {
+			$invalidPos = \min($posSlash, $posColon);
+		}
+
+		// Find the last @ before $invalidPos
+		$pos = $lastAtPos = 0;
+		while ($lastAtPos !== false && $lastAtPos <= $invalidPos) {
+			$pos = $lastAtPos;
+			$lastAtPos = \strpos($id, '@', $pos + 1);
+		}
+
+		if ($pos !== false) {
+			$user = \substr($id, 0, $pos);
+			$remote = \substr($id, $pos + 1);
+			$remote = $this->fixRemoteURL($remote);
+			if (!empty($user) && !empty($remote)) {
+				return [$user, $remote];
+			}
+		}
+
+		throw new \Exception('Invalid Federated Cloud ID');
+	}
+	/**
+	 * Strips away a potential file names and trailing slashes:
+	 * - http://localhost
+	 * - http://localhost/
+	 * - http://localhost/index.php
+	 * - http://localhost/index.php/s/{shareToken}
+	 *
+	 * all return: http://localhost
+	 *
+	 * @param string $remote
+	 * @return string
+	 */
+	protected function fixRemoteURL($remote) {
+		$remote = \str_replace('\\', '/', $remote);
+		if ($fileNamePosition = \strpos($remote, '/index.php')) {
+			$remote = \substr($remote, 0, $fileNamePosition);
+		}
+		$remote = \rtrim($remote, '/');
+
+		return $remote;
 	}
 }
