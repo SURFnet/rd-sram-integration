@@ -31,6 +31,7 @@ use OCP\IGroupManager;
 use OCA\FederatedGroups\AppInfo\Application;
 use OCA\FederatedGroups\MixedGroupShareProvider;
 use OCA\FederatedGroups\GroupBackend;
+use OCP\ILogger;
 
 function getOurDomain() {
     return $_SERVER['HTTP_HOST'];
@@ -46,12 +47,18 @@ class ScimController extends Controller {
     protected MixedGroupShareProvider $mixedGroupShareProvider;
     private GroupBackend $groupBackend;
 
-    public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend) {
+    /**
+    * @var ILogger
+    */
+    private $logger;
+
+    public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend, ILogger $logger) {
         parent::__construct($appName, $request);
         $federatedGroupsApp = new Application();
         $this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
         $this->groupManager = $groupManager;
         $this->groupBackend = $groupBackend;
+        $this->logger = $logger;
     }
 
     private function getNewDomainIfNeeded($newMember, $currentMembers) {
@@ -132,6 +139,8 @@ class ScimController extends Controller {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
+        $this->logger->info('Create Group ' . $id . ' with members: ' . print_r($members,true) );
+
         $body = ["id" => $id, "members" => $members];
 
         if (!$this->groupManager->get($id)) {
@@ -169,6 +178,8 @@ class ScimController extends Controller {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
+        $this->logger->info('Update Group ' . $groupId . ' with members: ' . print_r($members,true) );
+
         $body = ["members" => $members];
 
         try {
@@ -186,6 +197,9 @@ class ScimController extends Controller {
     public function deleteGroup($groupId) {
         $group = $this->groupManager->get(\urldecode($groupId));
         if ($group) {
+
+            $this->logger->info('Delete Group ' . $groupId );
+
             $deleted = $group->delete();
             if ($deleted) {
                 return new JSONResponse(['status' => 'success', 'message' => "Succesfully deleted group: {$groupId}", 'data' => null], Http::STATUS_NO_CONTENT);
@@ -216,7 +230,7 @@ class ScimController extends Controller {
 
             $groupObj["id"]          = $group->getGID();
             $groupObj["displayName"] = $group->getDisplayName();
-            
+
             $usersInGroup = $group->getBackend()->usersInGroup($groupId);
             // $usersInGroup = [...$group->getBackend()->usersInGroup($groupId), $this->groupBackend->usersInGroup($groupId)];
 
@@ -247,6 +261,8 @@ class ScimController extends Controller {
      */
     public function getGroup($groupId) {
         // work around #129
+        $this->logger->info('Get Group ' . $groupId );
+
         $group = $this->groupManager->get(\urldecode($groupId));
         if ($group) {
             $id          = $group->getGID();
