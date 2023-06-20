@@ -182,7 +182,7 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 	/**
 	 * @dataProvider getShareObject
 	 */
-	public function testCreate(Share\IShare $share){
+	public function test_create_with_group_share_type(Share\IShare $share){
 
 		$shareOwner = $this->createMock(IUser::class);
 		$shareOwner->method('getUID')->willReturn('shareOwner');
@@ -250,6 +250,88 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		
 		$result = $this->mixGroupProvider->create($share);
 		$this->assertNotEmpty($result->getToken(), "token should not be empty or null in the result object");
+
+	}
+
+
+	public function getLinkShareObject(){
+		list($file, $folder) = $this->getMockFileFolder();
+		list($shareAttributes, $shareAttributesReturnJson) = $this->mockShareAttributes();
+		$share = \OC::$server->getShareManager()->newShare();
+		$share->setShareType(Share::SHARE_TYPE_LINK)
+			->setSharedWith(self::GROUP_NAME)
+			->setSharedBy('initiator')
+			->setShareOwner('owner')
+			->setPermissions(\OCP\Constants::PERMISSION_READ)
+			->setAttributes($shareAttributes)
+			->setNode($file)
+			->setShareTime(new \DateTime('2023-05-01T00:01:02'))
+			->setTarget('myTarget')
+			->setId(42);
+		return [
+			[$share]
+		];
+	}
+
+	/**
+	 * @dataProvider getLinkShareObject
+	 */
+	public function test_create_with_link_share_type(Share\IShare $share){
+
+		$shareOwner = $this->createMock(IUser::class);
+		$shareOwner->method('getUID')->willReturn('shareOwner');
+
+		$path = $this->createMock(File::class);
+		$path->method('getId')->willReturn(3);
+		$path->method('getOwner')->willReturn($shareOwner);
+
+		$ownerFolder = $this->createMock(Folder::class);
+		$userFolder = $this->createMock(Folder::class);
+		$this->rootFolder
+			->method('getUserFolder')
+			->will($this->returnValueMap([
+				['initiator', $userFolder],
+				['owner', $ownerFolder],
+			]));
+
+		$userFolder->method('getById')
+			->with(3)
+			->willReturn([$path]);
+		$ownerFolder->method('getById')
+			->with(3)
+			->willReturn([$path]);
+
+		$groupBackend = $this->createMock(Backend::class);
+		$groupBackend->expects($this->never())
+			->method("usersInGroup");
+
+		$group = $this->createMock(IGroup::class);
+		$group->expects($this->never())
+			->method("getBackend");
+
+		$this->groupManager =  $this->createMock(IGroupManager::class);
+		$this->groupManager->expects($this->never())->method("get");
+		$this->addressHandler->method("getLocalUserFederatedAddress")
+			->willReturn(new Address("someone@somehost"));
+		
+		$this->groupNotifications->expects($this->never())
+			->method("sendRemoteShare");
+		
+		$this->mixGroupProvider = new MixedGroupShareProvider(
+			$this->dbConnection,
+			$this->userManager,
+			$this->groupManager,
+			$this->rootFolder,
+			$this->groupNotifications,
+			$this->tokenHandler,
+			$this->addressHandler,
+			$this->l,
+			$this->logger
+		);
+		
+		$result = $this->mixGroupProvider->create($share);
+		$this->assertNotNull($result, "result should not be empty or null in the result object");
+		$this->assertNotNull($result->getId(), "share should be persisted inside db with a new Id");
 
 	}
 
