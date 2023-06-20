@@ -112,7 +112,6 @@ class SRAMFederatedGroupShareProvider extends FederatedGroupShareProvider {
 					$qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_REMOTE_GROUP))
 				)
 			);
-
 		$cursor = $qb->execute();
 		$data = $cursor->fetch();
 		$cursor->closeCursor();
@@ -126,7 +125,6 @@ class SRAMFederatedGroupShareProvider extends FederatedGroupShareProvider {
 		} catch (InvalidShare $e) {
 			throw new ShareNotFound();
 		}
-
 		return $share;
 	}
 

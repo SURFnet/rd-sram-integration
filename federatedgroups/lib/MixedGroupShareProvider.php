@@ -150,7 +150,6 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			$sharedWith = $share->getSharedWith() . "@" . $remote;
 			$shareWithAddress = new Address($sharedWith);
 			
-			///// TODO =>>> set sharedSecret
 			$result = $this->groupNotifications->sendRemoteShare(
 				$shareWithAddress,
 				$ownerAddress,
@@ -197,7 +196,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 	 *
 	 * @param string $userId
 	 * @param int $id
-	 * @return \OCP\Files\File|\OCP\Files\Folder
+	 * @return \OCP\Files\File|\OCP\Files\Node
 	 * @throws InvalidShare
 	 */
 	private function getNode($userId, $id) {
@@ -350,6 +349,7 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			error_log("Local user, no need to check for OCM invites to send");
 		}
 	}
+
 
 	public function sendOcmInviteForExistingShares($remote, $groupId) {
 		// Note that we assume all federated groups are regular groups.
