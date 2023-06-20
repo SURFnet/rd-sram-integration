@@ -7,19 +7,14 @@ namespace OCA\FederatedGroups\AppInfo;
 
 use OC\AppFramework\Utility\SimpleContainer;
 use OCP\AppFramework\App;
-use OCP\IRequest;
-use GuzzleHttp\Exception\ServerException;
-use OCP\AppFramework\Http;
-use OCP\Share\Events\AcceptShare;
-use OCP\Share\Events\DeclineShare;
-use OCP\Util;
-use OCP\IContainer;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
 use OCA\FederatedFileSharing\Ocm\Permissions;
+use OCA\FederatedGroups\GroupBackend;
+use OCA\FederatedGroups\ScimSecurityMiddleware;
 use OCA\FederatedGroups\SRAMFederatedGroupShareProvider;
 
 
@@ -27,8 +22,21 @@ class Application extends App {
 	private $isProviderRegistered = false;
 	
 	public function __construct(array $urlParams = []) {
-		// error_log("fg: ". get_parent_class($this));
 		parent::__construct('federatedgroups', $urlParams);
+
+		$container = $this->getContainer();
+		$server = $container->getServer();
+
+		$container->registerService('OCA\\FederatedGroups\\GroupBackend', function (SimpleContainer $c) use ($server) {
+			return new GroupBackend();
+		});
+
+		$container->registerService('ScimSecurityMiddleware', function($c) use($server){
+            return new ScimSecurityMiddleware($server->getRequest(), $server->getConfig());
+        });
+
+        // executed in the order that it is registered
+        $container->registerMiddleware('ScimSecurityMiddleware');
 	}
 		
   	public static  function getMixedGroupShareProvider() {
@@ -100,5 +108,11 @@ class Application extends App {
 				return $ocmApp->getContainer()->query('OCA\\OpenCloudMesh\\GroupExternalManager');
 			}
 		);
+	}
+
+	public function registerBackends() {
+		$server = $this->getContainer()->getServer();
+		$groupBackend = $this->getContainer()->query('OCA\\FederatedGroups\\GroupBackend');
+		$server->getGroupManager()->addBackend($groupBackend);
 	}
 } 

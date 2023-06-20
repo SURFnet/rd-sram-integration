@@ -4,116 +4,180 @@ declare(strict_types=1);
 
 namespace OCA\FederatedGroups\Tests\Controller;
 
-// use OCA\OpenCloudMesh\Tests\FederatedFileSharing\TestCase;
-
+use OCA\FederatedGroups\Controller\ScimController;
 use OCA\FederatedGroups\MixedGroupShareProvider;
-use Test\TestCase;
 use OCP\AppFramework\Http;
+use OCP\IGroup;
+use Test\TestCase;
+use OCP\IRequest;
+use OCP\IGroupManager;
+use Test\Util\Group\Dummy;
 
-const RESPONSE_TO_USER_CREATE = Http::STATUS_CREATED;
-const RESPONSE_TO_USER_UPDATE = Http::STATUS_OK;
 
-const RESPONSE_TO_GROUP_CREATE = Http::STATUS_CREATED;
-const RESPONSE_TO_GROUP_UPDATE = Http::STATUS_OK;
-const IGNORE_DOMAIN = "sram.surf.nl";
-
-function getOurDomain() {
-	return getenv("SITE") . ".pondersource.net";
-}
-
+/**
+ * @group DB
+ */
 class ScimControllerTest extends TestCase {
+    private IGroupManager $groupManager;
 
-	/**
-	 * @var IGroupManager $groupManager
-	 */
-	private $groupManager;
-	/**
-	 * @var MixedGroupShareProvider
-	 */
-	protected $mixedGroupShareProvider;
+    private ScimController $controller;
+    private MixedGroupShareProvider $mixedGroupShareProvider;
 
-	/**
-	 * @var IDBConnection
-	 */
-	private $dbConnection;
-
-	/**
-	 * @var IUserManager
-	 */
-	private $userManager;
-
-	/**
-	 * @var IRootFolder
-	 */
-	private $rootFolder;
-
-	/**
-	 * @var GroupNotifications
-	 */
-	private $groupNotifications;
-
-	/**
-	 * @var TokenHandler
-	 */
-	private $tokenHandler;
-
-	/**
-	 * @var AddressHandler
-	 */
-	private $addressHandler;
-
-	/**
-	 * @var IL10N
-	 */
-	private $l;
-
-	/**
-	 * @var ILogger
-	 */
-	private $logger;
-
-	/**
-	 * @var MixedGroupShareProviderTest
-	 */
-	private $mixGroupProvider;
-
-	protected function setUp(): void {
-		parent::setUp();
-		// $federatedGroupsApp = $this->getMockBuilder(\OCA\FederatedGroups\AppInfo\Application::class);
-		// $this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
-
-		$this->dbConnection = \OC::$server->getDatabaseConnection();
-		$this->userManager = $this->createMock(IUserManager::class);
-		$this->groupManager = $this->createMock(IGroupManager::class);
-		$this->rootFolder = $this->createMock(IRootFolder::class);
-		$this->groupNotifications = $this->createMock(GroupNotifications::class);
-		$this->tokenHandler = $this->createMock(TokenHandler::class);
-		$this->addressHandler = $this->createMock(AddressHandler::class);
-		$this->l = $this->createMock(IL10N::class);
-		$this->logger = $this->createMock(ILogger::class);
-		$this->mixedGroupShareProvider = new MixedGroupShareProvider(
-			$this->dbConnection,
-			$this->userManager,
-			$this->groupManager,
-			$this->rootFolder,
-			$this->groupNotifications,
-			$this->tokenHandler,
-			$this->addressHandler,
-			$this->l,
-			$this->logger
-		);
-	}
-
-	public function tearDown(): void {
-		// $this->dbConnection->getQueryBuilder()->delete('share')->execute();
-		// $this->dbConnection->getQueryBuilder()->delete('filecache')->execute();
-
-		parent::tearDown();
-	}
+    protected function setUp(): void {
+        parent::setUp();
+        $request = $this->createMock(IRequest::class);
+        $this->groupManager = $this->createMock(IGroupManager::class);
+        $this->controller = new ScimController("federatedGroups", $request, $this->groupManager);
+        $this->mixedGroupShareProvider = $this->createMock(MixedGroupShareProvider::class);
+    }
 
 
-	public function it_will_return_groups() {
-		// $this->groupManager->expects($this->once())->method("get")
-		// 	->willReturn($group);
-	}
+    // deleteGroup START
+    public function test_it_can_delete_created_group() {
+        $groupId = 'test-group';
+        $members = [["value" => "test_user@oc2.docker"]];
+        $deleted = true;
+        $currentMembers = ["admin"];
+
+        $group = $this->createMock(IGroup::class);
+
+        $groupBackend = $this->createMock(Dummy::class);
+
+        $this->groupManager->expects($this->once())->method("createGroup")->with($groupId);
+        $this->groupManager->expects($this->any())->method("get")->with($groupId)->willReturn($group);
+
+        $group->expects($this->once())->method("getBackend")->willReturn($groupBackend);
+
+        $groupBackend->expects($this->once())->method("usersInGroup")->willReturn($currentMembers);
+        $groupBackend->expects($this->once())->method("removeFromGroup");
+
+        $createResponse = $this->controller->createGroup($groupId, $members);
+
+        $this->assertEquals(Http::STATUS_CREATED, $createResponse->getStatus());
+
+        $group->expects($this->once())->method("delete")->willReturn($deleted);
+
+        $deleteResponse = $this->controller->deleteGroup($groupId);
+
+        $this->assertEquals(Http::STATUS_NO_CONTENT, $deleteResponse->getStatus());
+    }
+
+    public function test_it_returns_404_when_delete_non_existing_group() {
+        $groupId = 'test-group';
+
+        $this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn(null);
+
+        $deleteResponse = $this->controller->deleteGroup($groupId);
+
+        $this->assertEquals(Http::STATUS_NOT_FOUND, $deleteResponse->getStatus());
+    }
+    // deleteGroup END
+
+
+    // getGroups START
+    public function test_it_can_get_list_of_groups() {
+        $groups = ["admin", "federalists"];
+        $usersInGroup = ["admin"];
+
+        $backend = $this->createMock(Dummy::class);
+        $backends = [$backend];
+
+        $group = $this->createMock(IGroup::class);
+        $groups = [$group];
+
+        $this->groupManager->expects($this->once())->method("getBackends")->willReturn($backends);
+        $backend->expects($this->any())->method("getGroups")->willReturn($groups);
+
+
+        $this->groupManager->expects($this->any())->method("get")->with($group)->willReturn($group);
+        $group->expects($this->any())->method("getGID");
+        $group->expects($this->any())->method("getDisplayName");
+
+        $groupBackend = $this->createMock(\OC\Group\Backend::class);
+        $group->expects($this->any())->method("getBackend")->willReturn($groupBackend);
+
+        $groupBackend->expects($this->any())->method("usersInGroup")->with($group)->willReturn($usersInGroup);
+
+        $response = $this->controller->getGroups();
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+    }
+    // getGroups END
+
+    // getGroup START
+    public function test_it_returns_404_if_groups_not_exists() {
+        $groupId = 'test-group';
+
+        $this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn(null);
+
+        $getResponse = $this->controller->getGroup($groupId);
+
+        $this->assertEquals(Http::STATUS_NOT_FOUND, $getResponse->getStatus());
+    }
+
+    public function test_it_can_get_group_if_exists() {
+        $groupId = 'test-group';
+
+        $usersInGroup = ["admin"];
+
+        $group = $this->createMock(IGroup::class);
+
+        $groupBackend = $this->createMock(Dummy::class);
+
+        $this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
+
+        $group->expects($this->once())->method("getBackend")->willReturn($groupBackend);
+
+        $groupBackend->expects($this->once())->method("usersInGroup")->willReturn($usersInGroup);
+
+        $responce = $this->controller->getGroup($groupId);
+
+        $this->assertEquals(Http::STATUS_OK, $responce->getStatus());
+    }
+    // getGroup END
+
+
+    // updateGroup START
+    public function test_it_can_update_group_if_exists() {
+        $groupId = 'test-group';
+        $members = [["value" => "test_user@oc2.docker"]];
+        $newMembers = ["test_user#oc2.docker"];
+        $currentMembers = ["current_member"];
+
+        $group = $this->createMock(IGroup::class);
+        $groupBackend = $this->createMock(Dummy::class);
+
+        $this->groupManager->expects($this->any())->method("get")->with($groupId)->willReturn($group);
+        $group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
+        $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
+        $groupBackend->expects($this->once())->method('removeFromGroup')->with($currentMembers[0], $groupId);
+        $groupBackend->expects($this->once())->method('addToGroup')->with($newMembers[0], $groupId);
+
+        $newDomain = explode("#", $newMembers[0]);
+        $this->mixedGroupShareProvider->expects($this->any())->method('sendOcmInviteForExistingShares')->with($newDomain, $groupId);
+
+        $response = $this->controller->updateGroup($groupId, $members);
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+    }
+    // updateGroup END
+
+    // createGroup START
+    public function test_it_can_create_group() {
+        $groupId = 'test-group';
+        $members = [["value" => "test_user@oc2.docker"]];
+        $newMembers = ["test_user#oc2.docker"];
+        $currentMembers = [];
+
+        $group = $this->createMock(IGroup::class);
+        $groupBackend = $this->createMock(Dummy::class);
+
+        $this->groupManager->expects($this->any())->method("createGroup")->with($groupId);
+        $this->groupManager->expects($this->any())->method("get")->with($groupId)->willReturn($group);
+        $group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
+        $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
+        $groupBackend->expects($this->any())->method('addToGroup')->with($newMembers[0], $groupId);
+
+        $response = $this->controller->createGroup($groupId, $members);
+        $this->assertEquals(Http::STATUS_CREATED, $response->getStatus());
+    }
+    // createGroup END
 }
