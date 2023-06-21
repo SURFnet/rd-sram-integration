@@ -389,8 +389,8 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 			catch (\Exception $e){
 				throw $e;
 			}
-			return $created;
 		}
+		return $created;
 	}
 
 	/**
