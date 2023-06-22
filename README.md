@@ -54,13 +54,11 @@ You should install Docker on you system as requirement **OR** just using the **G
 
 1- Clone the repository.
 
-2- Change the branch to `oc-opencloudmesh-testing`.
+2- Run `./scripts/clean.sh`.
 
-3- Run `./scripts/clean.sh`.
+3- Run `./scripts/init-rd-sram.sh`.
 
-4- Run `./scripts/init-rd-sram.sh`.
-
-5- Run `./scripts/rd-sram-testing.sh`.
+4- Run `./scripts/rd-sram-testing.sh`.
 
 After Running these commands you can browse localhost:5800 and it let you see a headless browser.
 inside headless browser you can enter these two addresses: https://oc1.docker and https://oc2.docker.
