@@ -19,10 +19,16 @@ This app requires you to run [this branch of ownCloud](https://github.com/ponder
 ```
 
 ## Development
-To debug it, you can open https://github.com/pondersource/dev-stock/tree/oc-opencloudmesh-testing
-on GitPod and run `./scripts/init-oc-opencloudmesh.sh` followed by `./scripts/oc-opencloudmesh-testing.sh`.
+To debug it, you can open https://github.com/pondersource/dev-stock
+on GitPod and run:
+* `./scripts/init-gitpod-prebuild.sh`
+*`./scripts/init-opencloudmesh.sh`
+* `./scripts/testing-opencloudmesh.sh`.
+
 Then:
 * open the browser-in-a-browser that will be started on port 5800
+* log in to https://oc2.docker as marie / radioactivity
+* create a group called 'scientists'
 * log in to https://oc1.docker as einstein / relativity
 * share something with scientists@oc2.docker
 * log in to https://oc2.docker as marie / radioactivity
