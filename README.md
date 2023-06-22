@@ -31,6 +31,6 @@ Then:
 * log in to https://oc2.docker as marie / radioactivity
 * create a group called 'scientists'
 * log in to https://oc1.docker as einstein / relativity
-* share something with scientists@oc2.docker
+* create a *folder* and share it with scientists@oc2.docker (careful, sharing welcome.txt will not work!)
 * log in to https://oc2.docker as marie / radioactivity
 * accept the share from einstein
