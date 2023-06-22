@@ -21,8 +21,9 @@ This app requires you to run [this branch of ownCloud](https://github.com/ponder
 ## Development
 To debug it, you can open https://github.com/pondersource/dev-stock
 on GitPod and run:
+
 * `./scripts/init-gitpod-prebuild.sh`
-*`./scripts/init-opencloudmesh.sh`
+* `./scripts/init-opencloudmesh.sh`
 * `./scripts/testing-opencloudmesh.sh`.
 
 Then:
