@@ -1,8 +1,16 @@
 # opencloudmesh app for ownCloud version 10
 
-In ownCloud version 10, the OpenCloudMesh protocol is partially implemented. This app, combined with
-our "ocm-cleaning" branch of owncloud/core, completes the implementation, so that not only user-to-user
-but also user-to-group sharing becomes possible.
+In OwnCloud version 10, the OpenCloudMesh protocol is partially implemented. This app is our solution to complete the implementation so by using this app, not only user-to-user
+but also user-to-group federated sharing becomes possible.
+
+therefore in the pure Owncloud installation without any custom application, you just can share the file with a federated user by typing `user-name@domain-of-another-owncloud`
+but, when you will install the openCloudMesh Application you can also share the file with a remote group by typing `group-name@domain-of-another-owncloud.
+
+So when you are typing inside the sharee search textbox after that you add the `@` the result should be like the below image: 
+![image](https://github.com/pondersource/oc-opencloudmesh/assets/123634558/3ea154a3-d2e0-49cb-9366-6c871ebfafcb)
+
+and when you click the second item in the result list (item with group icon) your file will be shared with all the members of the group on the remote server. (the group and its users should be present on the remote server)
+
 
 ## Status
 This app is still in alpha testing, so don't be surprised if it doesn't work for you yet!
@@ -16,6 +24,7 @@ This app requires you to run [this branch of ownCloud](https://github.com/ponder
   'sharing.ocmController' => 'OCA\\OpenCloudMesh\\Controller\\OcmController',
   'sharing.groupExternalManager' => 'OCA\\OpenCloudMesh\\GroupExternalManager',
 
+
 ```
 
 ## Development
@@ -27,7 +36,7 @@ on GitPod and run:
 * `./scripts/testing-opencloudmesh.sh`.
 
 Then:
-* open the browser-in-a-browser that will be started on port 5800
+* Open the browser-in-a-browser that will be started on port 5800
 * log in to https://oc2.docker as marie / radioactivity
 * create a group called 'scientists'
 * log in to https://oc1.docker as einstein / relativity
