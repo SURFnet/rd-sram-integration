@@ -154,6 +154,8 @@ class ScimController extends Controller {
         // https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
         try {
             $this->handleUpdateGroup($id, $body);
+            // $groupData = $this->handleGetGroupData($id);
+            // return new JSONResponse(['status'  => 'success', 'message' => null, 'data' => $groupData], Http::STATUS_CREATED);
         } catch (\Exception $ex) {
             return new JSONResponse(['status' => 'error', 'message' => $ex->getMessage(), 'data' => null], Http::STATUS_BAD_REQUEST);
         }
@@ -184,6 +186,8 @@ class ScimController extends Controller {
 
         try {
             $this->handleUpdateGroup($groupId, $body);
+            // $groupData = $this->handleGetGroupData($groupId);
+            // return new JSONResponse(['status' => 'success', 'message' => null, 'data' => $groupData], Http::STATUS_OK);
         } catch (\Exception $ex) {
             return new JSONResponse(['status' => 'error', 'message' => $ex->getMessage(), 'data' => null], Http::STATUS_BAD_REQUEST);
         }
