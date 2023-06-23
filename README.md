@@ -54,11 +54,13 @@ You should install Docker on you system as requirement **OR** just using the **G
 
 1- Clone the repository.
 
-2- Run `./scripts/clean.sh`.
+2- Run `./scripts/init-rd-sram.sh`.
 
-3- Run `./scripts/init-rd-sram.sh`.
+3- Run `./scripts/testing-rd-sram.sh`.
 
-4- Run `./scripts/testing-rd-sram.sh`.
+4- Run `docker exec -it oc2.docker sh /curls/includeMarie.sh oc2.docker`
+
+5- Run `docker exec -it oc1.docker sh /curls/includeMarie.sh oc1.docker`
 
 After Running these commands you can browse localhost:5800 and it let you see a headless browser.
 inside headless browser you can enter these two addresses: https://oc1.docker and https://oc2.docker.
