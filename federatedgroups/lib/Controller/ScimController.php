@@ -32,6 +32,9 @@ use OCA\FederatedGroups\AppInfo\Application;
 use OCA\FederatedGroups\MixedGroupShareProvider;
 use OCA\FederatedGroups\GroupBackend;
 use OCP\ILogger;
+use OC\Group\Group;
+use OC\User\Manager as UserManager;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 function getOurDomain() {
     return $_SERVER['HTTP_HOST'];
@@ -46,19 +49,19 @@ class ScimController extends Controller {
     private IGroupManager $groupManager;
     protected MixedGroupShareProvider $mixedGroupShareProvider;
     private GroupBackend $groupBackend;
+    private UserManager $userManager;
+    private EventDispatcherInterface $eventDispatcher;
+    private ILogger $logger;
 
-    /**
-    * @var ILogger
-    */
-    private $logger;
-
-    public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend, ILogger $logger) {
+    public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend, ILogger $logger, UserManager $userManager, EventDispatcherInterface $eventDispatcher) {
         parent::__construct($appName, $request);
         $federatedGroupsApp = new Application();
         $this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
         $this->groupManager = $groupManager;
         $this->groupBackend = $groupBackend;
         $this->logger = $logger;
+        $this->userManager = $userManager;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     private function getNewDomainIfNeeded($newMember, $currentMembers) {
@@ -82,9 +85,13 @@ class ScimController extends Controller {
             return $newDomain;
         }
     }
+    private function getGroupObject(string $groupId): Group {
+        return new Group($groupId, [$this->groupBackend], $this->userManager, $this->eventDispatcher, $this->groupManager, $groupId);
+    }
 
     private function handleUpdateGroup(string $groupId, $obj) {
-        $group = $this->groupManager->get($groupId);
+        $group = $this->getGroupObject($groupId);
+
         if ($group === null) {
             throw new Exception("cannot find the given group " . $groupId);
         }
@@ -128,6 +135,7 @@ class ScimController extends Controller {
         }
     }
 
+
     /**
      * @NoCSRFRequired
      * @PublicPage
@@ -139,7 +147,7 @@ class ScimController extends Controller {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
-        $this->logger->info('Create Group ' . $id . ' with members: ' . print_r($members,true) );
+        $this->logger->info('Create Group ' . $id . ' with members: ' . print_r($members, true));
 
         $body = ["id" => $id, "members" => $members];
 
@@ -147,7 +155,8 @@ class ScimController extends Controller {
             $this->groupBackend->createGroup($id);
         }
 
-        // $this->groupManager->createGroup($id);
+        // $group = new Group($id, [$this->groupBackend], $this->userManager, $this->eventDispatcher, $this->groupManager, $id);
+
 
         // expect group to already exist
         // we are probably receiving this create due to
@@ -180,7 +189,7 @@ class ScimController extends Controller {
             return new JSONResponse(['status' => 'error', 'message' => "Missing param: members", 'data' => null], Http::STATUS_BAD_REQUEST);
         }
 
-        $this->logger->info('Update Group ' . $groupId . ' with members: ' . print_r($members,true) );
+        $this->logger->info('Update Group ' . $groupId . ' with members: ' . print_r($members, true));
 
         $body = ["members" => $members];
 
@@ -202,7 +211,7 @@ class ScimController extends Controller {
         $group = $this->groupManager->get(\urldecode($groupId));
         if ($group) {
 
-            $this->logger->info('Delete Group ' . $groupId );
+            $this->logger->info('Delete Group ' . $groupId);
 
             $deleted = $group->delete();
             if ($deleted) {
@@ -246,7 +255,7 @@ class ScimController extends Controller {
      * @PublicPage
      */
     public function getGroup($groupId) {
-        $this->logger->info('Get Group ' . $groupId );
+        $this->logger->info('Get Group ' . $groupId);
 
         $groupData = $this->handleGetGroupData($groupId);
         if ($groupData) {
