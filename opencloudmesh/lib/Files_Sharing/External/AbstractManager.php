@@ -459,7 +459,7 @@ abstract class AbstractManager {
 		$hash = \md5($mountPoint);
 
 		$getShare = $this->connection->prepare("
-			SELECT `remote`, `share_token`, `remote_id`
+			SELECT `id`, `remote`, `share_token`, `remote_id`
 			FROM  `*PREFIX*{$this->tableName}`
 			WHERE `mountpoint_hash` = ? AND `user` = ?");
 		$result = $getShare->execute([$hash, $this->uid]);
