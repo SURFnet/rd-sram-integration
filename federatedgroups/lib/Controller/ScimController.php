@@ -99,7 +99,6 @@ class ScimController extends Controller {
 
         $currentMembers =  $backend->usersInGroup($groupId);
 
-        // $currentMembers = $this->groupBackend->usersInGroup($groupId);
         $newMembers     = [];
         foreach ($obj["members"] as $member) {
             $userIdParts = explode("@", $member["value"]);
@@ -118,14 +117,12 @@ class ScimController extends Controller {
         foreach ($currentMembers as $currentMember) {
             if (!in_array($currentMember, $newMembers)) {
                 $backend->removeFromGroup($currentMember, $groupId);
-                // $this->groupBackend->removeFromGroup($currentMember, $groupId);
             }
         }
 
         foreach ($newMembers as $newMember) {
             if (!in_array($newMember, $currentMembers)) {
                 $backend->addToGroup($newMember, $groupId);
-                // $this->groupBackend->addToGroup($newMember, $groupId);
 
                 $newDomain = $this->getNewDomainIfNeeded($newMember, $currentMembers);
                 if ($newDomain) {
@@ -155,16 +152,11 @@ class ScimController extends Controller {
             $this->groupBackend->createGroup($id);
         }
 
-        // $group = new Group($id, [$this->groupBackend], $this->userManager, $this->eventDispatcher, $this->groupManager, $id);
-
-
         // expect group to already exist
         // we are probably receiving this create due to
         // https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
         try {
             $this->handleUpdateGroup($id, $body);
-            // $groupData = $this->handleGetGroupData($id);
-            // return new JSONResponse(['status'  => 'success', 'message' => null, 'data' => $groupData], Http::STATUS_CREATED);
         } catch (\Exception $ex) {
             return new JSONResponse(['status' => 'error', 'message' => $ex->getMessage(), 'data' => null], Http::STATUS_BAD_REQUEST);
         }
@@ -195,8 +187,6 @@ class ScimController extends Controller {
 
         try {
             $this->handleUpdateGroup($groupId, $body);
-            // $groupData = $this->handleGetGroupData($groupId);
-            // return new JSONResponse(['status' => 'success', 'message' => null, 'data' => $groupData], Http::STATUS_OK);
         } catch (\Exception $ex) {
             return new JSONResponse(['status' => 'error', 'message' => $ex->getMessage(), 'data' => null], Http::STATUS_BAD_REQUEST);
         }
