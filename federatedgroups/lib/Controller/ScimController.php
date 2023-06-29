@@ -27,14 +27,10 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
-use OCP\IGroupManager;
+use OCA\FederatedGroups\GroupManagerProxy;
 use OCA\FederatedGroups\AppInfo\Application;
 use OCA\FederatedGroups\MixedGroupShareProvider;
-use OCA\FederatedGroups\GroupBackend;
 use OCP\ILogger;
-use OC\Group\Group;
-use OC\User\Manager as UserManager;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 function getOurDomain() {
     return $_SERVER['HTTP_HOST'];
@@ -46,22 +42,21 @@ function getOurDomain() {
  * @package OCA\FederatedGroups\Controller
  */
 class ScimController extends Controller {
-    private IGroupManager $groupManager;
+    private GroupManagerProxy $groupManagerProxy;
     protected MixedGroupShareProvider $mixedGroupShareProvider;
-    private GroupBackend $groupBackend;
-    private UserManager $userManager;
-    private EventDispatcherInterface $eventDispatcher;
     private ILogger $logger;
 
-    public function __construct($appName, IRequest $request, IGroupManager $groupManager, GroupBackend $groupBackend, ILogger $logger, UserManager $userManager, EventDispatcherInterface $eventDispatcher) {
+    public function __construct(
+        $appName,
+        IRequest $request,
+        GroupManagerProxy $groupManagerProxy,
+        ILogger $logger
+    ) {
         parent::__construct($appName, $request);
         $federatedGroupsApp = new Application();
         $this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
-        $this->groupManager = $groupManager;
-        $this->groupBackend = $groupBackend;
+        $this->groupManagerProxy = $groupManagerProxy;
         $this->logger = $logger;
-        $this->userManager = $userManager;
-        $this->eventDispatcher = $eventDispatcher;
     }
 
     private function getNewDomainIfNeeded($newMember, $currentMembers) {
@@ -85,12 +80,9 @@ class ScimController extends Controller {
             return $newDomain;
         }
     }
-    private function getGroupObject(string $groupId): Group {
-        return new Group($groupId, [$this->groupBackend], $this->userManager, $this->eventDispatcher, $this->groupManager, $groupId);
-    }
 
     private function handleUpdateGroup(string $groupId, $obj) {
-        $group = $this->getGroupObject($groupId);
+        $group = $this->groupManagerProxy->get($groupId);
 
         if ($group === null) {
             throw new Exception("cannot find the given group " . $groupId);
@@ -148,13 +140,11 @@ class ScimController extends Controller {
 
         $body = ["id" => $id, "members" => $members];
 
-        if (!$this->groupManager->get($id)) {
-            $this->groupBackend->createGroup($id);
+        if (!$this->groupManagerProxy->get($id)) {
+            $this->groupManagerProxy->createGroup($id);
+            // $this->groupBackend->createGroup($id);
         }
 
-        // expect group to already exist
-        // we are probably receiving this create due to
-        // https://github.com/SURFnet/rd-sram-integration/commit/38c6289fd85a92b7fce5d4fbc9ea3170c5eed5d5
         try {
             $this->handleUpdateGroup($id, $body);
         } catch (\Exception $ex) {
@@ -198,7 +188,7 @@ class ScimController extends Controller {
      * @PublicPage
      */
     public function deleteGroup($groupId) {
-        $group = $this->groupManager->get(\urldecode($groupId));
+        $group = $this->groupManagerProxy->get(\urldecode($groupId));
         if ($group) {
 
             $this->logger->info('Delete Group ' . $groupId);
@@ -222,7 +212,7 @@ class ScimController extends Controller {
         $groups = [];
         $groupDataArr    = [];
 
-        foreach ($this->groupManager->getBackends() as $backend) {
+        foreach ($this->groupManagerProxy->getBackends() as $backend) {
             array_push($groups, ...$backend->getGroups());
         }
 
@@ -270,7 +260,7 @@ class ScimController extends Controller {
     }
 
     private function handleGetGroupData($groupId) {
-        $group = $this->groupManager->get(\urldecode($groupId));
+        $group = $this->groupManagerProxy->get(\urldecode($groupId));
         if ($group) {
             $id = $group->getGID();
             $displayName = $group->getDisplayName();
