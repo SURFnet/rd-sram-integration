@@ -27,10 +27,6 @@ class Application extends App {
 		$container = $this->getContainer();
 		$server = $container->getServer();
 
-		// $container->registerService('OCA\\FederatedGroups\\GroupBackend', function (SimpleContainer $c) use ($server) {
-		// 	return new GroupBackend();
-		// });
-
 		$container->registerService('ScimSecurityMiddleware', function($c) use($server){
             return new ScimSecurityMiddleware($server->getRequest(), $server->getConfig());
         });
