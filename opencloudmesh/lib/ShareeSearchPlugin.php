@@ -10,7 +10,7 @@
  * @author Navid Shokri <navid@pondersource.com>
  * @author Reza Soltani <reza@pondersource.com>
  *
- * @copyright Copyright (c) 2022, SURF
+ * @copyright Copyright (c) 2023, SURF
  * @license AGPL-3.0-or-later
  *
  * This program is free software: you can redistribute it and/or modify
