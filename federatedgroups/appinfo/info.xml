@@ -16,7 +16,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 	<website>https://github.com/SURFnet/rd-sram-integration</website>
 	<bugs>https://github.com/SURFnet/rd-sram-integration/issues</bugs>
 	<repository type="git">https://github.com/SURFnet/rd-sram-integration.git</repository>
-	<licence>TBD</licence>
+	<licence>mit</licence>
 	<author>SURF</author>
 	<version>0.1.0</version>
 	<documentation>
