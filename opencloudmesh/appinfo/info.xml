@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <info>
 	<id>opencloudmesh</id>
-	<name>Federated Groups</name>
+	<name>Open Cloud Mesh</name>
 	<namespace>OpenCloudMesh</namespace>
 	<summary>Supports federated sharing with groups</summary>
 	<description>
