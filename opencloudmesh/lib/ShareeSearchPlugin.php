@@ -205,7 +205,7 @@ class ShareeSearchPlugin implements IRemoteShareesSearch {
 				],
 			];
 		}
-		if (isset($this->result) && count($this->result) > 0 )
+		if (isset($this->result) && count($this->result) > 0 && isset($this->result['exact']))
 			return $this->result['exact']['remotes'];
 		return [];
 	}
