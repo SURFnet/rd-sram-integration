@@ -9,7 +9,7 @@
 	<website>https://github.com/pondersource/oc-opencloudmesh</website>
 	<bugs>https://github.com/pondersource/oc-opencloudmesh/issues</bugs>
 	<repository type="git">https://github.com/pondersource/oc-opencloudmesh.git</repository>
-	<licence>mit</licence>
+	<licence>agpl</licence>
 	<author>SURF with contributions from Ponder Source</author>
 	<version>0.0.0</version>
 	<documentation>
