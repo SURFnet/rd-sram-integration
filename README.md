@@ -22,6 +22,14 @@ Einstein on `OC1.Docker` can share a file with the `federalists` group and the r
 Copy `federatedgroups` folder into apps folder of your owncloud. 
 Change **sharing.managerFactory** config entry to **OCA\\FederatedGroups\\ShareProviderFactory** inside *config.php* file.
 
+```
+  'sharing.managerFactory' => 'OCA\\FederatedGroups\\ShareProviderFactory',
+  'sharing.remoteShareesSearch' => 'OCA\\OpenCloudMesh\\ShareeSearchPlugin',
+  'sharing.ocmController' => 'OCA\\OpenCloudMesh\\Controller\\OcmController',
+  'sharing.groupExternalManager' => 'OCA\\OpenCloudMesh\\GroupExternalManager',
+```
+
+
 ## configuration
 there are two configuration those should be done in oc_appconfig table: 
 
