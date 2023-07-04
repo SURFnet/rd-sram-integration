@@ -11,7 +11,7 @@
 	<repository type="git">https://github.com/pondersource/oc-opencloudmesh.git</repository>
 	<licence>agpl</licence>
 	<author>SURF with contributions from Ponder Source</author>
-	<version>0.0.0</version>
+    <version>0.1.1</version>
 	<documentation>
 		<user>https://github.com/pondersource/oc-opencloudmesh</user>
 		<admin>https://github.com/pondersource/oc-opencloudmesh</admin>
@@ -22,6 +22,7 @@
 		<dav/>
 	</types>
 	<use-migrations>true</use-migrations>
+	<screenshot>https://user-images.githubusercontent.com/123634558/247931425-3ea154a3-d2e0-49cb-9366-6c871ebfafcb.png</screenshot>
 	<background-jobs>
 		<job>OCA\OpenCloudMesh\Files_Sharing\External\ScanExternalSharesJob</job>
 	</background-jobs>
