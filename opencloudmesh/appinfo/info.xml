@@ -4,13 +4,13 @@
 	<name>Open Cloud Mesh</name>
 	<namespace>OpenCloudMesh</namespace>
 	<summary>Supports federated sharing with groups</summary>
-	<description>The Open Cloud Mesh protocol specification prescribes support for shares to a user or to a group, but the ownCloud core implementation only supports share type "user". This app fills in the missing share type "group".
+	<description>The Open Cloud Mesh protocol specification prescribes support for shares to a user or to a group, but the ownCloud core implementation only supports the share type "user". This app fills in the missing share type "group".
 	</description>
 	<website>https://github.com/pondersource/oc-opencloudmesh</website>
 	<bugs>https://github.com/pondersource/oc-opencloudmesh/issues</bugs>
 	<repository type="git">https://github.com/pondersource/oc-opencloudmesh.git</repository>
 	<licence>agpl</licence>
-	<author>SURF with contributions from Ponder Source</author>
+	<author>Developed for SURF by Ponder Source</author>
     <version>0.1.1</version>
 	<documentation>
 		<user>https://github.com/pondersource/oc-opencloudmesh</user>
