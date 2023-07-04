@@ -16,7 +16,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 	<bugs>https://github.com/SURFnet/rd-sram-integration/issues</bugs>
 	<repository type="git">https://github.com/SURFnet/rd-sram-integration.git</repository>
 	<licence>agpl</licence>
-	<author>SURF</author>
+	<author>Developed for SURF by Ponder Source</author>
 	<version>0.0.0</version>
 	<documentation>
     		<user>https://github.com/SURFnet/rd-sram-integration</user>
