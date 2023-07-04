@@ -11,8 +11,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 	<name>Federated Groups</name>
 	<namespace>FederatedGroups</namespace>
 	<summary>Support groups with both local and foreign users</summary>
-	<description>
-	</description>
+	<description>The FederatedGroup application is the integration driver app that enables the ownCloud to connect to the SRAM and find out about federated group membership info using SCIM Controller. Also, this application enables the user to share a file with a federated group across the network of multiple Owncloud nodes.</description>
 	<website>https://github.com/SURFnet/rd-sram-integration</website>
 	<bugs>https://github.com/SURFnet/rd-sram-integration/issues</bugs>
 	<repository type="git">https://github.com/SURFnet/rd-sram-integration.git</repository>
@@ -29,6 +28,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 		<dav/>
 	</types>
 	<use-migrations>true</use-migrations>
+	<screenshot>https://user-images.githubusercontent.com/123634558/247931425-3ea154a3-d2e0-49cb-9366-6c871ebfafcb.png</screenshot>
 	<dependencies>
 		<owncloud min-version="10.4" max-version="10" />
 	</dependencies>
