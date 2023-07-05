@@ -1,20 +1,20 @@
 # Authorization (Required)
-there is a token that is stored in **appconfig** table with key `scim_token` and appid `federatedgroups` it should be set to a random generated string. 
+there is a token stored in **appconfig** table with key `scim_token` and appid `federatedgroups` it should be set to a randomly generated string. 
 
 You can also set it using
 ```
 insert into oc_appconfig (appid, configkey, configvalue) VALUES ('federatedgroups', 'scim_token', 'something-super-secret');
 ```
 
-please ask the adminstrator to share that token with you and then send requests with the below header: 
+please ask the administrator to share that token with you and then send requests with the below header: 
 
 > "x-auth: Bearer <SCIM_TOKEN>"
 
 # IP Restriction (Optional)
-You can restrict the incomming scim api calls from some white listed IPs. 
+You can restrict the incoming scim API calls from some whitelisted IPs. 
 
-there is an `allowed_ips` config key that is set to `*` (means all IPs are white listed) by default. 
-you can set your own white list (seperated by `,`). and then just machine with listed IPs can send scim 
+an `allowed_ips` config key is set to `*` (all IPs are white-listed) by default. 
+you can set your own white list (separated by `,`). and then just a machine with listed IPs can send scim 
 requests.
 
 You can also set it using
@@ -25,7 +25,7 @@ insert into oc_appconfig (appid, configkey, configvalue) VALUES ('federatedgroup
 
 
 # getGroups 
-Will return all groups in OwnCloud
+This Will return all groups in OwnCloud
 
 ```bash
 curl --location '/index.php/apps/federatedgroups/scim/Groups'
