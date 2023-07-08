@@ -1,6 +1,8 @@
 <?php
 namespace OCA\OpenCloudMesh\Tests\FederatedFileSharing;
 
+use Error;
+use Exception;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\TokenHandler;
 use OCA\OpenCloudMesh\FederatedFileSharing\FedGroupShareManager;
@@ -22,6 +24,7 @@ use OCP\Share\IProviderFactory;
  */
 class FederatedGroupShareProviderTest extends TestCase{
 
+    private $tableName = "share_external_group";
     /** @var FederatedGroupShareProvider*/
     private $federatedGroupShareProvider; 
 
@@ -103,7 +106,75 @@ class FederatedGroupShareProviderTest extends TestCase{
 
     public function testUnshare(){
 
-        $this->federatedGroupShareProvider->unshare(10,"abc");
+        $group_share = [
+			'token'         => 'abc',
+			'password'		=> 'mypass',
+			'name'			=> 'share_name',
+			'owner'			=> 'share_owner',
+			'user'			=> 'group',
+			'accepted'		=> 1,
+			'remote_id'		=> 5,
+            'remote'        => 'oc1.docker',
+            'parent'        => -1
+        ];
+        $parentId = $this->fillDB($group_share);
+        //error_log("ppppp--------" .$parentId);
+        $user_share = [
+			'token'         => 'abc',
+			'password'		=> 'mypass',
+			'name'			=> 'share_name',
+			'owner'			=> 'share_owner',
+			'user'			=> 'user1',
+			'accepted'		=> 1,
+			'remote_id'		=> 5,
+            'remote'        => 'oc1.docker',
+            'parent'        => $parentId
+        ];
+        
+        $var = $this->fillDB($user_share);
+        //error_log("pppppvvvvv--------" .$var);
+
+        $getShare = $this->connection->prepare("
+			SELECT *
+			FROM  `*PREFIX*{$this->tableName}`
+			WHERE `token` = ? and `remote_id` =?");
+		$result = $getShare->execute(['abc', 5]);
+        error_log("sag too roohet". $result);
+		$t = $result ? $getShare->fetch() : false;
+        error_log("kir to in hale ma" .var_export($t,true));
+        //$this->connection->
+        //$this->federatedGroupShareProvider->unshare(5,"abc");
     }
 
+    private function fillDB($share){
+        $tmpMountPointName = '{{TemporaryMountPointName#' . $share['name'] . '}}';
+		$mountPoint = $tmpMountPointName;
+		$hash = \md5($tmpMountPointName);
+		
+        $query = $this->connection->getQueryBuilder();
+		$i = 1;
+		
+        do{
+            $query->insert($this->tableName)->values(
+                [
+                    'remote'		=> $query->expr()->literal($share['remote']),
+                    'parent'        => $query->expr()->literal($share['parent']),
+                    'share_token'	=> $query->expr()->literal($share['token']),
+                    'password'		=> $query->expr()->literal($share['password']),
+                    'name'			=> $query->expr()->literal($share['name']),
+                    'owner'			=> $query->expr()->literal($share['owner']),
+                    'user'			=> $query->expr()->literal($share['user']),
+                    'mountpoint'	=> $query->expr()->literal($mountPoint),
+                    'mountpoint_hash'	=> $query->expr()->literal($hash),
+                    'accepted'		=> $query->expr()->literal($share['accepted']),
+                    'remote_id'		=> $query->expr()->literal($share['remote_id']),
+                ]
+            );
+            $data['mountpoint'] = $tmpMountPointName . '-' . $i;
+			$data['mountpoint_hash'] = \md5($data['mountpoint']);
+			$i++;
+        } while(!$query->execute());
+        
+        return $query->getLastInsertId('share_external_group');
+    }
 }
