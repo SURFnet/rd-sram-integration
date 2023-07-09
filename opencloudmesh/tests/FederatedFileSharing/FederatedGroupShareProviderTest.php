@@ -118,7 +118,6 @@ class FederatedGroupShareProviderTest extends TestCase{
             'parent'        => -1
         ];
         $parentId = $this->fillDB($group_share);
-        //error_log("ppppp--------" .$parentId);
         $user_share = [
 			'token'         => 'abc',
 			'password'		=> 'mypass',
@@ -132,18 +131,15 @@ class FederatedGroupShareProviderTest extends TestCase{
         ];
         
         $var = $this->fillDB($user_share);
-        //error_log("pppppvvvvv--------" .$var);
-
-        $getShare = $this->connection->prepare("
-			SELECT *
-			FROM  `*PREFIX*{$this->tableName}`
-			WHERE `token` = ? and `remote_id` =?");
-		$result = $getShare->execute(['abc', 5]);
-        error_log("sag too roohet". $result);
-		$t = $result ? $getShare->fetch() : false;
-        error_log("kir to in hale ma" .var_export($t,true));
-        //$this->connection->
-        //$this->federatedGroupShareProvider->unshare(5,"abc");
+        
+        $result = $this->connection->executeQuery(
+			'SELECT COUNT(*) AS `count` FROM `*PREFIX*share_external_group`',
+		)->fetch();
+		$actualCount = $result['count'];
+        
+    
+        $this->federatedGroupShareProvider->unshare(5,"abc");
+        
     }
 
     private function fillDB($share){
@@ -175,6 +171,6 @@ class FederatedGroupShareProviderTest extends TestCase{
 			$i++;
         } while(!$query->execute());
         
-        return $query->getLastInsertId('share_external_group');
+        return $query->getLastInsertId($this->tableName);
     }
 }
