@@ -46,7 +46,8 @@ use OCP\Share\Events\DeclineShare;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
-abstract class AbstractManager {
+abstract class AbstractManager
+{
 	/**
 	 * @var string
 	 */
@@ -145,7 +146,8 @@ abstract class AbstractManager {
 	 * @param string $remoteId
 	 * @return Mount|null
 	 */
-	public function addShare($remote, $token, $password, $name, $owner, $accepted=false, $user = null, $remoteId = -1) {
+	public function addShare($remote, $token, $password, $name, $owner, $accepted = false, $user = null, $remoteId = -1)
+	{
 		$user = $user ? $user : $this->uid;
 		$accepted = $accepted ? 1 : 0;
 		$name = Filesystem::normalizePath('/' . $name);
@@ -159,16 +161,16 @@ abstract class AbstractManager {
 			$mountPoint = $tmpMountPointName;
 			$hash = \md5($tmpMountPointName);
 			$data = [
-				'remote'		=> $remote,
-				'share_token'	=> $token,
-				'password'		=> $password,
-				'name'			=> $name,
-				'owner'			=> $owner,
-				'user'			=> $user,
-				'mountpoint'	=> $mountPoint,
-				'mountpoint_hash'	=> $hash,
-				'accepted'		=> $accepted,
-				'remote_id'		=> $remoteId,
+				'remote' => $remote,
+				'share_token' => $token,
+				'password' => $password,
+				'name' => $name,
+				'owner' => $owner,
+				'user' => $user,
+				'mountpoint' => $mountPoint,
+				'mountpoint_hash' => $hash,
+				'accepted' => $accepted,
+				'remote_id' => $remoteId,
 			];
 
 			$this->prepareData($data);
@@ -197,11 +199,11 @@ abstract class AbstractManager {
 		$query->execute([$remote, $token, $password, $name, $owner, $user, $mountPoint, $hash, $accepted, $remoteId]);
 
 		$options = [
-			'remote'	=> $remote,
-			'token'		=> $token,
-			'password'	=> $password,
-			'mountpoint'	=> $mountPoint,
-			'owner'		=> $owner
+			'remote' => $remote,
+			'token' => $token,
+			'password' => $password,
+			'mountpoint' => $mountPoint,
+			'owner' => $owner
 		];
 		return $this->mountShare($options);
 	}
@@ -209,7 +211,8 @@ abstract class AbstractManager {
 	/**
 	 * Prepare data to be inserter into the database. i.e. set values for additional columns.
 	 */
-	protected function prepareData(array &$data) {
+	protected function prepareData(array &$data)
+	{
 
 	}
 
@@ -219,7 +222,8 @@ abstract class AbstractManager {
 	 * @param int $id share id
 	 * @return mixed share of false
 	 */
-	protected function fetchShare($id) {
+	protected function fetchShare($id)
+	{
 		$getShare = $this->connection->prepare("
 			SELECT *
 			FROM  `*PREFIX*{$this->tableName}`
@@ -245,12 +249,13 @@ abstract class AbstractManager {
 	 * @param string $mountPoint
 	 * @return string|null
 	 */
-	public function getShareFileId($share, $mountPoint) {
+	public function getShareFileId($share, $mountPoint)
+	{
 		$options = [
-			'remote'	=> $share['remote'],
-			'token'		=> $share['share_token'],
-			'mountpoint'	=> $mountPoint,
-			'owner'		=> $share['owner']
+			'remote' => $share['remote'],
+			'token' => $share['share_token'],
+			'mountpoint' => $mountPoint,
+			'owner' => $share['owner']
 		];
 
 		// We need to scan the new file/folder here to get its fileId
@@ -278,7 +283,8 @@ abstract class AbstractManager {
 	 * @param mixed $share
 	 * @return string
 	 */
-	public function getShareRecipientMountPoint($share) {
+	public function getShareRecipientMountPoint($share)
+	{
 		\OC_Util::setupFS($share['user']);
 		$shareFolder = Helper::getShareFolder();
 		$mountPoint = Files::buildNotExistingFileName($shareFolder, $share['name']);
@@ -291,7 +297,8 @@ abstract class AbstractManager {
 	 * @param int $id
 	 * @return bool True if the share could be accepted, false otherwise
 	 */
-	public function acceptShare($id) {
+	public function acceptShare($id)
+	{
 		$share = $this->getShare($id);
 
 		if ($share) {
@@ -318,7 +325,8 @@ abstract class AbstractManager {
 					'sharedItem' => $share['name'],
 					'shareAcceptedFrom' => $share['owner'],
 					'remoteUrl' => $share['remote'],
-					'fileId' => $fileId, // can be null in case the file was not scanned properly
+					'fileId' => $fileId,
+					// can be null in case the file was not scanned properly
 					'shareId' => $id,
 					'shareRecipient' => $this->uid,
 				]
@@ -344,7 +352,8 @@ abstract class AbstractManager {
 	 * @param int $id
 	 * @return bool True if the share could be declined, false otherwise
 	 */
-	public function declineShare($id) {
+	public function declineShare($id)
+	{
 		$share = $this->getShare($id);
 
 		if ($share) {
@@ -361,7 +370,8 @@ abstract class AbstractManager {
 	/**
 	 * @param int $remoteShare
 	 */
-	public function processNotification($remoteShare) {
+	public function processNotification($remoteShare)
+	{
 		$filter = $this->notificationManager->createNotification();
 		$filter->setApp('files_sharing')
 			->setUser($this->uid)
@@ -375,12 +385,14 @@ abstract class AbstractManager {
 	 * @param string $path
 	 * @return string
 	 */
-	protected function stripPath($path) {
+	protected function stripPath($path)
+	{
 		$prefix = "/{$this->uid}/files";
 		return \rtrim(\substr($path, \strlen($prefix)), '/');
 	}
 
-	public function getMount($data) {
+	public function getMount($data)
+	{
 		$data['manager'] = $this;
 		$mountPoint = '/' . $this->uid . '/files' . $data['mountpoint'];
 		$data['mountpoint'] = $mountPoint;
@@ -392,7 +404,8 @@ abstract class AbstractManager {
 	 * @param array $data
 	 * @return Mount
 	 */
-	protected function mountShare($data) {
+	protected function mountShare($data)
+	{
 		$mount = $this->getMount($data);
 		$this->mountManager->addMount($mount);
 		return $mount;
@@ -401,7 +414,8 @@ abstract class AbstractManager {
 	/**
 	 * @return \OC\Files\Mount\Manager
 	 */
-	public function getMountManager() {
+	public function getMountManager()
+	{
 		return $this->mountManager;
 	}
 
@@ -410,7 +424,8 @@ abstract class AbstractManager {
 	 * @param string $target
 	 * @return bool
 	 */
-	public function setMountPoint($source, $target) {
+	public function setMountPoint($source, $target)
+	{
 		$source = $this->stripPath($source);
 		$target = $this->stripPath($target);
 		$sourceHash = \md5($source);
@@ -423,7 +438,7 @@ abstract class AbstractManager {
 			AND `user` = ?
 		");
 		try {
-			$result = (bool)$query->execute([$target, $targetHash, $sourceHash, $this->uid]);
+			$result = (bool) $query->execute([$target, $targetHash, $sourceHash, $this->uid]);
 		} catch (UniqueConstraintViolationException $e) {
 			$result = false;
 		}
@@ -436,7 +451,8 @@ abstract class AbstractManager {
 	 *
 	 * @param string|null $uid
 	 */
-	public function setUid($uid) {
+	public function setUid($uid)
+	{
 		// FIXME: External manager should not depend on uid
 		$this->uid = $uid;
 	}
@@ -447,7 +463,8 @@ abstract class AbstractManager {
 	 *
 	 * @throws NoUserException
 	 */
-	public function removeShare($mountPoint) {
+	public function removeShare($mountPoint)
+	{
 		if ($this->uid === null) {
 			throw new NoUserException();
 		}
@@ -470,8 +487,7 @@ abstract class AbstractManager {
 			$share = $getShare->fetch();
 			if (isset($share)) {
 				$removeResult = $this->executeRemoveShareStatement($share, $hash);
-			}
-			else {
+			} else {
 				$removeResult = true;
 			}
 		}
@@ -493,7 +509,8 @@ abstract class AbstractManager {
 	 *
 	 * @param $mountPointId
 	 */
-	protected function removeReShares($mountPointId) {
+	protected function removeReShares($mountPointId)
+	{
 		$selectQuery = $this->connection->getQueryBuilder();
 		$query = $this->connection->getQueryBuilder();
 		$selectQuery->select('id')->from('share')
@@ -523,7 +540,8 @@ abstract class AbstractManager {
 	 *
 	 * @return array list of open server-to-server shares
 	 */
-	public function getOpenShares() {
+	public function getOpenShares()
+	{
 		return $this->getShares(false);
 	}
 
@@ -532,7 +550,8 @@ abstract class AbstractManager {
 	 *
 	 * @return array list of accepted server-to-server shares
 	 */
-	public function getAcceptedShares() {
+	public function getAcceptedShares()
+	{
 		return $this->getShares(true);
 	}
 
@@ -544,7 +563,8 @@ abstract class AbstractManager {
 	 *                            null for all shares of the user
 	 * @return array list of open server-to-server shares
 	 */
-	private function getShares($accepted) {
+	private function getShares($accepted)
+	{
 		$user = $this->userManager->get($this->uid);
 		$groups = $this->groupManager->getUserGroups($user);
 		$userGroups = [];
@@ -572,7 +592,7 @@ abstract class AbstractManager {
 
 		if (!is_null($accepted)) {
 			$shares = array_filter($shares, function ($share) use ($accepted) {
-				return (bool)$share['accepted'] === $accepted;
+				return (bool) $share['accepted'] === $accepted;
 			});
 		}
 		return \array_values($shares);
@@ -580,4 +600,48 @@ abstract class AbstractManager {
 
 	abstract protected function fetchShares($shares);
 
+	public function acceptRemoteGroupShares($groupId, $userId)
+	{
+		$getGroupSharesStmt = $this->connection->prepare("SELECT * FROM  `*PREFIX*{$this->tableName}` WHERE `user` = ?");
+
+		$getUserSharesStmt = $this->connection->prepare("SELECT * FROM  `*PREFIX*{$this->tableName}` WHERE `user` = ?");
+
+		$groupShares = $getGroupSharesStmt->execute([$groupId]) ? $getGroupSharesStmt->fetchAll() : [];
+		$userShares = $getUserSharesStmt->execute([$userId]) ? $getUserSharesStmt->fetchAll() : [];
+
+		$openShares = array_diff($userShares, $groupShares);
+
+		$openShares = array_filter($groupShares, function ($groupShare) use ($userShares) {
+			return !array_filter($userShares, function ($userShare) use ($groupShare) {
+				return $userShare['parent'] == $groupShare['id'];
+			});
+		});
+
+		foreach ($openShares as $share) {
+
+			$shareFolder = \OCA\Files_Sharing\Helper::getShareFolder();
+			$mountPoint = \OCP\Files::buildNotExistingFileName($shareFolder, $share['name']);
+			$mountPoint = \OC\Files\Filesystem::normalizePath($mountPoint);
+			$mountpoint_hash = \md5($mountPoint);
+
+			$query = $this->connection->prepare("
+                            INSERT INTO `*PREFIX*{$this->tableName}`
+                            (`parent`, `remote`,`remote_id`, `share_token`, `password`, `name`, `owner`, `user`, `mountpoint`, `mountpoint_hash`, `accepted`)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ");
+			$query->execute([
+				$share['id'],
+				$share['remote'],
+				$share['remote_id'],
+				$share['share_token'],
+				$share['password'],
+				$share['name'],
+				$share['owner'],
+				$userId,
+				$mountPoint,
+				$mountpoint_hash,
+				1,
+			]);
+		}
+	}
 }

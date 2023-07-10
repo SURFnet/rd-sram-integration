@@ -145,7 +145,7 @@ class Manager extends AbstractManager {
 	/**
 	 * @return bool True if db could be accepted, false otherwise
 	 */
-	protected function acceptShareInDb($share, $mountPoint, $hash) {
+	public function acceptShareInDb($share, $mountPoint, $hash) {
 		$id = $share['id'];
 		$parentId = (int)$share['parent'];
 		if ($parentId !== -1) {

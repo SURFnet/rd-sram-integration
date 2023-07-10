@@ -24,30 +24,32 @@
 
 namespace OCA\OpenCloudMesh\AppInfo;
 
-use OC\AppFramework\Utility\SimpleContainer;
-use OCP\AppFramework\App;
-use OCP\IRequest;
 use GuzzleHttp\Exception\ServerException;
-use OCP\AppFramework\Http;
-use OCP\Share\Events\AcceptShare;
-use OCP\Share\Events\DeclineShare;
-use OCP\Util;
-use OCP\IContainer;
+use OC\AppFramework\Utility\SimpleContainer;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
 use OCA\FederatedFileSharing\Ocm\Permissions;
 use OCA\FederatedFileSharing\TokenHandler;
+use OCA\OpenCloudMesh\Controller\OcmController;
 use OCA\OpenCloudMesh\FederatedFileSharing\FedGroupShareManager;
 use OCA\OpenCloudMesh\FederatedFileSharing\FedUserShareManager;
 use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
 use OCA\OpenCloudMesh\FederatedFileSharing\UserNotifications;
 use OCA\OpenCloudMesh\FederatedGroupShareProvider;
 use OCA\OpenCloudMesh\FederatedUserShareProvider;
-use OCA\OpenCloudMesh\Controller\OcmController;
+use OCA\OpenCloudMesh\Files_Sharing\External\Manager;
 use OCA\OpenCloudMesh\Files_Sharing\Hooks;
 use OCA\OpenCloudMesh\Files_Sharing\Middleware\RemoteOcsMiddleware;
+use OCA\OpenCloudMesh\Hooks\UserHooks;
 use OCA\OpenCloudMesh\ShareProviderFactory;
+use OCP\AppFramework\App;
+use OCP\AppFramework\Http;
+use OCP\IContainer;
+use OCP\IRequest;
+use OCP\Share\Events\AcceptShare;
+use OCP\Share\Events\DeclineShare;
+use OCP\Util;
 
 class Application extends App {
 	private $isProviderRegistered = false;
@@ -67,7 +69,7 @@ class Application extends App {
 		$container->registerService('OCA\\OpenCloudMesh\\GroupExternalManager', function (SimpleContainer $c) use ($server) {
 			$user = $server->getUserSession()->getUser();
 			$uid = $user ? $user->getUID() : null;
-			return new \OCA\OpenCloudMesh\Files_Sharing\External\Manager(
+			return new Manager(
 				$server->getDatabaseConnection(),
 				\OC\Files\Filesystem::getMountManager(),
 				\OC\Files\Filesystem::getLoader(),
@@ -113,9 +115,7 @@ class Application extends App {
 			);
 		});
 
-		$container->registerService(
-			'OCA\\OpenCloudMesh\\FederatedFileSharing\\FedGroupShareManager',
-			function ($c) use ($server) {
+		$container->registerService('OCA\\OpenCloudMesh\\FederatedFileSharing\\FedGroupShareManager', function ($c) use ($server) {
 				$config = \OC::$server->getConfig();
 
 				$addressHandler = new AddressHandler(
@@ -210,8 +210,33 @@ class Application extends App {
 				$c->getServer()->getEventDispatcher()
 			);
 		});
+
+		$this->registerHooks($container, $server);
 	}
 
+	private function registerHooks($container, $server) {
+		$container->registerService('UserHooks', function($c) use($server) {
+			$user = $server->getUserSession()->getUser();
+			$uid = $user ? $user->getUID() : null;
+            return new UserHooks(
+				$server->getConfig(),
+                $c->query('ServerContainer')->getUserSession(),
+				$c->query('ServerContainer')->getUserManager(),
+				$c->query('ServerContainer')->getGroupManager(),
+				new Manager(
+					$server->getDatabaseConnection(),
+					\OC\Files\Filesystem::getMountManager(),
+					\OC\Files\Filesystem::getLoader(),
+					$server->getNotificationManager(),
+					$server->getEventDispatcher(),
+					$server->getUserManager(),
+					$server->getGroupManager(),
+					$uid
+				),
+				// $server->getDatabaseConnection(),
+            );
+        });
+	}
 	/**
 	 * get instance of federated group share provider
 	 *
@@ -342,5 +367,6 @@ class Application extends App {
 
 	public function registerEvents() {
 		$this->getContainer()->query('Hooks')->registerListeners();
+		$this->getContainer()->query('UserHooks')->register();
 	}
 } 
