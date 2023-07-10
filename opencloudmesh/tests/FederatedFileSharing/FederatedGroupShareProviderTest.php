@@ -131,16 +131,21 @@ class FederatedGroupShareProviderTest extends TestCase{
         ];
         
         $var = $this->fillDB($user_share);
-        
-        $result = $this->connection->executeQuery(
-			'SELECT COUNT(*) AS `count` FROM `*PREFIX*share_external_group`',
-		)->fetch();
-		$actualCount = $result['count'];
-        
+        $count = $this->getRowCount();
+        $this->assertEquals(2,$count);
     
         $this->federatedGroupShareProvider->unshare(5,"abc");
         
+        $count = $this->getRowCount();
+        $this->assertEquals(0,$count);
     }
+
+    private function getRowCount(){
+        $result = $this->connection->executeQuery(
+			'SELECT COUNT(*) AS `count` FROM `*PREFIX*share_external_group` Where `remote_id` = 5 and `share_token` = "abc"',
+		)->fetch();
+		return $result['count'];
+    } 
 
     private function fillDB($share){
         $tmpMountPointName = '{{TemporaryMountPointName#' . $share['name'] . '}}';
