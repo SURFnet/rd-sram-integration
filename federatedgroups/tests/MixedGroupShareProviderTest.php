@@ -16,7 +16,7 @@ use OCP\ILogger;
 use OCP\IUserManager;
 use OCP\IUser;
 use OCP\Files\Folder;
-use OCP\Share;
+use OCP\Share\IShare;
 use OCP\Share\IAttributes as IShareAttributes;
 use phpDocumentor\Reflection\Types\This;
 use function PHPUnit\Framework\any;
@@ -369,11 +369,10 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 	}*/
 
 	public function testDelete(){
-		$groupBackend = $this->createMock();
 		$share = $this->createMock(IShare::class); 
-		$share->method("getType")->expects($this->once())->willReturn(1);
-		$share->method("getToken")->expects($this->once())->willReturn("t0ken");
-		$share->method("getId")->expects($this->once())->willReturn(10);
+		$share->expects($this->once())->method("getShareType")->willReturn(1);
+		$share->expects($this->once())->method("getToken")->willReturn("t0ken");
+		$share->expects($this->once())->method("getId")->willReturn(10);
 
 
 		$shareOwner = $this->createMock(IUser::class);
