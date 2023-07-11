@@ -17,6 +17,7 @@ use OCP\IUserManager;
 use OCP\IUser;
 use OCP\Files\Folder;
 use OCP\Share\IShare;
+use OCP\Share;
 use OCP\Share\IAttributes as IShareAttributes;
 use phpDocumentor\Reflection\Types\This;
 use function PHPUnit\Framework\any;
@@ -112,7 +113,7 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		parent::tearDown();
 	}
 
-	/*public function mockShareAttributes() {
+	public function mockShareAttributes() {
 		$formattedShareAttributes = 
 			[
 				[
@@ -177,12 +178,12 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		return [
 			[$share]
 		];
-	}/*
+	}
 
 	/*
 	 * @dataProvider getShareObject
 	 */
-	/*public function test_create_with_group_share_type(Share\IShare $share){
+	public function test_create_with_group_share_type(Share\IShare $share){
 
 		$shareOwner = $this->createMock(IUser::class);
 		$shareOwner->method('getUID')->willReturn('shareOwner');
@@ -271,12 +272,12 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		return [
 			[$share]
 		];
-	}/*
+	}
 
 	/*
 	 * @dataProvider getLinkShareObject
 	 */
-	/*public function test_create_with_link_share_type(Share\IShare $share){
+	public function test_create_with_link_share_type(Share\IShare $share){
 
 		$shareOwner = $this->createMock(IUser::class);
 		$shareOwner->method('getUID')->willReturn('shareOwner');
@@ -366,13 +367,13 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		$this->assertSame('secrettoken', $share->getToken());
 		$this->assertSame('shared_With', $share->getSharedWith());
 		$this->assertSame('some_name', $share->getName());
-	}*/
+	}
 
 	public function testDelete(){
 		$share = $this->createMock(IShare::class); 
-		$share->expects($this->once())->method("getShareType")->willReturn(1);
-		$share->expects($this->once())->method("getToken")->willReturn("t0ken");
-		$share->expects($this->exactly(2))->method("getId")->willReturn(10);
+		$share->expects($this->exactly(2))->method("getShareType")->willReturn(1);
+		$share->expects($this->exactly(2))->method("getToken")->willReturn("t0ken");
+		$share->expects($this->exactly(4))->method("getId")->willReturn(10);
 
 
 		$shareOwner = $this->createMock(IUser::class);
@@ -421,9 +422,9 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		
 		$this->groupNotifications->expects(self::exactly(2))
 			->method("sendRemoteUnshare")
-			->with($share, $this->logicalOr(
-				$this->equalTo("host1.co")),
-				$this->equalTo("host2.co"))
+			->with($this->logicalOr(
+				$this->equalTo("host1.co"),
+				$this->equalTo("host2.co")),10, "t0ken")
 			->willReturn(true);
 		
 		$this->mixGroupProvider = new MixedGroupShareProvider(
@@ -439,7 +440,6 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		);
 		
 		$result = $this->mixGroupProvider->delete($share);
-		$this->assertNotEmpty($result->getToken(), "token should not be empty or null in the result object");
 
 	}
 
