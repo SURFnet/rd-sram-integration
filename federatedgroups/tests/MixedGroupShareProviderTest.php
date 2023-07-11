@@ -180,7 +180,7 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		];
 	}
 
-	/*
+	/**
 	 * @dataProvider getShareObject
 	 */
 	public function test_create_with_group_share_type(Share\IShare $share){
@@ -274,7 +274,7 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		];
 	}
 
-	/*
+	/**
 	 * @dataProvider getLinkShareObject
 	 */
 	public function test_create_with_link_share_type(Share\IShare $share){
