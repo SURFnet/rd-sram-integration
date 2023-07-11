@@ -372,7 +372,7 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		$share = $this->createMock(IShare::class); 
 		$share->expects($this->once())->method("getShareType")->willReturn(1);
 		$share->expects($this->once())->method("getToken")->willReturn("t0ken");
-		$share->expects($this->once())->method("getId")->willReturn(10);
+		$share->expects($this->exactly(2))->method("getId")->willReturn(10);
 
 
 		$shareOwner = $this->createMock(IUser::class);
