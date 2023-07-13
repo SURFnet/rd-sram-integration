@@ -16,6 +16,7 @@ use OCP\ILogger;
 use OCP\IUserManager;
 use OCP\IUser;
 use OCP\Files\Folder;
+use OCP\Share\IShare;
 use OCP\Share;
 use OCP\Share\IAttributes as IShareAttributes;
 use phpDocumentor\Reflection\Types\This;
@@ -366,6 +367,80 @@ class MixedGroupShareProviderTest extends \Test\TestCase {
 		$this->assertSame('secrettoken', $share->getToken());
 		$this->assertSame('shared_With', $share->getSharedWith());
 		$this->assertSame('some_name', $share->getName());
+	}
+
+	public function testDelete(){
+		$share = $this->createMock(IShare::class); 
+		$share->expects($this->exactly(2))->method("getShareType")->willReturn(1);
+		$share->expects($this->exactly(2))->method("getToken")->willReturn("t0ken");
+		$share->expects($this->exactly(4))->method("getId")->willReturn(10);
+
+
+		$shareOwner = $this->createMock(IUser::class);
+		$shareOwner->method('getUID')->willReturn('shareOwner');
+
+		$path = $this->createMock(File::class);
+		$path->method('getId')->willReturn(3);
+		$path->method('getOwner')->willReturn($shareOwner);
+
+		$ownerFolder = $this->createMock(Folder::class);
+		$userFolder = $this->createMock(Folder::class);
+		$this->rootFolder
+			->method('getUserFolder')
+			->will($this->returnValueMap([
+				['initiator', $userFolder],
+				['owner', $ownerFolder],
+			]));
+
+		$userFolder->method('getById')
+			->with(3)
+			->willReturn([$path]);
+		$ownerFolder->method('getById')
+			->with(3)
+			->willReturn([$path]);
+
+		$groupBackend = $this->createMock(Backend::class);
+		$groupBackend->expects(self::once())
+			->method("usersInGroup")->willReturn(
+				[
+					"user1#host1.co",
+					"user2#host2.co",
+					"local_user"
+				]
+			);
+
+		$group = $this->createMock(IGroup::class);
+		$group->expects($this->once())
+			->method("getBackend") ->willReturn($groupBackend);
+
+		$this->groupManager =  $this->createMock(IGroupManager::class);
+		$this->groupManager->expects($this->once())->method("get")
+			->willReturn($group);
+
+		$this->addressHandler->method("getLocalUserFederatedAddress")
+			->willReturn(new Address("someone@somehost"));
+		
+		$this->groupNotifications->expects(self::exactly(2))
+			->method("sendRemoteUnshare")
+			->with($this->logicalOr(
+				$this->equalTo("host1.co"),
+				$this->equalTo("host2.co")),10, "t0ken")
+			->willReturn(true);
+		
+		$this->mixGroupProvider = new MixedGroupShareProvider(
+			$this->dbConnection,
+			$this->userManager,
+			$this->groupManager,
+			$this->rootFolder,
+			$this->groupNotifications,
+			$this->tokenHandler,
+			$this->addressHandler,
+			$this->l,
+			$this->logger
+		);
+		
+		$result = $this->mixGroupProvider->delete($share);
+
 	}
 
 }
