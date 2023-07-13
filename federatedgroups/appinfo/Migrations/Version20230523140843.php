@@ -1,33 +1,48 @@
 <?php
 
-// SPDX-FileCopyrightText: 2022 SURF
-//
-// SPDX-License-Identifier: AGPL-3.0-or-later
-
 namespace OCA\FederatedGroups\Migrations;
 
+
 use Doctrine\DBAL\Schema\Schema;
-use OCP\IDBConnection;
-use OCP\Migration\ISqlMigration;
+use OCP\Migration\ISchemaMigration;
 
-class Version20230523140843 implements ISqlMigration {
+class Version20230523140843 implements ISchemaMigration
+{
 
-    public function sql(IDBConnection $connection) {
-        $prefix = $connection->getPrefix();
+    public function changeSchema(Schema $schema, array $options)
+    {
+        $prefix = $options['tablePrefix'];
+        if (!$schema->hasTable("{$prefix}fg_groups")) {
+            $fg_groups_table = $schema->createTable("{$prefix}fg_groups");
 
-		$sql1 = "CREATE TABLE `{$prefix}fg_groups` (
-                    `gid` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
-                     PRIMARY KEY (`gid`) 
-                ) 
-                ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+            $fg_groups_table->addColumn('gid', 'string', [
+                'length' => 64,
+                'notnull' => true,
+                'comment' => ''
+            ]);
+        }
+        $fg_groups_table->setPrimaryKey(['gid']);
 
-        $sql2 = "CREATE TABLE `{$prefix}fg_group_user` ( 
-                    `gid` varchar(64) COLLATE utf8_unicode_ci NOT NULL, 
-                    `uid` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
-                    UNIQUE INDEX `{$prefix}uc_fg_group_user` (`gid`,`uid`) USING BTREE
-                )
-                ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
-        
-		return [$sql1, $sql2];
-	}
+
+        if (!$schema->hasTable("{$prefix}fg_group_user")) {
+            $fg_group_user_table = $schema->createTable("{$prefix}fg_group_user");
+
+            $fg_group_user_table->addColumn('gid', 'string', [
+                'length' => 64,
+                'notnull' => true,
+                'comment' => ''
+            ]);
+
+            $fg_group_user_table->addColumn('uid', 'string', [
+                'length' => 64,
+                'notnull' => true,
+                'comment' => ''
+            ]);
+
+			$fg_group_user_table->addUniqueIndex(
+				['gid', 'uid'],
+				`{$prefix}uc_fg_group_user`
+			);
+        }
+    }
 }
