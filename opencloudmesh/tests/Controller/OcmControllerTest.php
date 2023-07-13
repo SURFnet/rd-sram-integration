@@ -29,6 +29,7 @@ use OCA\OpenCloudMesh\FederatedFileSharing\FedGroupShareManager;
 use OCA\OpenCloudMesh\FederatedFileSharing\FedUserShareManager;
 use OCA\OpenCloudMesh\Controller\OcmController;
 use OCA\FederatedFileSharing\Middleware\OcmMiddleware;
+use OCP\Share\Exceptions\ShareNotFound;
 use OCA\FederatedFileSharing\Ocm\Exception\BadRequestException;
 use OCA\FederatedFileSharing\Ocm\Exception\ForbiddenException;
 use OCA\FederatedFileSharing\Ocm\Exception\NotImplementedException;
@@ -372,6 +373,54 @@ class OcmControllerTest extends TestCase {
 
 		$response = $this->ocmController->processNotification(
 			FileNotification::NOTIFICATION_TYPE_SHARE_DECLINED,
+			FileNotification::RESOURCE_TYPE_FILE,
+			'90',
+			[
+				'sharedSecret' => $this->shareToken
+			]
+		);
+		$this->assertEquals(Http::STATUS_CREATED, $response->getStatus());
+	}
+
+	public function testProcessUnshareNotificationSuccessfully(){
+		$this->fedUserShareManager->expects($this->never())
+		->method("unshare"); 
+		$this->fedGroupShareManager->expects($this->once())
+			->method('unshare');
+		$response = $this->ocmController->processNotification(
+			FileNotification::NOTIFICATION_TYPE_SHARE_UNSHARED,
+			FileNotification::RESOURCE_TYPE_FILE,
+			'90',
+			[
+				'sharedSecret' => $this->shareToken
+			]
+		);
+		$this->assertEquals(Http::STATUS_CREATED, $response->getStatus());
+	}
+
+	public function testProcessUnshareNotificationForRemoteUserSharedFile(){
+		$this->fedUserShareManager->expects($this->once())
+			->method("unshare"); 
+		$this->fedGroupShareManager->expects($this->once())
+			->method('unshare')->will($this->throwException(new ShareNotFound()));
+		$response = $this->ocmController->processNotification(
+			FileNotification::NOTIFICATION_TYPE_SHARE_UNSHARED,
+			FileNotification::RESOURCE_TYPE_FILE,
+			'90',
+			[
+				'sharedSecret' => $this->shareToken
+			]
+		);
+		$this->assertEquals(Http::STATUS_CREATED, $response->getStatus());
+	}
+
+	public function testProcessUnshareNotificationforWrongProviderId(){
+		$this->fedUserShareManager->expects($this->once())
+			->method("unshare")->will($this->throwException(new ShareNotFound())); 
+		$this->fedGroupShareManager->expects($this->once())
+			->method('unshare')->will($this->throwException(new ShareNotFound()));
+		$response = $this->ocmController->processNotification(
+			FileNotification::NOTIFICATION_TYPE_SHARE_UNSHARED,
 			FileNotification::RESOURCE_TYPE_FILE,
 			'90',
 			[
