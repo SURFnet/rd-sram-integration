@@ -79,11 +79,6 @@ class GroupManagerProxy extends PublicEmitter
      */
     public function createGroup($gid)
     {
-        $this->groupBackend;
-        // error_log("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj");
-        // $this->logger->info('Create Group ' . $gid . ' with members: ');
-        // var_export("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj");
-
         if ($gid === '' || $gid === null || \trim($gid) !== $gid) {
             return false;
         } elseif ($group = $this->get($gid)) {

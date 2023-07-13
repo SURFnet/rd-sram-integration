@@ -10,24 +10,26 @@ use OCP\AppFramework\Http;
 use OCP\IGroup;
 use Test\TestCase;
 use OCP\IRequest;
-use OCP\IGroupManager;
 use Test\Util\Group\Dummy;
+use OCA\FederatedGroups\GroupManagerProxy;
+use OCP\ILogger;
 
 
 /**
  * @group DB
  */
 class ScimControllerTest extends TestCase {
-    private IGroupManager $groupManager;
-
     private ScimController $controller;
     private MixedGroupShareProvider $mixedGroupShareProvider;
+    private ILogger $logger;
+    private GroupManagerProxy $groupManagerProxy;
 
     protected function setUp(): void {
         parent::setUp();
         $request = $this->createMock(IRequest::class);
-        $this->groupManager = $this->createMock(IGroupManager::class);
-        $this->controller = new ScimController("federatedGroups", $request, $this->groupManager);
+        $this->groupManagerProxy = $this->createMock(GroupManagerProxy::class);
+        $this->logger = $this->createMock(ILogger::class);
+        $this->controller = new ScimController("federatedGroups", $request, $this->groupManagerProxy, $this->logger);
         $this->mixedGroupShareProvider = $this->createMock(MixedGroupShareProvider::class);
     }
 
@@ -43,8 +45,8 @@ class ScimControllerTest extends TestCase {
 
         $groupBackend = $this->createMock(Dummy::class);
 
-        $this->groupManager->expects($this->once())->method("createGroup")->with($groupId);
-        $this->groupManager->expects($this->any())->method("get")->with($groupId)->willReturn($group);
+        $this->groupManagerProxy->expects($this->once())->method("createGroup")->with($groupId);
+        $this->groupManagerProxy->expects($this->any())->method("get")->with($groupId)->willReturn($group);
 
         $group->expects($this->once())->method("getBackend")->willReturn($groupBackend);
 
@@ -65,7 +67,7 @@ class ScimControllerTest extends TestCase {
     public function test_it_returns_404_when_delete_non_existing_group() {
         $groupId = 'test-group';
 
-        $this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn(null);
+        $this->groupManagerProxy->expects($this->once())->method("get")->with($groupId)->willReturn(null);
 
         $deleteResponse = $this->controller->deleteGroup($groupId);
 
@@ -85,11 +87,11 @@ class ScimControllerTest extends TestCase {
         $group = $this->createMock(IGroup::class);
         $groups = [$group];
 
-        $this->groupManager->expects($this->once())->method("getBackends")->willReturn($backends);
+        $this->groupManagerProxy->expects($this->once())->method("getBackends")->willReturn($backends);
         $backend->expects($this->any())->method("getGroups")->willReturn($groups);
 
 
-        $this->groupManager->expects($this->any())->method("get")->with($group)->willReturn($group);
+        $this->groupManagerProxy->expects($this->any())->method("get")->with($group)->willReturn($group);
         $group->expects($this->any())->method("getGID");
         $group->expects($this->any())->method("getDisplayName");
 
@@ -107,7 +109,7 @@ class ScimControllerTest extends TestCase {
     public function test_it_returns_404_if_groups_not_exists() {
         $groupId = 'test-group';
 
-        $this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn(null);
+        $this->groupManagerProxy->expects($this->once())->method("get")->with($groupId)->willReturn(null);
 
         $getResponse = $this->controller->getGroup($groupId);
 
@@ -123,7 +125,7 @@ class ScimControllerTest extends TestCase {
 
         $groupBackend = $this->createMock(Dummy::class);
 
-        $this->groupManager->expects($this->once())->method("get")->with($groupId)->willReturn($group);
+        $this->groupManagerProxy->expects($this->once())->method("get")->with($groupId)->willReturn($group);
 
         $group->expects($this->once())->method("getBackend")->willReturn($groupBackend);
 
@@ -146,7 +148,7 @@ class ScimControllerTest extends TestCase {
         $group = $this->createMock(IGroup::class);
         $groupBackend = $this->createMock(Dummy::class);
 
-        $this->groupManager->expects($this->any())->method("get")->with($groupId)->willReturn($group);
+        $this->groupManagerProxy->expects($this->any())->method("get")->with($groupId)->willReturn($group);
         $group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
         $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
         $groupBackend->expects($this->once())->method('removeFromGroup')->with($currentMembers[0], $groupId);
@@ -170,13 +172,14 @@ class ScimControllerTest extends TestCase {
         $group = $this->createMock(IGroup::class);
         $groupBackend = $this->createMock(Dummy::class);
 
-        $this->groupManager->expects($this->any())->method("createGroup")->with($groupId);
-        $this->groupManager->expects($this->any())->method("get")->with($groupId)->willReturn($group);
+        $this->groupManagerProxy->expects($this->any())->method("createGroup")->with($groupId);
+        $this->groupManagerProxy->expects($this->any())->method("get")->with($groupId)->willReturn($group);
         $group->expects($this->once())->method('getBackend')->willReturn($groupBackend);
         $groupBackend->expects($this->once())->method('usersInGroup')->with($groupId)->willReturn($currentMembers);
         $groupBackend->expects($this->any())->method('addToGroup')->with($newMembers[0], $groupId);
 
         $response = $this->controller->createGroup($groupId, $members);
+        error_log(json_encode($response->getData()));
         $this->assertEquals(Http::STATUS_CREATED, $response->getStatus());
     }
     // createGroup END
