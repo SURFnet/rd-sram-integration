@@ -23,6 +23,7 @@
 namespace OCA\FederatedGroups\Controller;
 
 use Exception;
+use OCA\FederatedGroups\helpers\IDomainHelper;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -31,10 +32,6 @@ use OCA\FederatedGroups\GroupManagerProxy;
 use OCA\FederatedGroups\AppInfo\Application;
 use OCA\FederatedGroups\MixedGroupShareProvider;
 use OCP\ILogger;
-
-function getOurDomain() {
-    return $_SERVER['HTTP_HOST'];
-}
 
 /**
  * Class ScimController
@@ -45,18 +42,22 @@ class ScimController extends Controller {
     private GroupManagerProxy $groupManagerProxy;
     protected MixedGroupShareProvider $mixedGroupShareProvider;
     private ILogger $logger;
+    private IDomainHelper $domainHelper;
+
 
     public function __construct(
         $appName,
         IRequest $request,
         GroupManagerProxy $groupManagerProxy,
-        ILogger $logger
+        ILogger $logger,
+        IDomainHelper $domainHelper
     ) {
         parent::__construct($appName, $request);
         $federatedGroupsApp = new Application();
         $this->mixedGroupShareProvider = $federatedGroupsApp->getMixedGroupShareProvider();
         $this->groupManagerProxy = $groupManagerProxy;
         $this->logger = $logger;
+        $this->domainHelper = $domainHelper;
     }
 
     private function getNewDomainIfNeeded($newMember, $currentMembers) {
@@ -66,7 +67,7 @@ class ScimController extends Controller {
 
         if (count($newMemberParts) == 2) {
             $newDomain = $newMemberParts[1];
-            if (str_contains($newDomain, getOurDomain()))
+            if (str_contains($newDomain, $this->domainHelper->getOurDomain()))
                 return null;
             // if we have a member with same domain, we have sent the invite before, so no need to send it again
             foreach ($currentMembers as $currentMember) {
@@ -101,7 +102,7 @@ class ScimController extends Controller {
                 throw new Exception("cannot parse OCM user " . $member["value"]);
             }
             $newMember = $userIdParts[0];
-            if ($userIdParts[1] !== getOurDomain()) {
+            if ($userIdParts[1] !== $this->domainHelper->getOurDomain()) {
                 $newMember .= "#" . $userIdParts[1];
             }
             $newMembers[] = $newMember;
@@ -140,10 +141,10 @@ class ScimController extends Controller {
 
         $body = ["id" => $id, "members" => $members];
 
-        if (!$this->groupManagerProxy->get($id)) {
-            $this->groupManagerProxy->createGroup($id);
-            // $this->groupBackend->createGroup($id);
-        }
+        $this->groupManagerProxy->createGroup($id);
+        // if (!$this->groupManagerProxy->get($id)) {
+        //     // $this->groupBackend->createGroup($id);
+        // }
 
         try {
             $this->handleUpdateGroup($id, $body);
@@ -260,7 +261,7 @@ class ScimController extends Controller {
     }
 
     private function handleGetGroupData($groupId) {
-        $group = $this->groupManagerProxy->get(\urldecode($groupId));
+        $group = $this->groupManagerProxy->get($groupId);
         if ($group) {
             $id = $group->getGID();
             $displayName = $group->getDisplayName();

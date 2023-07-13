@@ -5,17 +5,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 namespace OCA\FederatedGroups\AppInfo;
 
-use OC\AppFramework\Utility\SimpleContainer;
-use OCP\AppFramework\App;
-use OCA\FederatedFileSharing\TokenHandler;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\DiscoveryManager;
 use OCA\FederatedFileSharing\Ocm\NotificationManager;
-use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
 use OCA\FederatedFileSharing\Ocm\Permissions;
-use OCA\FederatedGroups\GroupBackend;
+use OCA\FederatedFileSharing\TokenHandler;
+use OCA\FederatedGroups\helpers\IDomainHelper;
+use OCA\FederatedGroups\helpers\ProductionDomainHelper;
 use OCA\FederatedGroups\ScimSecurityMiddleware;
 use OCA\FederatedGroups\SRAMFederatedGroupShareProvider;
+use OCA\OpenCloudMesh\FederatedFileSharing\GroupNotifications;
+use OCP\AppFramework\App;
 
 
 class Application extends App {
@@ -27,12 +27,16 @@ class Application extends App {
 		$container = $this->getContainer();
 		$server = $container->getServer();
 
+		$container->registerService(IDomainHelper::class, function($c) use($server){
+            return new ProductionDomainHelper();
+        });
+
 		$container->registerService('ScimSecurityMiddleware', function($c) use($server){
             return new ScimSecurityMiddleware($server->getRequest(), $server->getConfig());
         });
 
         // executed in the order that it is registered
-        $container->registerMiddleware('ScimSecurityMiddleware');
+        // $container->registerMiddleware('ScimSecurityMiddleware');
 	}
 		
   	public static  function getMixedGroupShareProvider() {
