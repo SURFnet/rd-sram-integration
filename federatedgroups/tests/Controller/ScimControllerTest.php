@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\FederatedGroups\Tests\Controller;
 
 use OCA\FederatedGroups\Controller\ScimController;
+use OCA\FederatedGroups\helpers\TestDomainHelper;
 use OCA\FederatedGroups\MixedGroupShareProvider;
 use OCP\AppFramework\Http;
 use OCP\IGroup;
@@ -18,24 +19,30 @@ use OCP\ILogger;
 /**
  * @group DB
  */
-class ScimControllerTest extends TestCase {
+class ScimControllerTest extends TestCase
+{
     private ScimController $controller;
     private MixedGroupShareProvider $mixedGroupShareProvider;
     private ILogger $logger;
     private GroupManagerProxy $groupManagerProxy;
+    private TestDomainHelper $domainHelper;
 
-    protected function setUp(): void {
+
+    protected function setUp(): void
+    {
         parent::setUp();
         $request = $this->createMock(IRequest::class);
         $this->groupManagerProxy = $this->createMock(GroupManagerProxy::class);
         $this->logger = $this->createMock(ILogger::class);
-        $this->controller = new ScimController("federatedGroups", $request, $this->groupManagerProxy, $this->logger);
+        $this->domainHelper = new TestDomainHelper();
+        $this->controller = new ScimController("federatedGroups", $request, $this->groupManagerProxy, $this->logger, $this->domainHelper);
         $this->mixedGroupShareProvider = $this->createMock(MixedGroupShareProvider::class);
     }
 
 
     // deleteGroup START
-    public function test_it_can_delete_created_group() {
+    public function test_it_can_delete_created_group()
+    {
         $groupId = 'test-group';
         $members = [["value" => "test_user@oc2.docker"]];
         $deleted = true;
@@ -64,7 +71,8 @@ class ScimControllerTest extends TestCase {
         $this->assertEquals(Http::STATUS_NO_CONTENT, $deleteResponse->getStatus());
     }
 
-    public function test_it_returns_404_when_delete_non_existing_group() {
+    public function test_it_returns_404_when_delete_non_existing_group()
+    {
         $groupId = 'test-group';
 
         $this->groupManagerProxy->expects($this->once())->method("get")->with($groupId)->willReturn(null);
@@ -77,7 +85,8 @@ class ScimControllerTest extends TestCase {
 
 
     // getGroups START
-    public function test_it_can_get_list_of_groups() {
+    public function test_it_can_get_list_of_groups()
+    {
         $groups = ["admin", "federalists"];
         $usersInGroup = ["admin"];
 
@@ -106,7 +115,8 @@ class ScimControllerTest extends TestCase {
     // getGroups END
 
     // getGroup START
-    public function test_it_returns_404_if_groups_not_exists() {
+    public function test_it_returns_404_if_groups_not_exists()
+    {
         $groupId = 'test-group';
 
         $this->groupManagerProxy->expects($this->once())->method("get")->with($groupId)->willReturn(null);
@@ -116,7 +126,8 @@ class ScimControllerTest extends TestCase {
         $this->assertEquals(Http::STATUS_NOT_FOUND, $getResponse->getStatus());
     }
 
-    public function test_it_can_get_group_if_exists() {
+    public function test_it_can_get_group_if_exists()
+    {
         $groupId = 'test-group';
 
         $usersInGroup = ["admin"];
@@ -139,7 +150,8 @@ class ScimControllerTest extends TestCase {
 
 
     // updateGroup START
-    public function test_it_can_update_group_if_exists() {
+    public function test_it_can_update_group_if_exists()
+    {
         $groupId = 'test-group';
         $members = [["value" => "test_user@oc2.docker"]];
         $newMembers = ["test_user#oc2.docker"];
@@ -163,7 +175,8 @@ class ScimControllerTest extends TestCase {
     // updateGroup END
 
     // createGroup START
-    public function test_it_can_create_group() {
+    public function test_it_can_create_group()
+    {
         $groupId = 'test-group';
         $members = [["value" => "test_user@oc2.docker"]];
         $newMembers = ["test_user#oc2.docker"];
