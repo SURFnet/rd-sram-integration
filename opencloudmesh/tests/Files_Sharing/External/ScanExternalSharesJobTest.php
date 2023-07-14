@@ -155,9 +155,7 @@ class ScanExternalSharesJobTest extends TestCase {
 	 */
 	public function testRunHandlesOffset($scanShareReturn, $scanShareMaxPerSession, $scanShareExpectedRuns, $expectedOffset) {
 		$scanShares = $this->getScanSharesMockForRun();
-		$scanShares->expects($this->exactly($scanShareExpectedRuns))
-			->method('shouldScan')
-			->willReturn($scanShareReturn);
+		$scanShares->expects($this->exactly($scanShareExpectedRuns))->method('shouldScan')->willReturn($scanShareReturn);
 
 		$this->config->setAppValue('files_sharing', 'cronjob_scan_external_batch', $scanShareMaxPerSession);
 

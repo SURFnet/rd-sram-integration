@@ -485,10 +485,9 @@ abstract class AbstractManager
 
 		if ($result) {
 			$share = $getShare->fetch();
-			if (isset($share)) {
+			if ($share !== false) {
 				$removeResult = $this->executeRemoveShareStatement($share, $hash);
-			} else {
-				$removeResult = true;
+				$this->eventDispatcher->dispatch(new DeclineShare($share),DeclineShare::class);
 			}
 		}
 		$getShare->closeCursor();

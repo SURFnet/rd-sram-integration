@@ -43,7 +43,8 @@ use Test\Traits\UserTrait;
  *
  * @package OCA\OpenCloudMesh\Tests\Files_Sharing\External
  */
-class ManagerTest extends TestCase {
+class ManagerTest extends TestCase
+{
 	use UserTrait;
 
 	/** @var Manager **/
@@ -64,7 +65,8 @@ class ManagerTest extends TestCase {
 	private $user;
 	private $mountProvider;
 
-	protected function setUp(): void {
+	protected function setUp(): void
+	{
 		parent::setUp();
 
 		$this->uid = $this->getUniqueID('user');
@@ -96,14 +98,16 @@ class ManagerTest extends TestCase {
 		});
 	}
 
-	private function setupMounts() {
+	private function setupMounts()
+	{
 		$mounts = $this->mountProvider->getMountsForUser($this->user, new StorageFactory());
 		foreach ($mounts as $mount) {
 			$this->mountManager->addMount($mount);
 		}
 	}
 
-	public function testAddShare() {
+	public function testAddShare()
+	{
 		$shareData1 = [
 			'remote' => 'http://localhost',
 			'token' => 'token1',
@@ -286,7 +290,8 @@ class ManagerTest extends TestCase {
 		$this->assertNotMount('{{TemporaryMountPointName#' . $shareData1['name'] . '}}-1');
 	}
 
-	public function testAddShareAccepted() {
+	public function testAddShareAccepted()
+	{
 		$shareData1 = [
 			'remote' => 'http://localhost',
 			'token' => 'token1',
@@ -308,7 +313,8 @@ class ManagerTest extends TestCase {
 	 * Verify that a share event matches a given share
 	 *
 	 */
-	protected function verifyShareEvent(ShareEvent $event, $share, $expectedClass) {
+	protected function verifyShareEvent(ShareEvent $event, $share, $expectedClass)
+	{
 		return $share['remote_id'] == $event->getRemoteId() && \get_class($event) === $expectedClass;
 	}
 
@@ -318,7 +324,8 @@ class ManagerTest extends TestCase {
 	 * @param int $share
 	 * @param string $mountPoint
 	 */
-	protected function assertExternalShareEntry($expected, $actual, $share, $mountPoint) {
+	protected function assertExternalShareEntry($expected, $actual, $share, $mountPoint)
+	{
 		$this->assertEquals($expected['remote'], $actual['remote'], 'Asserting remote of a share #' . $share);
 		$this->assertEquals($expected['token'], $actual['share_token'], 'Asserting token of a share #' . $share);
 		$this->assertEquals($expected['name'], $actual['name'], 'Asserting name of a share #' . $share);
@@ -328,7 +335,8 @@ class ManagerTest extends TestCase {
 		$this->assertEquals($mountPoint, $actual['mountpoint'], 'Asserting mountpoint of a share #' . $share);
 	}
 
-	private function assertMount($mountPoint) {
+	private function assertMount($mountPoint)
+	{
 		$mountPoint = \rtrim($mountPoint, '/');
 		$mount = $this->mountManager->find($this->getFullPath($mountPoint));
 		$this->assertInstanceOf('\OCA\OpenCloudMesh\Files_Sharing\External\Mount', $mount);
@@ -338,7 +346,8 @@ class ManagerTest extends TestCase {
 		$this->assertInstanceOf('\OCA\Files_Sharing\External\Storage', $storage);
 	}
 
-	private function assertNotMount($mountPoint) {
+	private function assertNotMount($mountPoint)
+	{
 		$mountPoint = \rtrim($mountPoint, '/');
 		$mount = $this->mountManager->find($this->getFullPath($mountPoint));
 		if ($mount) {
@@ -349,40 +358,43 @@ class ManagerTest extends TestCase {
 		}
 	}
 
-	private function getFullPath($path) {
+	private function getFullPath($path)
+	{
 		return '/' . $this->uid . '/files' . $path;
 	}
 
-	public function testRemoveShare() {
+	public function testRemoveShare()
+	{
 		/*$shareData1 = [
-			'remote' => 'http://localhost',
-			'token' => 'token1',
-			'password' => '',
-			'name' => '/SharedFolder',
-			'owner' => 'foobar',
-			'accepted' => false,
-			'user' => $this->uid,
-		];
-		$shareData2 = $shareData1;
-		$shareData2['token'] = 'token2';
-		$shareData3 = $shareData1;
-		$shareData3['token'] = 'token3';
+				  'remote' => 'http://localhost',
+				  'token' => 'token1',
+				  'password' => '',
+				  'name' => '/SharedFolder',
+				  'owner' => 'foobar',
+				  'accepted' => false,
+				  'user' => $this->uid,
+			  ];
+			  $shareData2 = $shareData1;
+			  $shareData2['token'] = 'token2';
+			  $shareData3 = $shareData1;
+			  $shareData3['token'] = 'token3';
 
-		// Add a share for "user"
-		$this->assertNull(call_user_func_array([$this->manager, 'addShare'], $shareData1));
-		$openShares = $this->manager->getOpenShares();
-		$this->assertCount(1, $openShares);
-		$this->assertExternalShareEntry($shareData1, $openShares[0], 1, '{{TemporaryMountPointName#' . $shareData1['name'] . '}}');
+			  // Add a share for "user"
+			  $this->assertNull(call_user_func_array([$this->manager, 'addShare'], $shareData1));
+			  $openShares = $this->manager->getOpenShares();
+			  $this->assertCount(1, $openShares);
+			  $this->assertExternalShareEntry($shareData1, $openShares[0], 1, '{{TemporaryMountPointName#' . $shareData1['name'] . '}}');
 
-		$this->setupMounts();
-		$this->assertNotMount('SharedFolder');
-		$this->assertNotMount('{{TemporaryMountPointName#' . $shareData1['name'] . '}}');*/
+			  $this->setupMounts();
+			  $this->assertNotMount('SharedFolder');
+			  $this->assertNotMount('{{TemporaryMountPointName#' . $shareData1['name'] . '}}');*/
 
 		$this->mountManager = $this->createMock(\OC\Files\Mount\Manager::class);
 		$idbConnection = $this->createMock(\OCP\IDBConnection::class);
 		$prepare = $this->createMock(\Doctrine\DBAL\Driver\Statement::class);
-		$prepare->method('execute')
-			->willReturn(true);
+		$prepare->method('execute')->willReturn(true);
+		// id`, `remote`, `share_token`, `share_token
+		$prepare->method('fetch')->willReturn(['id' => 1,'remote' => 1,'share_token' => 1,'remote_id' => 1]);
 		$idbConnection->method('prepare')
 			->willReturn($prepare);
 		$storageFactory = $this->createMock(\OCP\Files\Storage\IStorageFactory::class);

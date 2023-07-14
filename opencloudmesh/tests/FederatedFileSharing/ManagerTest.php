@@ -67,13 +67,14 @@ class ManagerTest extends TestCase {
 			$this->storageFactory,
 			$this->notificationManager,
 			$this->eventDispatcher,
+			\OC::$server->getUserManager(),
+			\OC::$server->getGroupManager(),
 			$this->uid
 		);
 	}
 
 	public function testRemoveShareForNonExistingShareDispatchNoEvents() {
-		$this->eventDispatcher->expects($this->never())
-			->method('dispatch');
+		$this->eventDispatcher->expects($this->never())->method('dispatch');
 
 		$statement = $this->createMock(Statement::class);
 		$statement->method('execute')->willReturnOnConsecutiveCalls(true, false);
@@ -89,8 +90,7 @@ class ManagerTest extends TestCase {
 		$mountPoint = $this->createMock(IMountPoint::class);
 		$mountPoint->method('getStorage')->willReturn($storage);
 
-		$this->mountManager->method('find')
-			->willReturn($mountPoint);
+		$this->mountManager->method('find')->willReturn($mountPoint);
 
 		$this->manager->removeShare('/neverhood');
 	}
