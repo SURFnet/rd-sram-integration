@@ -4,16 +4,6 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-/**
- *
- */
-
-error_log("Site: " . getenv("SITE"));
-// if (getenv("SITE") == "cloud") {
-// 	$CONTROLLER = "rdapi";
-// } else {
-// 	$CONTROLLER = "scim";
-// }
 $CONTROLLER = "scim";
 
 return [
