@@ -6,7 +6,7 @@ namespace OCA\FederatedGroups\Migrations;
 use Doctrine\DBAL\Schema\Schema;
 use OCP\Migration\ISchemaMigration;
 
-class Version20230523140843 implements ISchemaMigration
+class Version20230823171700 implements ISchemaMigration
 {
 
     public function changeSchema(Schema $schema, array $options)
