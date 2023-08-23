@@ -16,7 +16,7 @@ class Version20230523140843 implements ISchemaMigration
             $fg_groups_table = $schema->createTable("{$prefix}fg_groups");
 
             $fg_groups_table->addColumn('gid', 'string', [
-                'length' => 64,
+                'length' => 512,
                 'notnull' => true,
                 'comment' => ''
             ]);
@@ -28,13 +28,13 @@ class Version20230523140843 implements ISchemaMigration
             $fg_group_user_table = $schema->createTable("{$prefix}fg_group_user");
 
             $fg_group_user_table->addColumn('gid', 'string', [
-                'length' => 64,
+                'length' => 512,
                 'notnull' => true,
                 'comment' => ''
             ]);
 
             $fg_group_user_table->addColumn('uid', 'string', [
-                'length' => 64,
+                'length' => 512,
                 'notnull' => true,
                 'comment' => ''
             ]);
