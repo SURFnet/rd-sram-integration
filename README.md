@@ -60,7 +60,7 @@ You should install Docker on your system as a requirement **OR** just using the 
 
 ### Instruction:
 
-1- Clone the repository.
+1- Clone the [pondersource dev-stock repository](https://github.com/pondersource/dev-stock).
 
 2- Run `./scripts/init-rd-sram.sh`.
 
