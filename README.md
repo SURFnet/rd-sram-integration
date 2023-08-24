@@ -58,6 +58,10 @@ https://github.com/pondersource/dev-stock
 ### Note:
 You should install Docker on your system as a requirement **OR** just using the **Github Codespaces**
 
+### Known issue
+
+Step 3 will throw an error but we think it can be safely ignored, see https://github.com/SURFnet/rd-sram-integration/issues/235.
+
 ### Instruction:
 
 1- Clone the [pondersource dev-stock repository](https://github.com/pondersource/dev-stock).
