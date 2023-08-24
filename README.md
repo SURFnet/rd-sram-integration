@@ -74,6 +74,12 @@ Step 3 will throw an error but we think it can be safely ignored, see https://gi
 
 5- Run `docker exec -it oc1.docker sh /curls/includeMarie.sh oc1.docker`
 
+6- Optionally, tell the OC containers to trust access through VSCode exposed ports:
+```
+docker exec -it oc1.docker sed -i "14 i\      3 => \$_SERVER['HTTP_HOST']," /var/www/html/config/config.php
+docker exec -it oc2.docker sed -i "14 i\      3 => \$_SERVER['HTTP_HOST']," /var/www/html/config/config.php
+```
+
 After Running these commands you can browse localhost:5800 and see a headless browser.
 inside the headless browser, you can enter these two addresses: https://oc1.docker and https://oc2.docker.
 
