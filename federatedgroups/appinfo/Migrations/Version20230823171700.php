@@ -39,10 +39,10 @@ class Version20230823171700 implements ISchemaMigration
                 'comment' => ''
             ]);
 
-//			$fg_group_user_table->addUniqueIndex(
-//				['gid', 'uid'],
-//				`{$prefix}uc_fg_group_user`
-//			);
+			$fg_group_user_table->addUniqueIndex(
+				['gid', 'uid'],
+				`{$prefix}uc_fg_group_user`
+			);
         }
     }
 }
