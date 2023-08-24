@@ -89,3 +89,4 @@ and finally, you can share a file with the `federalists` Group for example on oc
 
 then you can browse the oc2.docker and see the incoming share dialog.
 
+If you can prefer you can use [Reza's bootstrap script](https://github.com/pondersource/dev-stock/blob/main/bootstrap-rd-sram.sh) that executes steps 1-5.
