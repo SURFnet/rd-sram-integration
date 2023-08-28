@@ -97,7 +97,7 @@ oc2.docker:
   > 
   > password: radioactivity
   
-and finally, you can share a file with the `federalists` Group for example on oc1.docker.
+and finally, you can share a file with the `TestGroup (uniharderwijk_surfdrive_test) (SRAM CO)` Group for example on oc1.docker.
 
 then you can browse the oc2.docker and see the incoming share dialog.
 
