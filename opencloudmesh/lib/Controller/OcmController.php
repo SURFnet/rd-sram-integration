@@ -192,11 +192,14 @@ class OcmController extends Controller {
 				|| !\is_array($protocol['options'])
 				|| !isset($protocol['options']['sharedSecret'])
 			) {
+				$this->logger->debug("[OCM] protocol is not an array or name/options/options.sharedSecret missing");
+				
 				throw new BadRequestException(
 					'server can not add federated share, missing parameter'
 				);
 			}
 			if (!\OCP\Util::isValidFileName($name)) {
+				$this->logger->debug("[OCM] filename $name not valid");
 				throw new BadRequestException(
 					'The mountpoint name contains invalid characters.'
 				);
@@ -223,6 +226,7 @@ class OcmController extends Controller {
 			$shareWithAddress = new Address($shareWith);
 			$localShareWith = $shareWithAddress->toLocalUid();
 			if (!$this->fedGroupShareManager->localShareWithExists($localShareWith)) {
+				$this->logger->debug("[OCM] Group $localShareWith does not exist");
 				throw new BadRequestException("Group $localShareWith does not exist");
 			}
 
@@ -284,6 +288,7 @@ class OcmController extends Controller {
 	) {
 		try {
 			if (!\is_array($notification)) {
+				$this->logger->debug("[OCM] Notification is not an array");
 				throw new BadRequestException(
 					'server can not add federated share, missing parameter'
 				);
@@ -436,6 +441,7 @@ class OcmController extends Controller {
 		try {
 			list($share, $fedShareManager) = $this->getShareById($id);
 		} catch (Share\Exceptions\ShareNotFound $e) {
+			$this->logger->debug("[OCM] Share with id {$id} does not exist");
 			throw new BadRequestException("Share with id {$id} does not exist");
 		}
 

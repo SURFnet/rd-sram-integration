@@ -31,6 +31,7 @@ use OCP\AppFramework\Http;
 use OCP\BackgroundJob\IJobList;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
+use OCP\ILogger;
 use GuzzleHttp\Exception\ClientException;
 
 class UserNotifications extends AbstractNotifications {
@@ -40,6 +41,7 @@ class UserNotifications extends AbstractNotifications {
 	 * @param DiscoveryManager $discoveryManager
 	 * @param IJobList $jobList
 	 * @param IConfig $config
+ 	 * @param ILogger $logger
 	 */
 	public function __construct(
 		AddressHandler $addressHandler,
@@ -47,7 +49,8 @@ class UserNotifications extends AbstractNotifications {
 		DiscoveryManager $discoveryManager,
 		NotificationManager $notificationManager,
 		IJobList $jobList,
-		IConfig $config
+		IConfig $config,
+		ILogger $logger
 	) {
 		parent::__construct(
 			$addressHandler,

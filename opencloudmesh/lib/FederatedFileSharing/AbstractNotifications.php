@@ -35,6 +35,7 @@ use OCA\FederatedFileSharing\DiscoveryManager;
 use OCP\AppFramework\Http;
 use OCP\BackgroundJob\IJobList;
 use OCP\Http\Client\IClientService;
+use OCP\ILogger;
 use OCP\IConfig;
 use GuzzleHttp\Exception\ClientException;
 
@@ -68,6 +69,7 @@ abstract class AbstractNotifications {
 	 * @param DiscoveryManager $discoveryManager
 	 * @param IJobList $jobList
 	 * @param IConfig $config
+	 * @param ILogger $logger
 	 * @param string $shareType
 	 */
 	public function __construct(
@@ -77,6 +79,7 @@ abstract class AbstractNotifications {
 		NotificationManager $notificationManager,
 		IJobList $jobList,
 		IConfig $config,
+		ILogger $logger,
 		string $shareType
 	) {
 		$this->addressHandler = $addressHandler;
@@ -432,7 +435,7 @@ abstract class AbstractNotifications {
 
 		$url = $shareWithAddress->getHostName();
 		$result = $this->tryHttpPostToShareEndpoint($url, '/shares', $fields, true);
-
+        $this->logger->debug("POST to $url resulted in " . $result['statusCode']);
 		if (isset($result['statusCode']) && $result['statusCode'] === Http::STATUS_CREATED) {
 			return true;
 		}
