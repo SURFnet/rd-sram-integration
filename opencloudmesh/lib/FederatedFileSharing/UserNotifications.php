@@ -59,6 +59,7 @@ class UserNotifications extends AbstractNotifications {
 			$notificationManager,
 			$jobList,
 			$config,
+			$logger,
 			'user'
 		);
 	}
