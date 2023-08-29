@@ -85,7 +85,8 @@ class Application extends App {
 			$discoveryManager,
 			$notificationManager,
 			\OC::$server->getJobList(),
-			\OC::$server->getConfig()
+			\OC::$server->getConfig(),
+			\OC::$server->getLogger()
 		);
 		$tokenHandler = new TokenHandler(
 			\OC::$server->getSecureRandom()
