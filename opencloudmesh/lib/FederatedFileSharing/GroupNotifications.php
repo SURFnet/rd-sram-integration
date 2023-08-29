@@ -49,7 +49,8 @@ class GroupNotifications extends AbstractNotifications {
 		DiscoveryManager $discoveryManager,
 		NotificationManager $notificationManager,
 		IJobList $jobList,
-		IConfig $config
+		IConfig $config,
+		ILogger $logger
 	) {
 		parent::__construct(
 			$addressHandler,
