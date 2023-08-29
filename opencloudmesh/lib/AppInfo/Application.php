@@ -100,7 +100,8 @@ class Application extends App {
 				$discoveryManager,
 				$notificationManager,
 				\OC::$server->getJobList(),
-				\OC::$server->getConfig()
+				\OC::$server->getConfig(),
+				\OC::$server->getLogger()
 			);
 		});
 
@@ -164,7 +165,8 @@ class Application extends App {
 					$discoveryManager,
 					$notificationManager,
 					\OC::$server->getJobList(),
-					$config
+					$config,
+					\OC::$server->getLogger()
 				);
 
 				$factoryClass = $config->getSystemValue('sharing.managerFactory', '\ OCA\OpenCloudMesh\ShareProviderFactory');
