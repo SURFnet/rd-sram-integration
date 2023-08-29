@@ -128,6 +128,7 @@ class OcmController extends Controller {
 		$this->fedUserShareManager = $fedUserShareManager;
 		$this->logger = $logger;
 		$this->config = $config;
+		$this->logger->debug("[OCM] Controller Constructor");
 	}
 
 	/**
@@ -174,6 +175,7 @@ class OcmController extends Controller {
 		$resourceType,
 		$protocol
 	) {
+		$this->logger->debug("[OCM] createShare");
 		try {
 			$this->ocmMiddleware->assertIncomingSharingEnabled();
 			$this->ocmMiddleware->assertNotNull(
@@ -222,6 +224,7 @@ class OcmController extends Controller {
 					"ResourceType {$resourceType} is not supported"
 				);
 			}
+			$this->logger->debug("[OCM] checks passed");
 
 			$shareWithAddress = new Address($shareWith);
 			$localShareWith = $shareWithAddress->toLocalUid();
