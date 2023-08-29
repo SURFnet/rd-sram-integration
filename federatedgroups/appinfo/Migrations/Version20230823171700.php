@@ -41,7 +41,7 @@ class Version20230823171700 implements ISchemaMigration
 
 			$fg_group_user_table->addUniqueIndex(
 				['gid', 'uid'],
-				`{$prefix}uc_fg_group_user`
+				"{$prefix}uc_fg_group_user"
 			);
         }
     }
