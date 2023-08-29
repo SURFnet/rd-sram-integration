@@ -88,6 +88,7 @@ abstract class AbstractNotifications {
 		$this->notificationManager = $notificationManager;
 		$this->jobList = $jobList;
 		$this->config = $config;
+		$this->logger = $logger;
 		$this->shareType = $shareType;
 	}
 
