@@ -372,7 +372,10 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		// Create group share locally
 		$created = parent::create($share);
 		if($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP){
+			$this->logger->debug('[FG] Creating (Mixed?) Group share');
+
 			$remotes = $this->getRemotePartieslist($share->getSharedWith());
+
 			$created->setToken($this->tokenHandler->generateToken());
 			// Send OCM invites to remote group members
 			try {
@@ -508,12 +511,19 @@ class MixedGroupShareProvider extends DefaultShareProvider implements IShareProv
 		$group = $this->groupManager->get($groupName);
 		$backend = $group->getBackend();
 		$recipients = $backend->usersInGroup($groupName);
-			foreach ($recipients as $k => $v) {
+
+
+		foreach ($recipients as $k => $v) {
+			$this->logger->debug("[FG] Considering whether '$v' is a foreigner");
 			$parts = explode(self::SEPARATOR, $v);
 			if (count($parts) > 1) {
+				$this->logger->debug("[FG] Yes '$v' is a foreigner");
 				$remotes[] = $parts[1];
+			} else {
+				$this->logger->debug("[FG] No '$v' is not a foreigner");
 			}
 		}
+		$this->logger->debug("[FG] Remote parties list " . var_export($remotes, true));
 		return $remotes; 
 	}
 
