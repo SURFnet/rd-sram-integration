@@ -487,7 +487,9 @@ abstract class AbstractManager
 			$share = $getShare->fetch();
 			if ($share !== false) {
 				$removeResult = $this->executeRemoveShareStatement($share, $hash);
-				$this->eventDispatcher->dispatch(new DeclineShare($share),DeclineShare::class);
+				if ($this->shouldNotifyShareDecline($share)) {
+					$this->eventDispatcher->dispatch(new DeclineShare($share), DeclineShare::class);
+				}
 			}
 		}
 		$getShare->closeCursor();
@@ -502,6 +504,7 @@ abstract class AbstractManager
 	}
 
 	abstract protected function executeRemoveShareStatement($share, $mountHash);
+	abstract protected function shouldNotifyShareDecline($share);
 
 	/**
 	 * remove re-shares from share table and mapping in the federated_reshares table

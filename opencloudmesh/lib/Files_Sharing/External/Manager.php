@@ -315,6 +315,10 @@ class Manager extends AbstractManager {
 		return true;
 	}
 
+	protected function shouldNotifyShareDecline($share) {
+		return false;
+	}
+
 	protected function fetchShares($shares) {
 		$shares = $shares->fetchAll();
 
